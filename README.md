@@ -1,4 +1,4 @@
-# nuage-mesos-cni
+# nuage-cni
 Repository for maintaining Nuage Integration with Mesos/Kubernetes/Openshift using CNI plugin
 
 To build CNI plugin binaries, execute "make" from "nuage-cni" folder. Make sure the GOPATH is set correctly. Following binaries will be generated under "nuage-cni" folder:
