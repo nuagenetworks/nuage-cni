@@ -1,0 +1,12 @@
+[Unit]
+Description=Nuage CNI monitoring daemon for Mesos agent nodes
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/nuage-cni-mesos -daemon
+Type=simple
+PIDFile=/var/run/nuage-cni/nuage-cni.pid
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

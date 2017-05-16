@@ -1,0 +1,10 @@
+vrsendpoint: "/var/run/openvswitch/db.sock"
+vrsbridge: "alubr0"
+monitorinterval: 60
+cniversion: 0.2.0
+loglevel: "info"
+portresolvetimer: 60
+logfilesize: 1
+vrsconnectionchecktimer: 180
+mtu: 1450
+staleentrytimeout: 600

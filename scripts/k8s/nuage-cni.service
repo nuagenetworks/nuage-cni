@@ -1,0 +1,12 @@
+[Unit]
+Description=Nuage CNI monitoring daemon for K8S slave nodes
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/nuage-cni-k8s -daemon
+Type=simple
+PIDFile=/var/run/nuage-cni/nuage-cni.pid
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
