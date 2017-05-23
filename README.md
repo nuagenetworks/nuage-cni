@@ -15,11 +15,9 @@ The Nuage CNI plugin functions in two modes:
 
 In the CNI mode, the Nuage CNI plugin gets invoked by network/cni isolator when a container gets launched or deleted.
 
-- Functions
+ - When container/pod gets launched, the Nuage CNI Plugin gets invoked. It creates a container port in VRS and resolves that container with an IP address from Nuage defined VSD overlay network.
 
- - Adding a container - When container/pod gets launched, the Nuage CNI Plugin gets invoked. It creates a container port in VRS and resolves that container with an IP address from Nuage defined VSD overlay network.
-
- - Deleting a container - When container/pod gets deleted, the Nuage CNI Plugin gets invoked. It deletes the container port entry from VRS thereby detaching the container from Nuage defined VSD overlay network.
+ - When container/pod gets deleted, the Nuage CNI Plugin gets invoked. It deletes the container port entry from VRS thereby detaching the container from Nuage defined VSD overlay network.
 
 ## Audit Daemon Mode
 
@@ -51,8 +49,8 @@ In Audit Daemon mode, the Nuage CNI plugin also operates as a background systemd
 
 # Automated Nuage CNI plugin installation
 
-- Please refer to the Nuage VSP Mesos Integration Guide for detailed steps on Nuage Mesos CNI plugin frameowkr installation on Mesos clusters.
+- Please refer to the Nuage VSP Mesos Integration Guide for detailed steps on Nuage Mesos CNI plugin frameworks installation on Mesos clusters.
 
-- Please refer to the Nuage VSP OpenShift Integration Guide for detailed steps on Nuage Openshift CNI plugin ansible installation on Openshift clusters (HA and single master)
+- Please refer to the Nuage VSP OpenShift Integration Guide for detailed steps on Nuage Openshift CNI plugin Ansible installation on Openshift clusters (HA and single master)
 
-- Please refer to the Nuage VSP Kubernetes Integration Guide for detailed steps on Nuage Kubernetes CNI plugin ansible installation on Kubernetes setups
+- Please refer to the Nuage VSP Kubernetes Integration Guide for detailed steps on Nuage Kubernetes CNI plugin Ansible installation on Kubernetes setups
