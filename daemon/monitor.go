@@ -87,19 +87,44 @@ func cleanupStalePortsEntities(vrsConnection vrsSdk.VRSConnection, orchestrator 
 	var entityPortList []string
 	var entityUUIDList []string
 	var formattedEntityUUIDList []string
+	var vrsEntitiesList []string
+	var vrsPortsList []string
 
 	// First obtain VRS entity and port list followed by orchestrator
 	// entity/port list to avoid race condition
-	vrsEntitiesList, err := vrsConnection.GetAllEntities()
+	entitiesList, err := vrsConnection.GetAllEntities()
 	if err != nil {
 		log.Errorf("Failed to get entity list from VRS: %v", err)
 		return err
 	}
 
-	vrsPortsList, err := vrsConnection.GetAllPorts()
+	// Here we determine if we are using only CNI networked VRS entities
+	// while performing audit
+	for _, entry := range entitiesList {
+		entryPortList, err := vrsConnection.GetEntityPorts(entry)
+		if err != nil {
+			log.Warnf("Error occured while obtaining VRS ports for entity %s", entry)
+		}
+		for _, portEntry := range entryPortList {
+			if strings.Contains(portEntry, "cni") {
+				vrsEntitiesList = append(vrsEntitiesList, entry)
+				break
+			}
+		}
+	}
+
+	portsList, err := vrsConnection.GetAllPorts()
 	if err != nil {
 		log.Errorf("Failed getting port names from VRS: %v", err)
 		return err
+	}
+
+	// Here we determine if we are using only CNI networked VRS alubr0 ports
+	// while performing audit
+	for _, portEntry := range portsList {
+		if strings.Contains(portEntry, "cni") {
+			vrsPortsList = append(vrsPortsList, portEntry)
+		}
 	}
 
 	switch orchestrator {
