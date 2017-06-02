@@ -19,7 +19,6 @@ import (
 	"nuage-cni/config"
 	"os"
 	"os/exec"
-	"regexp"
 	"strings"
 )
 
@@ -213,16 +212,11 @@ func RemoveVethPortFromVRS(port string) error {
 
 // GetNuagePortName creates a unique port name
 // for container host port entry
-func GetNuagePortName(intf string, uuid string) string {
-
-	// Extracting port prefix from container interface name
-	// Eg: port prefix for interface "eth0" will be "0"
-	re := regexp.MustCompile("[0-9]+")
-	intfPrefix := re.FindAllString(intf, -1)
+func GetNuagePortName(uuid string) string {
 
 	// Formatting UUID string by removing "-"
 	formattedUUID := strings.Replace(uuid, "-", "", -1)
-	nuagePortName := intfPrefix[0] + generateVEthString(formattedUUID)
+	nuagePortName := "cni" + generateVEthString(formattedUUID)
 
 	return nuagePortName
 }
@@ -235,7 +229,7 @@ func generateVEthString(uuid string) string {
 	if err != nil {
 		log.Errorf("Error generating unique hash string for entity")
 	}
-	return fmt.Sprintf("%s", hex.EncodeToString(h.Sum(nil))[:14])
+	return fmt.Sprintf("%s", hex.EncodeToString(h.Sum(nil))[:12])
 }
 
 // GetContainerNuageMetadata populates NuageMetadata struct

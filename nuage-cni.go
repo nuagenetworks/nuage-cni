@@ -189,7 +189,7 @@ func networkConnect(args *skel.CmdArgs) error {
 
 		entityInfo["name"] = string(k8sArgs.K8S_POD_NAME)
 		entityInfo["entityport"] = args.IfName
-		entityInfo["brport"] = client.GetNuagePortName(entityInfo["entityport"], args.ContainerID)
+		entityInfo["brport"] = client.GetNuagePortName(args.ContainerID)
 		err := k8s.GetPodNuageMetadata(&nuageMetadataObj, string(k8sArgs.K8S_POD_NAME), string(k8sArgs.K8S_POD_NAMESPACE), orchestrator)
 		if err != nil {
 			log.Errorf("Error obtaining Nuage metadata")
@@ -204,7 +204,7 @@ func networkConnect(args *skel.CmdArgs) error {
 		formattedContainerUUID := newContainerUUID + newContainerUUID
 		entityInfo["uuid"] = formattedContainerUUID
 		entityInfo["entityport"] = args.IfName
-		entityInfo["brport"] = client.GetNuagePortName(entityInfo["entityport"], entityInfo["uuid"])
+		entityInfo["brport"] = client.GetNuagePortName(entityInfo["uuid"])
 		err = client.GetContainerNuageMetadata(&nuageMetadataObj, args)
 		if err != nil {
 			log.Errorf("Error obtaining Nuage metadata")
@@ -393,14 +393,14 @@ func networkDisconnect(args *skel.CmdArgs) error {
 		entityInfo["name"] = string(k8sArgs.K8S_POD_NAME)
 		entityInfo["uuid"] = string(k8sArgs.K8S_POD_INFRA_CONTAINER_ID)
 		// Determining the Nuage host port name to be deleted from OVSDB table
-		portName = client.GetNuagePortName(args.IfName, args.ContainerID)
+		portName = client.GetNuagePortName(args.ContainerID)
 	} else {
 		entityInfo["name"] = args.ContainerID
 		newContainerUUID := strings.Replace(args.ContainerID, "-", "", -1)
 		formattedContainerUUID := newContainerUUID + newContainerUUID
 		entityInfo["uuid"] = formattedContainerUUID
 		// Determining the Nuage host port name to be deleted from OVSDB table
-		portName = client.GetNuagePortName(args.IfName, entityInfo["uuid"])
+		portName = client.GetNuagePortName(entityInfo["uuid"])
 	}
 
 	log.Infof("Detaching entity %s from Nuage defined network", entityInfo["name"])

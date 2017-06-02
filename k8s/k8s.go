@@ -33,8 +33,8 @@ var nuageMonClientCACertFile string
 // NuageKubeMonResp will unmarshal JSON
 // response from Nuage kubemon service
 type NuageKubeMonResp struct {
-	Subnet string `json:"subnetName"`
-	PG     string `json:"policyGroups"`
+	Subnet string   `json:"subnetName"`
+	PG     []string `json:"policyGroups"`
 }
 
 // Pod will hold fields necessary to query
@@ -189,7 +189,9 @@ func getPodMetadataFromNuageK8sMon(podname string, ns string) error {
 
 	if podPG == "" {
 		log.Debugf("Pod policy group information obtained from Nuage K8S monitor : %s", result.PG)
-		podPG = result.PG
+		for _, pg := range result.PG {
+			podPG = pg
+		}
 	}
 
 	log.Debugf("Pod subnet information obtained from Nuage K8S monitor : %s", result.Subnet)
