@@ -18,7 +18,6 @@ import (
 	"net"
 	"nuage-cni/config"
 	"os"
-	"os/exec"
 	"regexp"
 	"strings"
 )
@@ -167,45 +166,19 @@ func ConnectToVRSOVSDB(conf *config.Config) (vrsSdk.VRSConnection, error) {
 	return vrsConnection, nil
 }
 
-// AddVETHPortToVRS will help add veth ports to VRS alubr0
-func AddVETHPortToVRS(port string, vmuuid string, vmname string) error {
-
-	cmdstr := fmt.Sprintf("/usr/bin/ovs-vsctl --no-wait --if-exists del-port alubr0 %s -- %s-port alubr0 %s -- set interface %s 'external-ids={vm-uuid=%s,vm-name=%s}'", port, addCli, port, port, vmuuid, vmname)
-	cmd := exec.Command("bash", "-c", cmdstr)
-	_, err := cmd.Output()
-	if err != nil {
-		return fmt.Errorf("Problem adding veth port to alubr0 on VRS %v", err)
-	}
-
-	return nil
-}
-
 // DeleteVethPair will help user delete veth pairs on VRS
-func DeleteVethPair(brPort string) error {
+func DeleteVethPair(brPort string, entityPort string) error {
 
 	log.Debugf("Deleting veth paired port %s as a part of Nuage CNI cleanup", brPort)
-	cmdstr := fmt.Sprintf("ip link %s %s", deleteCli, brPort)
-	cmd := exec.Command("bash", "-c", cmdstr)
-	_, err := cmd.Output()
-
-	if err != nil {
-		log.Errorf("Error deleting veth pair on VRS as a part of Nuage CNI cleanup")
-		return fmt.Errorf("Error while deleting veth pair on VRS %v", err)
+	localVethPair := &netlink.Veth{
+		LinkAttrs: netlink.LinkAttrs{Name: brPort},
+		PeerName:  entityPort,
 	}
 
-	return nil
-}
-
-// RemoveVethPortFromVRS will help delete veth ports from VRS alubr0
-func RemoveVethPortFromVRS(port string) error {
-
-	log.Debugf("Removing port %s from alubr0 bridge as a part of Nuage CNI cleanup", port)
-	cmdstr := fmt.Sprintf("/usr/bin/ovs-vsctl --no-wait %s-port alubr0 %s", deleteCli, port)
-	cmd := exec.Command("bash", "-c", cmdstr)
-	_, err := cmd.Output()
+	err := netlink.LinkDel(localVethPair)
 	if err != nil {
-		log.Errorf("Error deleting port %s from alubr0", port)
-		return fmt.Errorf("Problem deleting veth port from alubr0 on VRS %v", err)
+		log.Errorf("Deleting veth pair %+v failed with error: %s", localVethPair, err)
+		return err
 	}
 
 	return nil

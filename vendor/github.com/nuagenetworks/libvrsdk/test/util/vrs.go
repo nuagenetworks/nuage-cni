@@ -1,9 +1,16 @@
 package util
 
 import (
+	"crypto/md5"
+	"encoding/hex"
 	"fmt"
+	"io"
 	"math/rand"
+	"net"
+	"os"
 	"os/exec"
+	"strconv"
+	"strings"
 	"time"
 )
 
@@ -66,48 +73,32 @@ func DeleteVETHPair(entityPort string, brPort string) error {
 	return nil
 }
 
-// AddVETHPortToVRS will help add veth ports to VRS alubr0
-func AddVETHPortToVRS(port string, vmuuid string, vmname string) error {
-
-	cmdstr := fmt.Sprintf("/usr/bin/ovs-vsctl --no-wait --if-exists del-port alubr0 %s -- %s-port alubr0 %s -- set interface %s 'external-ids={vm-uuid=%s,vm-name=%s}'", port, add, port, port, vmuuid, vmname)
-	cmd := exec.Command("bash", "-c", cmdstr)
-	_, err := cmd.Output()
-	if err != nil {
-		return fmt.Errorf("Problem adding veth port to alubr0 on VRS %v", err)
-	}
-
-	return nil
-}
-
-// RemoveVETHPortFromVRS will help delete veth ports from VRS alubr0
-func RemoveVETHPortFromVRS(port string) error {
-
-	cmdstr := fmt.Sprintf("/usr/bin/ovs-vsctl --no-wait %s-port alubr0 %s", delete, port)
-	cmd := exec.Command("bash", "-c", cmdstr)
-	_, err := cmd.Output()
-	if err != nil {
-		return fmt.Errorf("Problem deleting veth port from alubr0 on VRS %v", err)
-	}
-
-	return nil
-}
-
 // GenerateMAC will act as a pseudo random MAC generator
 func GenerateMAC() string {
+	hw := make(net.HardwareAddr, 6)
+	h := md5.New()
+	hostname, _ := os.Hostname()
+	io.WriteString(h, hostname)
+	hostnameHash := hex.EncodeToString(h.Sum(nil))
+	randbuf := make([]byte, 6)
+	rand.Seed(time.Now().UTC().UnixNano())
+	rand.Read(randbuf)
+	randbuf[0] = byte(int(randbuf[0])&0xFE | 0x02)
+	macString1, _ := strconv.ParseInt(hostnameHash[:2], 16, 0)
+	macString2, _ := strconv.ParseInt(hostnameHash[2:4], 16, 0)
+	randbuf[1] = byte(macString1)
+	randbuf[2] = byte(macString2)
+	copy(hw, randbuf)
+	return hw.String()
 
-	arr := make([]int, 6)
-	var num int
-	for i := 0; i < 6; i++ {
-		for {
-			num = rand.New(rand.NewSource(time.Now().UnixNano())).Intn(100)
-			if num >= 10 && num <= 99 {
-				break
-			}
-		}
+}
 
-		arr[i] = num
-	}
+// SplitUUIDString will hep extract UUID string
+// obtained from Port table
+func SplitUUIDString(uuid string) string {
 
-	mac := fmt.Sprintf("%d:%d:%d:%d:%d:%d", arr[0], arr[1], arr[2], arr[3], arr[4], arr[5])
-	return mac
+	uuidName := strings.Split(uuid, "[")
+	uuidStrSplit := strings.Split(uuidName[1], "]")
+	uuidStr := strings.Split(uuidStrSplit[0], " ")
+	return uuidStr[1]
 }

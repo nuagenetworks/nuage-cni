@@ -166,7 +166,7 @@ func getPodMetadataFromNuageK8sMon(podname string, ns string) error {
 	var jsonStr = []byte(string(out))
 	resp, err := client.Post(url, "application/json", bytes.NewBuffer(jsonStr))
 	if err != nil {
-		log.Errorf("Error occured while sending POST call to Nuage K8S monitor to obtain pod metadata")
+		log.Errorf("Error occured while sending POST call to Nuage K8S monitor to obtain pod metadata: %v", err)
 		return err
 	}
 

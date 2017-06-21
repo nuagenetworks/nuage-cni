@@ -4,7 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	log "github.com/Sirupsen/logrus"
+	"github.com/docker/docker/api/types"
+	dockerClient "github.com/docker/docker/client"
 	vrsSdk "github.com/nuagenetworks/libvrsdk/api"
+	"golang.org/x/net/context"
 	"io/ioutil"
 	kapi "k8s.io/kubernetes/pkg/api"
 	krestclient "k8s.io/kubernetes/pkg/client/restclient"
@@ -16,7 +19,6 @@ import (
 	"nuage-cni/client"
 	"nuage-cni/config"
 	"os"
-	"os/exec"
 	"os/signal"
 	"strings"
 	"syscall"
@@ -32,6 +34,14 @@ var staleEntryTimeout int64
 type containerInfo struct {
 	ID string `json:"container_id"`
 }
+
+//NuageDockerClient structure holds docker client
+type NuageDockerClient struct {
+	socketFile string
+	dclient    *dockerClient.Client
+}
+
+var nuagedocker = &NuageDockerClient{}
 
 // getActiveMesosContainers will return a list of currently
 // active Mesos containers to help in audit cleanup
@@ -270,12 +280,12 @@ func cleanupPortTable(vrsConnection vrsSdk.VRSConnection, entityPortList []strin
 		}
 
 		// Purging out the veth port from VRS alubr0
-		err = client.RemoveVethPortFromVRS(stalePort)
+		err = vrsConnection.RemovePortFromAlubr0(stalePort)
 		if err != nil {
 			log.Warnf("Unable to delete veth port as part of cleanup from alubr0: %v", err)
 		}
 
-		err = client.DeleteVethPair(stalePort)
+		err = client.DeleteVethPair(stalePort, "eth0")
 		if err != nil {
 			log.Warnf("Failed to clear veth ports from VRS: %v", err)
 		}
@@ -362,6 +372,13 @@ func MonitorAgent(config *config.Config, orchestrator string) error {
 			break
 		}
 		time.Sleep(time.Duration(5) * time.Second)
+	}
+
+	// Setting up docker client connection
+	nuagedocker.socketFile = "unix:///var/run/docker.sock"
+	nuagedocker.dclient, err = connectToDockerDaemon(nuagedocker.socketFile)
+	if err != nil {
+		log.Errorf("Connection to docker daemon failed with error: %v", err)
 	}
 
 	log.Infof("Starting Nuage CNI monitoring daemon for %s agent nodes", orchestrator)
@@ -452,16 +469,40 @@ func getActiveK8SPods(orchestrator string) ([]string, error) {
 
 	var infraIDList []string
 	for _, id := range idList {
-		cmdStr := fmt.Sprintf("docker inspect --format {{.HostConfig.NetworkMode}} %s", id)
-		cmd := exec.Command("bash", "-c", cmdStr)
-		out, _ := cmd.Output()
-		outStr := string(out)
-		newStr := strings.Replace(outStr, "\n", "", -1)
-		outSlice := strings.Split(newStr, ":")
-		if len(outSlice) > 1 {
-			infraIDList = append(infraIDList, outSlice[1])
+		contUUID, err := getPodContainerUUID(id)
+		if err != nil {
+			log.Errorf("Failed to obtain container UUID for the pod ID %s", id)
 		}
+		infraIDList = append(infraIDList, contUUID)
 	}
 
 	return infraIDList, err
+}
+
+func getPodContainerUUID(uuid string) (string, error) {
+	var err error
+	var containerInspect types.ContainerJSON
+	containerInspect, err = nuagedocker.dclient.ContainerInspect(context.Background(), uuid)
+	if err != nil {
+		log.Errorf("Inspect on container failed with error: %v", err)
+		return "", err
+	}
+
+	newUUIDStr := strings.Replace(string(containerInspect.HostConfig.NetworkMode), "\n", "", -1)
+	contUUID := strings.Split(newUUIDStr, ":")
+	return contUUID[1], err
+}
+
+func connectToDockerDaemon(socketFile string) (*dockerClient.Client, error) {
+	err := os.Setenv("DOCKER_HOST", socketFile)
+	if err != nil {
+		log.Errorf("Setting DOCKER_HOST failed")
+		return nil, err
+	}
+	client, err := dockerClient.NewEnvClient()
+	if err != nil {
+		log.Errorf("Connecting to docker client failed with error: %v", err)
+		return nil, err
+	}
+	return client, nil
 }

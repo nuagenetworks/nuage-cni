@@ -228,16 +228,19 @@ func networkConnect(args *skel.CmdArgs) error {
 		log.Errorf("Error creating veth paired interface for entity %s", entityInfo["name"])
 		// Cleaning up veth ports from VRS before returning if we fail during
 		// veth create task
-		_ = client.DeleteVethPair(entityInfo["brport"])
+		_ = client.DeleteVethPair(entityInfo["brport"], entityInfo["entityport"])
 		return fmt.Errorf("Failed to create veth paired interface for the entity")
 	}
 	log.Debugf("Successfully created a veth paired port for entity %s", entityInfo["name"])
 
-	err = client.AddVETHPortToVRS(entityInfo["brport"], entityInfo["uuid"], entityInfo["name"])
+	var info vrsSdk.EntityInfo
+	info.Name = entityInfo["name"]
+	info.UUID = entityInfo["uuid"]
+	err = vrsConnection.AddPortToAlubr0(entityInfo["brport"], info)
 	if err != nil {
 		log.Errorf("Error adding bridge veth end %s of entity %s to alubr0", entityInfo["brport"], entityInfo["name"])
 		// Cleaning up veth ports from VRS
-		_ = client.DeleteVethPair(entityInfo["brport"])
+		_ = client.DeleteVethPair(entityInfo["brport"], entityInfo["entityport"])
 		return fmt.Errorf("Failed to add bridge veth port to alubr0")
 	}
 	log.Debugf("Attached veth interface %s to bridge %s for entity %s", entityInfo["brport"], bridgeName, entityInfo["name"])
@@ -275,8 +278,8 @@ func networkConnect(args *skel.CmdArgs) error {
 	err = vrsConnection.CreatePort(entityInfo["brport"], portAttributes, portMetadata)
 	if err != nil {
 		log.Errorf("Error creating entity port for entity %s in Nuage Port table", entityInfo["name"])
-		_ = client.DeleteVethPair(entityInfo["brport"])
-		_ = client.RemoveVethPortFromVRS(entityInfo["brport"])
+		_ = client.DeleteVethPair(entityInfo["brport"], entityInfo["entityport"])
+		_ = vrsConnection.RemovePortFromAlubr0(entityInfo["brport"])
 		return fmt.Errorf("Unable to create entity port %v", err)
 	}
 	log.Debugf("Successfully created a port for entity %s in Nuage Port table", entityInfo["name"])
@@ -392,6 +395,7 @@ func networkDisconnect(args *skel.CmdArgs) error {
 
 		entityInfo["name"] = string(k8sArgs.K8S_POD_NAME)
 		entityInfo["uuid"] = string(k8sArgs.K8S_POD_INFRA_CONTAINER_ID)
+		entityInfo["entityport"] = args.IfName
 		// Determining the Nuage host port name to be deleted from OVSDB table
 		portName = client.GetNuagePortName(args.IfName, args.ContainerID)
 	} else {
@@ -399,6 +403,7 @@ func networkDisconnect(args *skel.CmdArgs) error {
 		newContainerUUID := strings.Replace(args.ContainerID, "-", "", -1)
 		formattedContainerUUID := newContainerUUID + newContainerUUID
 		entityInfo["uuid"] = formattedContainerUUID
+		entityInfo["entityport"] = args.IfName
 		// Determining the Nuage host port name to be deleted from OVSDB table
 		portName = client.GetNuagePortName(args.IfName, entityInfo["uuid"])
 	}
@@ -435,13 +440,13 @@ func networkDisconnect(args *skel.CmdArgs) error {
 	}
 
 	// Purging out the veth port from VRS alubr0
-	err = client.RemoveVethPortFromVRS(portName)
+	err = vrsConnection.RemovePortFromAlubr0(portName)
 	if err != nil {
 		log.Errorf("Failed to remove veth port %s for entity %s from alubr0", portName, entityInfo["name"])
 	}
 
 	// Cleaning up veth paired ports from VRS
-	err = client.DeleteVethPair(portName)
+	err = client.DeleteVethPair(portName, entityInfo["entityport"])
 	if err != nil {
 		log.Errorf("Failed to clear veth ports from VRS for entity %s", entityInfo["name"])
 	}
