@@ -79,15 +79,13 @@ type InfrastructureGatewayProfile struct {
 func NewInfrastructureGatewayProfile() *InfrastructureGatewayProfile {
 
 	return &InfrastructureGatewayProfile{
-		FlowEvictionThreshold: 2500,
-		SystemSyncWindow:      "ONE_HOUR",
-		UpgradeAction:         "NONE",
-		StatsCollectorPort:    29090,
-		SystemSyncScheduler:   "0 0 * * 0",
-		DeadTimer:             "ONE_HOUR",
-		UseTwoFactor:          true,
-		RemoteLogMode:         "DISABLED",
-		DatapathSyncTimeout:   1000,
+		UpgradeAction:       "NONE",
+		StatsCollectorPort:  29090,
+		SystemSyncScheduler: "0 0 * * 0",
+		DeadTimer:           "ONE_HOUR",
+		UseTwoFactor:        true,
+		RemoteLogMode:       "DISABLED",
+		DatapathSyncTimeout: 1000,
 	}
 }
 

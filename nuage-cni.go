@@ -233,7 +233,10 @@ func networkConnect(args *skel.CmdArgs) error {
 	}
 	log.Debugf("Successfully created a veth paired port for entity %s", entityInfo["name"])
 
-	err = client.AddVETHPortToVRS(entityInfo["brport"], entityInfo["uuid"], entityInfo["name"])
+	var info vrsSdk.EntityInfo
+	info.Name = entityInfo["name"]
+	info.UUID = entityInfo["uuid"]
+	err = vrsConnection.AddPortToAlubr0(entityInfo["brport"], info)
 	if err != nil {
 		log.Errorf("Error adding bridge veth end %s of entity %s to alubr0", entityInfo["brport"], entityInfo["name"])
 		// Cleaning up veth ports from VRS
@@ -435,7 +438,7 @@ func networkDisconnect(args *skel.CmdArgs) error {
 	}
 
 	// Purging out the veth port from VRS alubr0
-	err = client.RemoveVethPortFromVRS(portName)
+	err = vrsConnection.RemovePortFromAlubr0(portName)
 	if err != nil {
 		log.Errorf("Failed to remove veth port %s for entity %s from alubr0", portName, entityInfo["name"])
 	}
