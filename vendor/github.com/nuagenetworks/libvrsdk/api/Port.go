@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/nuagenetworks/libvrsdk/api/port"
 	"github.com/nuagenetworks/libvrsdk/ovsdb"
+	"github.com/nuagenetworks/libvrsdk/test/util"
 	"github.com/socketplane/libovsdb"
 	"reflect"
 )
@@ -20,6 +21,15 @@ type PortIPv4Info struct {
 	MAC        string
 	Registered bool
 }
+
+// Constants for OVSDB table names
+const (
+	bridgeTable    = "Bridge"
+	portTable      = "Port"
+	interfaceTable = "Interface"
+	bridgeName     = "alubr0"
+	OvsDBName      = "Open_vSwitch"
+)
 
 // GetAllPorts returns the slice of all the vport names attached to the VRS
 func (vrsConnection *VRSConnection) GetAllPorts() ([]string, error) {
@@ -274,5 +284,120 @@ func (vrsConnection VRSConnection) processUpdates(updates *libovsdb.TableUpdates
 			}
 		}
 	}
+	return nil
+}
+
+// AddPortToAlubr0 adds Nuage port to alubr0 bridge
+func (vrsConnection *VRSConnection) AddPortToAlubr0(intfName string, entityInfo EntityInfo) error {
+
+	namedPortUUID := "port"
+	namedIntfUUID := "intf"
+	var err error
+
+	// 1) Insert a row for Nuage port in OVSDB Interface table
+	extIDMap := make(map[string]string)
+	intfOp := libovsdb.Operation{}
+	intf := make(map[string]interface{})
+	intf["name"] = intfName
+	extIDMap["vm-name"] = entityInfo.Name
+	extIDMap["vm-uuid"] = entityInfo.UUID
+	intf["external_ids"], err = libovsdb.NewOvsMap(extIDMap)
+	if err != nil {
+		return err
+	}
+	// interface table ops
+	intfOp = libovsdb.Operation{
+		Op:       "insert",
+		Table:    interfaceTable,
+		Row:      intf,
+		UUIDName: namedIntfUUID,
+	}
+
+	// 2) Insert a row for Nuage port in OVSDB Port table
+	portOp := libovsdb.Operation{}
+	port := make(map[string]interface{})
+	port["name"] = intfName
+	port["interfaces"] = libovsdb.UUID{namedIntfUUID}
+	port["external_ids"], err = libovsdb.NewOvsMap(extIDMap)
+	if err != nil {
+		return err
+	}
+	portOp = libovsdb.Operation{
+		Op:       "insert",
+		Table:    portTable,
+		Row:      port,
+		UUIDName: namedPortUUID,
+	}
+
+	// 3) Mutate the Ports column of the row in the Bridge table with new Nuage port
+	mutateUUID := []libovsdb.UUID{libovsdb.UUID{namedPortUUID}}
+	mutateSet, _ := libovsdb.NewOvsSet(mutateUUID)
+	mutation := libovsdb.NewMutation("ports", "insert", mutateSet)
+	condition := libovsdb.NewCondition("name", "==", bridgeName)
+	mutateOp := libovsdb.Operation{
+		Op:        "mutate",
+		Table:     bridgeTable,
+		Mutations: []interface{}{mutation},
+		Where:     []interface{}{condition},
+	}
+
+	operations := []libovsdb.Operation{intfOp, portOp, mutateOp}
+	reply, err := vrsConnection.ovsdbClient.Transact(OvsDBName, operations...)
+	if err != nil || len(reply) < len(operations) {
+		return fmt.Errorf("Problem mutating row in the OVSDB Bridge table for alubr0")
+	}
+
+	return nil
+}
+
+// RemovePortFromAlubr0 will remove a port from alubr0 bridge
+func (vrsConnection *VRSConnection) RemovePortFromAlubr0(portName string) error {
+
+	condition := libovsdb.NewCondition("name", "==", portName)
+	selectOp := libovsdb.Operation{
+		Op:    "select",
+		Table: "Port",
+		Where: []interface{}{condition},
+	}
+
+	selectOperation := []libovsdb.Operation{selectOp}
+	reply, err := vrsConnection.ovsdbClient.Transact(OvsDBName, selectOperation...)
+	if err != nil || len(reply) != 1 {
+		return fmt.Errorf("Problem selecting row in the OVSDB Port table for alubr0")
+	}
+
+	// Obtain Port table OVSDB row corresponding to the port name
+	ovsdbRow := reply[0].Rows[0]
+	portUUID := ovsdbRow["_uuid"]
+	portUUIDStr := fmt.Sprintf("%v", portUUID)
+	portUUIDNew := util.SplitUUIDString(portUUIDStr)
+
+	condition = libovsdb.NewCondition("name", "==", portName)
+	deleteOp := libovsdb.Operation{
+		Op:    "delete",
+		Table: "Port",
+		Where: []interface{}{condition},
+	}
+
+	// Deleting a Bridge row in Bridge table requires mutating the open_vswitch table.
+	mutateUUID := []libovsdb.UUID{libovsdb.UUID{portUUIDNew}}
+	mutateSet, _ := libovsdb.NewOvsSet(mutateUUID)
+	mutation := libovsdb.NewMutation("ports", "delete", mutateSet)
+	condition = libovsdb.NewCondition("name", "==", bridgeName)
+
+	// simple mutate operation
+	mutateOp := libovsdb.Operation{
+		Op:        "mutate",
+		Table:     "Bridge",
+		Mutations: []interface{}{mutation},
+		Where:     []interface{}{condition},
+	}
+
+	operations := []libovsdb.Operation{deleteOp, mutateOp}
+	reply, err = vrsConnection.ovsdbClient.Transact(OvsDBName, operations...)
+	if err != nil || len(reply) < len(operations) {
+		return fmt.Errorf("Problem mutating row in the OVSDB Bridge table for alubr0")
+	}
+
 	return nil
 }
