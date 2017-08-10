@@ -12,7 +12,9 @@ if [ -z ${version} ]; then
     exit 1
 fi
 
+NUAGE_BUILD_NUMBER=${NUAGE_BUILD_NUMBER:-0}
+version=$version-$NUAGE_BUILD_NUMBER
 cd $GOPATH/src/nuage-cni
 make
 sudo docker build -t nuage/cni:${version} .
-docker save nuage/cni:${version} > nuage-cni-docker.tar
+docker save nuage/cni:${version} > nuage-cni-docker-${version}.tar
