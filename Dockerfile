@@ -7,6 +7,7 @@ ADD scripts/install-cni.sh /install-cni.sh
 ADD cninetconf/k8s/nuage-net.conf /nuage-net.conf.k8s
 ADD cninetconf/openshift/nuage-net.conf /nuage-net.conf.openshift
 ADD nuage-cni.yaml /nuage-cni.yaml
+RUN yum -y install iptables
 
 ENV PATH=$PATH:/opt/cni/bin
 VOLUME /opt/cni

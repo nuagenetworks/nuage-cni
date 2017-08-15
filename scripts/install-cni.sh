@@ -5,9 +5,6 @@
 # - Expects the host CNI network config path to be mounted at /host/etc/cni/net.d.
 # - Expects the desired Nuage VSP config in the NUAGE_VSP_CONFIG env variable.
 
-# Ensure all variables are defined.
-set -u
-
 # The directory on the host where CNI networks are installed. Defaults to
 # /etc/cni/net.d, but can be overridden by setting CNI_NET_DIR.  This is used
 # for populating absolute paths in the CNI network config to assets
@@ -25,9 +22,18 @@ SKIP_CNI_BINARIES=",$SKIP_CNI_BINARIES,"
 if [ "$1" = "nuage-cni-k8s" ]; then
     TMP_CONF='/tmp/vsp-k8s.yaml'
     NUAGE_CONF='/usr/share/vsp-k8s/vsp-k8s.yaml'
-else
+    CONFIG_DIR='vsp-k8s'
+fi
+
+if [ "$1" = "nuage-cni-openshift" ]; then
     TMP_CONF='/tmp/vsp-openshift.yaml'
     NUAGE_CONF='/usr/share/vsp-openshift/vsp-openshift.yaml'
+    CONFIG_DIR='vsp-openshift'
+fi
+
+if [ "$2" = "is_atomic" ]; then
+    DIR='/var/usr/share'
+    NUAGE_CONF=$DIR/$CONFIG_DIR/$CONFIG_DIR.yaml
 fi
 
 # Create a temporary file for Nuage vsp-k8s yaml
@@ -77,6 +83,32 @@ FILENAME=${CNI_CONF_NAME:-nuage-net.conf}
 mv $TMP_CONF /host/etc/cni/net.d/${FILENAME}
 echo "Wrote CNI config: $(cat /host/etc/cni/net.d/${FILENAME})"
 echo "Done configuring CNI"
+
+# Add iptables rule for Nuage overlay to underlay traffic
+# and vice versa
+iptables -L | grep nuage-vxlan
+if [ $? -eq 0 ]
+then
+echo "iptables rule to allow Nuage vxlan ports is present"
+else
+iptables -w -I INPUT 1 -p udp --dport 4789 -j ACCEPT -m comment --comment "nuage-vxlan"
+fi
+
+iptables -L | grep nuage-overlay-underlay
+if [ $? -eq 0 ]
+then
+echo "iptables rule to allow Nuage overlay to underlay traffic is present"
+else
+iptables -w -I FORWARD 1 -s ${NUAGE_CLUSTER_NW_CIDR:-} -j ACCEPT -m comment --comment "nuage-overlay-underlay"
+fi
+
+iptables -L | grep nuage-underlay-overlay
+if [ $? -eq 0 ]
+then
+echo "iptables rule to allow Nuage underlay to overlay traffic is present"
+else
+iptables -w -I FORWARD 1 -d ${NUAGE_CLUSTER_NW_CIDR:-} -j ACCEPT -m comment --comment "nuage-underlay-overlay"  
+fi
 
 # Start Nuage CNI audit daemon to run infinitely here.
 # This prevents Kubernetes from restarting the pod repeatedly.
