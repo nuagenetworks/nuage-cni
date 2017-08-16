@@ -396,6 +396,7 @@ func networkDisconnect(args *skel.CmdArgs) error {
 		entityInfo["name"] = string(k8sArgs.K8S_POD_NAME)
 		entityInfo["uuid"] = string(k8sArgs.K8S_POD_INFRA_CONTAINER_ID)
 		entityInfo["entityport"] = args.IfName
+		entityInfo["zone"] = string(k8sArgs.K8S_POD_NAMESPACE)
 		// Determining the Nuage host port name to be deleted from OVSDB table
 		portName = client.GetNuagePortName(args.IfName, args.ContainerID)
 	} else {
@@ -449,6 +450,12 @@ func networkDisconnect(args *skel.CmdArgs) error {
 	err = client.DeleteVethPair(portName, entityInfo["entityport"])
 	if err != nil {
 		log.Errorf("Failed to clear veth ports from VRS for entity %s", entityInfo["name"])
+	}
+
+	// Send pod deletion notification to Nuage monitor
+	err = k8s.SendPodDeletionNotification(entityInfo["name"], entityInfo["zone"], orchestrator)
+	if err != nil {
+		log.Errorf("Error occured while sending delete notification for pod %s", entityInfo["name"])
 	}
 
 	vrsConnection.Disconnect()
