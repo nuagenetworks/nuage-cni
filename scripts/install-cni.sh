@@ -70,8 +70,17 @@ else
     rm -f /host/opt/cni/bin/nuage-cni-k8s
 fi
 
-# Move CNI yaml file to etc/default folder
-cp /nuage-cni.yaml /etc/default/
+CNI_YAML_CONF='/etc/default/nuage-cni.yaml'
+# Configuring Nuage CNI yaml file using daemon sets
+if [ "${NUAGE_CNI_YAML_CONFIG:-}" != "" ]; then
+cat > $CNI_YAML_CONF << EOF
+EOF
+chmod 777 $CNI_YAML_CONF
+
+cat > $CNI_YAML_CONF <<EOF
+${NUAGE_CNI_YAML_CONFIG:-}
+EOF
+fi
 
 TMP_CONF='/nuage-net.conf.k8s'
 if [ "$1" = "nuage-cni-openshift" ]; then
