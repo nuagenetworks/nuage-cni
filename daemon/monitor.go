@@ -18,6 +18,7 @@ import (
 	"net/http"
 	"nuage-cni/client"
 	"nuage-cni/config"
+	"nuage-cni/k8s"
 	"os"
 	"os/signal"
 	"strings"
@@ -30,6 +31,7 @@ var signalChannel chan os.Signal
 var staleEntityMap map[string]int64
 var stalePortMap map[string]int64
 var staleEntryTimeout int64
+var isAtomic bool
 
 type containerInfo struct {
 	ID string `json:"container_id"`
@@ -389,6 +391,9 @@ func MonitorAgent(config *config.Config, orchestrator string) error {
 		log.Errorf("Error cleaning up stale entities and ports on VRS")
 	}
 
+	// Determine whether the base host is RHEL server or RHEL atomic
+	isAtomic = k8s.VerifyHostType()
+
 	vrsStaleEntriesCleanupTicker := time.NewTicker(time.Duration(config.MonitorInterval) * time.Second)
 	vrsConnectionCheckTicker := time.NewTicker(time.Duration(config.VRSConnectionCheckTimer) * time.Second)
 
@@ -428,10 +433,16 @@ func getActiveK8SPods(orchestrator string) ([]string, error) {
 	var podsList []string
 	var config *krestclient.Config
 	var kubeconfFile string
-	if orchestrator == "k8s" {
-		kubeconfFile = "/usr/share/vsp-k8s/nuage.kubeconfig"
+	var dir string
+	if isAtomic == true {
+		dir = "/var/usr/share"
 	} else {
-		kubeconfFile = "/usr/share/vsp-openshift/nuage.kubeconfig"
+		dir = "/usr/share"
+	}
+	if orchestrator == "k8s" {
+		kubeconfFile = dir + "/vsp-k8s/nuage.kubeconfig"
+	} else {
+		kubeconfFile = dir + "/vsp-openshift/nuage.kubeconfig"
 	}
 
 	loadingRules := &clientcmd.ClientConfigLoadingRules{}

@@ -15,6 +15,7 @@ import (
 	"net/http"
 	"nuage-cni/client"
 	"nuage-cni/config"
+	"os"
 )
 
 var vspK8SConfig = &config.NuageVSPK8SConfig{}
@@ -29,6 +30,8 @@ var kubeconfFile string
 var nuageMonClientCertFile string
 var nuageMonClientKeyFile string
 var nuageMonClientCACertFile string
+
+var isHostAtomic bool
 
 // NuageKubeMonResp will unmarshal JSON
 // response from Nuage kubemon service
@@ -200,20 +203,41 @@ func getPodMetadataFromNuageK8sMon(podname string, ns string) error {
 
 func initDataDir(orchestrator string) {
 
-	if orchestrator == "k8s" {
-		vspK8sConfigFile = "/usr/share/vsp-k8s/vsp-k8s.yaml"
-		kubeconfFile = "/usr/share/vsp-k8s/nuage.kubeconfig"
-		nuageMonClientCertFile = "/usr/share/vsp-k8s/nuageMonClient.crt"
-		nuageMonClientKeyFile = "/usr/share/vsp-k8s/nuageMonClient.key"
-		nuageMonClientCACertFile = "/usr/share/vsp-k8s/nuageMonCA.crt"
+	isHostAtomic = VerifyHostType()
+	var dir string
+	if isHostAtomic == true {
+		dir = "/var/usr/share/"
 	} else {
-		vspK8sConfigFile = "/usr/share/vsp-openshift/vsp-openshift.yaml"
-		kubeconfFile = "/usr/share/vsp-openshift/nuage.kubeconfig"
-		nuageMonClientCertFile = "/usr/share/vsp-openshift/nuageMonClient.crt"
-		nuageMonClientKeyFile = "/usr/share/vsp-openshift/nuageMonClient.key"
-		nuageMonClientCACertFile = "/usr/share/vsp-openshift/nuageMonCA.crt"
+		dir = "/usr/share/"
 	}
 
+	if orchestrator == "k8s" {
+		vspK8sConfigFile = dir + "/vsp-k8s/vsp-k8s.yaml"
+		kubeconfFile = dir + "/vsp-k8s/nuage.kubeconfig"
+		nuageMonClientCertFile = dir + "/vsp-k8s/nuageMonClient.crt"
+		nuageMonClientKeyFile = dir + "/vsp-k8s/nuageMonClient.key"
+		nuageMonClientCACertFile = dir + "/vsp-k8s/nuageMonCA.crt"
+	} else {
+		vspK8sConfigFile = dir + "/vsp-openshift/vsp-openshift.yaml"
+		kubeconfFile = dir + "/vsp-openshift/nuage.kubeconfig"
+		nuageMonClientCertFile = dir + "/vsp-openshift/nuageMonClient.crt"
+		nuageMonClientKeyFile = dir + "/vsp-openshift/nuageMonClient.key"
+		nuageMonClientCACertFile = dir + "/vsp-openshift/nuageMonCA.crt"
+	}
+}
+
+// VerifyHostType will determine the base host
+// as RHEL server or RHEL atomic
+func VerifyHostType() bool {
+
+	// check if the host is an atomic host
+	_, err := os.Stat("/run/ostree-booted")
+	if err != nil {
+		log.Infof("This is a RHEL server host")
+		return false
+	}
+	log.Infof("This is a RHEL atomic host")
+	return true
 }
 
 // GetPodNuageMetadata will populate NuageMetadata struct
