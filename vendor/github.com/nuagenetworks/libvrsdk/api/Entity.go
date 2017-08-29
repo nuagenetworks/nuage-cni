@@ -160,6 +160,22 @@ func (vrsConnection *VRSConnection) GetEntityPorts(uuid string) ([]string, error
 	return ovsdb.UnMarshallOVSStringSet(row[ovsdb.NuageVMTableColumnPorts])
 }
 
+// GetEntityName retrieves entity name from OVSDB
+func (vrsConnection *VRSConnection) GetEntityName(uuid string) (string, error) {
+
+	readRowArgs := ovsdb.ReadRowArgs{
+		Columns:   []string{ovsdb.NuageVMTableColumnVMName},
+		Condition: []string{ovsdb.NuageVMTableColumnVMUUID, "==", uuid},
+	}
+
+	row, err := vrsConnection.vmTable.ReadRow(vrsConnection.ovsdbClient, readRowArgs)
+	if err != nil {
+		return "", fmt.Errorf("Unable to get VM name")
+	}
+
+	return row[ovsdb.NuageVMTableColumnVMName].(string), err
+}
+
 // SetEntityState sets the entity state
 func (vrsConnection *VRSConnection) SetEntityState(uuid string, state entity.State, subState entity.SubState) error {
 

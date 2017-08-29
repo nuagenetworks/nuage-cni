@@ -396,6 +396,7 @@ func networkDisconnect(args *skel.CmdArgs) error {
 		entityInfo["name"] = string(k8sArgs.K8S_POD_NAME)
 		entityInfo["uuid"] = string(k8sArgs.K8S_POD_INFRA_CONTAINER_ID)
 		entityInfo["entityport"] = args.IfName
+		entityInfo["zone"] = string(k8sArgs.K8S_POD_NAMESPACE)
 		// Determining the Nuage host port name to be deleted from OVSDB table
 		portName = client.GetNuagePortName(args.IfName, args.ContainerID)
 	} else {
@@ -424,31 +425,38 @@ func networkDisconnect(args *skel.CmdArgs) error {
 	// Obtaining all ports associated with this entity
 	portList, _ := vrsConnection.GetEntityPorts(entityInfo["uuid"])
 
-	// Delete the entity from VM table only if port being currently
-	// deleted is the last port for this entity
+	// Delete VRS OVSDB entries only if the ports for the entity
+	// exist in VRS tables
 	if len(portList) == 1 {
 		err = vrsConnection.DestroyEntity(entityInfo["uuid"])
 		if err != nil {
 			log.Errorf("Failed to remove entity from Nuage entity Table for entity %s", entityInfo["name"])
 		}
-	}
 
-	// Performing cleanup of port/entity on VRS
-	err = vrsConnection.DestroyPort(portName)
-	if err != nil {
-		log.Errorf("Failed to delete entity port from Nuage Port table for entity %s", entityInfo["name"])
-	}
+		// Performing cleanup of port/entity on VRS
+		err = vrsConnection.DestroyPort(portName)
+		if err != nil {
+			log.Errorf("Failed to delete entity port from Nuage Port table for entity %s", entityInfo["name"])
+		} else {
+			// Send pod deletion notification to Nuage monitor only if port deletion
+			// in VRS succeeds
+			err = k8s.SendPodDeletionNotification(entityInfo["name"], entityInfo["zone"], orchestrator)
+			if err != nil {
+				log.Errorf("Error occured while sending delete notification for pod %s", entityInfo["name"])
+			}
+		}
 
-	// Purging out the veth port from VRS alubr0
-	err = vrsConnection.RemovePortFromAlubr0(portName)
-	if err != nil {
-		log.Errorf("Failed to remove veth port %s for entity %s from alubr0", portName, entityInfo["name"])
-	}
+		// Purging out the veth port from VRS alubr0
+		err = vrsConnection.RemovePortFromAlubr0(portName)
+		if err != nil {
+			log.Errorf("Failed to remove veth port %s for entity %s from alubr0", portName, entityInfo["name"])
+		}
 
-	// Cleaning up veth paired ports from VRS
-	err = client.DeleteVethPair(portName, entityInfo["entityport"])
-	if err != nil {
-		log.Errorf("Failed to clear veth ports from VRS for entity %s", entityInfo["name"])
+		// Cleaning up veth paired ports from VRS
+		err = client.DeleteVethPair(portName, entityInfo["entityport"])
+		if err != nil {
+			log.Errorf("Failed to clear veth ports from VRS for entity %s", entityInfo["name"])
+		}
 	}
 
 	vrsConnection.Disconnect()

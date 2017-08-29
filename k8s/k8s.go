@@ -15,6 +15,7 @@ import (
 	"net/http"
 	"nuage-cni/client"
 	"nuage-cni/config"
+	"os"
 )
 
 var vspK8SConfig = &config.NuageVSPK8SConfig{}
@@ -30,11 +31,13 @@ var nuageMonClientCertFile string
 var nuageMonClientKeyFile string
 var nuageMonClientCACertFile string
 
+var isHostAtomic bool
+
 // NuageKubeMonResp will unmarshal JSON
 // response from Nuage kubemon service
 type NuageKubeMonResp struct {
-	Subnet string `json:"subnetName"`
-	PG     string `json:"policyGroups"`
+	Subnet string   `json:"subnetName"`
+	PG     []string `json:"policyGroups"`
 }
 
 // Pod will hold fields necessary to query
@@ -43,6 +46,7 @@ type Pod struct {
 	Name   string `json:"podName"`
 	Zone   string `json:"desiredZone,omitempty"`
 	Subnet string `json:"desiredSubnet,omitempty"`
+	Action string `json:"action,omitempty"`
 }
 
 func getK8SLabelsPodUIDFromAPIServer(podNs string, podname string) error {
@@ -189,7 +193,9 @@ func getPodMetadataFromNuageK8sMon(podname string, ns string) error {
 
 	if podPG == "" {
 		log.Debugf("Pod policy group information obtained from Nuage K8S monitor : %s", result.PG)
-		podPG = result.PG
+		for _, pg := range result.PG {
+			podPG = pg
+		}
 	}
 
 	log.Debugf("Pod subnet information obtained from Nuage K8S monitor : %s", result.Subnet)
@@ -200,20 +206,41 @@ func getPodMetadataFromNuageK8sMon(podname string, ns string) error {
 
 func initDataDir(orchestrator string) {
 
-	if orchestrator == "k8s" {
-		vspK8sConfigFile = "/usr/share/vsp-k8s/vsp-k8s.yaml"
-		kubeconfFile = "/usr/share/vsp-k8s/nuage.kubeconfig"
-		nuageMonClientCertFile = "/usr/share/vsp-k8s/nuageMonClient.crt"
-		nuageMonClientKeyFile = "/usr/share/vsp-k8s/nuageMonClient.key"
-		nuageMonClientCACertFile = "/usr/share/vsp-k8s/nuageMonCA.crt"
+	isHostAtomic = VerifyHostType()
+	var dir string
+	if isHostAtomic == true {
+		dir = "/var/usr/share/"
 	} else {
-		vspK8sConfigFile = "/usr/share/vsp-openshift/vsp-openshift.yaml"
-		kubeconfFile = "/usr/share/vsp-openshift/nuage.kubeconfig"
-		nuageMonClientCertFile = "/usr/share/vsp-openshift/nuageMonClient.crt"
-		nuageMonClientKeyFile = "/usr/share/vsp-openshift/nuageMonClient.key"
-		nuageMonClientCACertFile = "/usr/share/vsp-openshift/nuageMonCA.crt"
+		dir = "/usr/share/"
 	}
 
+	if orchestrator == "k8s" {
+		vspK8sConfigFile = dir + "/vsp-k8s/vsp-k8s.yaml"
+		kubeconfFile = dir + "/vsp-k8s/nuage.kubeconfig"
+		nuageMonClientCertFile = dir + "/vsp-k8s/nuageMonClient.crt"
+		nuageMonClientKeyFile = dir + "/vsp-k8s/nuageMonClient.key"
+		nuageMonClientCACertFile = dir + "/vsp-k8s/nuageMonCA.crt"
+	} else {
+		vspK8sConfigFile = dir + "/vsp-openshift/vsp-openshift.yaml"
+		kubeconfFile = dir + "/vsp-openshift/nuage.kubeconfig"
+		nuageMonClientCertFile = dir + "/vsp-openshift/nuageMonClient.crt"
+		nuageMonClientKeyFile = dir + "/vsp-openshift/nuageMonClient.key"
+		nuageMonClientCACertFile = dir + "/vsp-openshift/nuageMonCA.crt"
+	}
+}
+
+// VerifyHostType will determine the base host
+// as RHEL server or RHEL atomic
+func VerifyHostType() bool {
+
+	// check if the host is an atomic host
+	_, err := os.Stat("/run/ostree-booted")
+	if err != nil {
+		log.Infof("This is a RHEL server host")
+		return false
+	}
+	log.Infof("This is a RHEL atomic host")
+	return true
 }
 
 // GetPodNuageMetadata will populate NuageMetadata struct
@@ -252,6 +279,67 @@ func GetPodNuageMetadata(nuageMetadata *client.NuageMetadata, name string, ns st
 	nuageMetadata.Network = podNetwork
 	nuageMetadata.User = adminUser
 	nuageMetadata.PolicyGroup = podPG
+
+	return err
+}
+
+// SendPodDeletionNotification will notify the Nuage monitor on master nodes
+// about pod deletion
+func SendPodDeletionNotification(podname string, ns string, orchestrator string) error {
+
+	initDataDir(orchestrator)
+	var err error
+
+	log.Infof("Sending delete notification for pod %s under namespace %s", podname, ns)
+
+	// Parsing Nuage config file on agent nodes
+	err = getVSPK8SConfig()
+	if err != nil {
+		log.Errorf("Error in parsing Nuage config file")
+		return fmt.Errorf("Error in parsing Nuage config file: %s", err)
+	}
+
+	url := vspK8SConfig.NuageK8SMonServer + "/namespaces/" + ns + "/pods"
+
+	// Load client cert
+	cert, err := tls.LoadX509KeyPair(nuageMonClientCertFile, nuageMonClientKeyFile)
+	if err != nil {
+		log.Errorf("Error loading client cert file to communicate with Nuage monitor")
+		return err
+	}
+
+	// Load CA cert
+	caCert, err := ioutil.ReadFile(nuageMonClientCACertFile)
+	if err != nil {
+		log.Errorf("Error loading CA cert file to communicate with Nuage monitor")
+		return err
+	}
+	caCertPool := x509.NewCertPool()
+	caCertPool.AppendCertsFromPEM(caCert)
+
+	// Setup HTTPS client
+	tlsConfig := &tls.Config{
+		Certificates:       []tls.Certificate{cert},
+		RootCAs:            caCertPool,
+		InsecureSkipVerify: true,
+	}
+	tlsConfig.BuildNameToCertificate()
+	transport := &http.Transport{TLSClientConfig: tlsConfig}
+	client := &http.Client{Transport: transport}
+
+	pod := &Pod{Name: podname, Action: "delete"}
+	out, err := json.Marshal(pod)
+	if err != nil {
+		log.Errorf("Error occured while marshalling Pod data to communicate with Nuage monitor")
+		return err
+	}
+
+	var jsonStr = []byte(string(out))
+	_, err = client.Post(url, "application/json", bytes.NewBuffer(jsonStr))
+	if err != nil {
+		log.Errorf("Error occured while sending pod deletion notification to Nuage monitor: %v", err)
+		return err
+	}
 
 	return err
 }
