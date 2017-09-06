@@ -35,6 +35,13 @@ var staleEntryTimeout int64
 var isAtomic bool
 var orchestratorType string
 
+const (
+	kubeletConfig      = "/etc/kubernetes/kubelet.conf"
+	nuageMonClientKey  = "/usr/share/vsp-k8s/nuageMonClient.key"
+	nuageMonClientCert = "/usr/share/vsp-k8s/nuageMonClient.crt"
+	nuageMonClientCA   = "/usr/share/vsp-k8s/nuageMonCA.crt"
+)
+
 type containerInfo struct {
 	ID string `json:"container_id"`
 }
@@ -412,6 +419,16 @@ func MonitorAgent(config *config.Config, orchestrator string) error {
 	staleEntryTimeout = config.StaleEntryTimeout
 	orchestratorType = orchestrator
 
+	// Currently generate certificate files only for k8s as
+	// the platform. TODO: For OpenShift as platform
+	if orchestrator == "k8s" {
+		// Generate client certificates to talk to Nuage master monitor
+		err = generateClientCertificates()
+		if err != nil {
+			log.Errorf("Error occured while generating client certificates on slave nodes")
+		}
+	}
+
 	for {
 		vrsConnection, err = client.ConnectToVRSOVSDB(config)
 		if err != nil {
@@ -562,4 +579,33 @@ func connectToDockerDaemon(socketFile string) (*dockerClient.Client, error) {
 		return nil, err
 	}
 	return client, nil
+}
+
+func generateClientCertificates() error {
+
+	log.Infof("Generating certificate files on slave nodes")
+	config, err := clientcmd.LoadFromFile(kubeletConfig)
+	if err != nil {
+		log.Errorf("Error occured while loading kubelet config: %v", err)
+		return err
+	}
+
+	// Generate Client key and Certificate files
+	for _, authInfo := range config.AuthInfos {
+		if len(authInfo.ClientKeyData) > 0 {
+			_ = ioutil.WriteFile(nuageMonClientKey, authInfo.ClientKeyData, 0644)
+		}
+		if len(authInfo.ClientCertificateData) > 0 {
+			_ = ioutil.WriteFile(nuageMonClientCert, authInfo.ClientCertificateData, 0644)
+		}
+	}
+
+	// Generate CA certificate file
+	for _, clusterInfo := range config.Clusters {
+		if len(clusterInfo.CertificateAuthorityData) > 0 {
+			_ = ioutil.WriteFile(nuageMonClientCA, clusterInfo.CertificateAuthorityData, 0644)
+		}
+	}
+
+	return err
 }
