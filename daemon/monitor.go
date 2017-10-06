@@ -7,6 +7,7 @@ import (
 	"github.com/docker/docker/api/types"
 	dockerClient "github.com/docker/docker/client"
 	vrsSdk "github.com/nuagenetworks/libvrsdk/api"
+	"github.com/nuagenetworks/libvrsdk/api/port"
 	"golang.org/x/net/context"
 	"io/ioutil"
 	kapi "k8s.io/kubernetes/pkg/api"
@@ -18,6 +19,7 @@ import (
 	"net/http"
 	"nuage-cni/client"
 	"nuage-cni/config"
+	"nuage-cni/k8s"
 	"os"
 	"os/signal"
 	"strings"
@@ -30,6 +32,8 @@ var signalChannel chan os.Signal
 var staleEntityMap map[string]int64
 var stalePortMap map[string]int64
 var staleEntryTimeout int64
+var isAtomic bool
+var orchestratorType string
 
 type containerInfo struct {
 	ID string `json:"container_id"`
@@ -96,6 +100,7 @@ func cleanupStalePortsEntities(vrsConnection vrsSdk.VRSConnection, orchestrator 
 	var portList []string
 	var entityPortList []string
 	var entityUUIDList []string
+	var localEntityUUIDList []string
 	var formattedEntityUUIDList []string
 
 	// First obtain VRS entity and port list followed by orchestrator
@@ -137,8 +142,17 @@ func cleanupStalePortsEntities(vrsConnection vrsSdk.VRSConnection, orchestrator 
 	default:
 	}
 
-	var formattedUUID string
+	// Filter out the container UUIDs local to the VRS
+	// on which the audit daemon runs
 	for _, id := range entityUUIDList {
+		entityExists, _ := vrsConnection.CheckEntityExists(id)
+		if entityExists {
+			localEntityUUIDList = append(localEntityUUIDList, id)
+		}
+	}
+
+	var formattedUUID string
+	for _, id := range localEntityUUIDList {
 		if orchestrator == "mesos" {
 			newID := strings.Replace(id, "-", "", -1)
 			formattedUUID = newID + newID
@@ -256,12 +270,45 @@ func cleanupVMTable(vrsConnection vrsSdk.VRSConnection, entityUUIDList []string,
 		err = vrsConnection.DestroyEntity(staleID)
 		if err != nil {
 			log.Warnf("Unable to delete entry from nuage VM table: %v", err)
+		} else {
+			sendStaleEntryDeleteNotification(vrsConnection, staleID)
 		}
 		delete(staleEntityMap, staleID)
 	}
 
 	log.Infof("Stale entities cleaned up from VRS %v", deleteStaleEntitiesList)
 	return err
+}
+
+// sendStaleEntryDeleteNotification notifies monitor about
+// stale VRS entity and port entry deletion
+func sendStaleEntryDeleteNotification(vrsConnection vrsSdk.VRSConnection, staleID string) {
+
+	var err error
+	entityName, err := vrsConnection.GetEntityName(staleID)
+	if err != nil {
+		log.Debugf("Error obtaining entity name from OVSDB: %v", err)
+	}
+
+	ports, err := vrsConnection.GetEntityPorts(staleID)
+	if err != nil {
+		log.Debugf("Failed getting port names from VRS: %v", err)
+	}
+
+	var portInfo map[port.StateKey]interface{}
+	for _, port := range ports {
+		portInfo, err = vrsConnection.GetPortState(port)
+		if err != nil {
+			log.Debugf("Unable to obtain port Nuage metadata from VRS")
+		}
+	}
+
+	log.Debugf("Sending delete notification for entity %s for zone %s", entityName, portInfo[port.StateKeyNuageZone].(string))
+	// Send pod deletion notification to Nuage monitor
+	err = k8s.SendPodDeletionNotification(entityName, portInfo[port.StateKeyNuageZone].(string), orchestratorType)
+	if err != nil {
+		log.Errorf("Error occured while sending delete notification for pod %s", entityName)
+	}
 }
 
 // cleanupPortTable removes stale port entries from Nuage VM table
@@ -363,6 +410,7 @@ func MonitorAgent(config *config.Config, orchestrator string) error {
 	staleEntityMap = make(map[string]int64)
 	stalePortMap = make(map[string]int64)
 	staleEntryTimeout = config.StaleEntryTimeout
+	orchestratorType = orchestrator
 
 	for {
 		vrsConnection, err = client.ConnectToVRSOVSDB(config)
@@ -388,6 +436,9 @@ func MonitorAgent(config *config.Config, orchestrator string) error {
 	if err != nil {
 		log.Errorf("Error cleaning up stale entities and ports on VRS")
 	}
+
+	// Determine whether the base host is RHEL server or RHEL atomic
+	isAtomic = k8s.VerifyHostType()
 
 	vrsStaleEntriesCleanupTicker := time.NewTicker(time.Duration(config.MonitorInterval) * time.Second)
 	vrsConnectionCheckTicker := time.NewTicker(time.Duration(config.VRSConnectionCheckTimer) * time.Second)
@@ -428,10 +479,16 @@ func getActiveK8SPods(orchestrator string) ([]string, error) {
 	var podsList []string
 	var config *krestclient.Config
 	var kubeconfFile string
-	if orchestrator == "k8s" {
-		kubeconfFile = "/usr/share/vsp-k8s/nuage.kubeconfig"
+	var dir string
+	if isAtomic == true {
+		dir = "/var/usr/share"
 	} else {
-		kubeconfFile = "/usr/share/vsp-openshift/nuage.kubeconfig"
+		dir = "/usr/share"
+	}
+	if orchestrator == "k8s" {
+		kubeconfFile = dir + "/vsp-k8s/nuage.kubeconfig"
+	} else {
+		kubeconfFile = dir + "/vsp-openshift/nuage.kubeconfig"
 	}
 
 	loadingRules := &clientcmd.ClientConfigLoadingRules{}

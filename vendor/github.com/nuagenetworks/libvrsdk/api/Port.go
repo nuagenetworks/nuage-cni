@@ -101,7 +101,8 @@ func (vrsConnection VRSConnection) GetPortState(name string) (map[port.StateKey]
 	readRowArgs := ovsdb.ReadRowArgs{
 		Columns: []string{ovsdb.NuagePortTableColumnIPAddress, ovsdb.NuagePortTableColumnSubnetMask,
 			ovsdb.NuagePortTableColumnGateway, ovsdb.NuagePortTableColumnEVPNID,
-			ovsdb.NuagePortTableColumnVRFId},
+			ovsdb.NuagePortTableColumnVRFId, ovsdb.NuagePortTableColumnNuageZone,
+			ovsdb.NuagePortTableColumnNuageDomain, ovsdb.NuagePortTableColumnNuageNetwork},
 		Condition: []string{ovsdb.NuagePortTableColumnName, "==", name},
 	}
 
@@ -117,6 +118,10 @@ func (vrsConnection VRSConnection) GetPortState(name string) (map[port.StateKey]
 	portState[port.StateKeyGateway] = row[ovsdb.NuagePortTableColumnGateway]
 	portState[port.StateKeyVrfID] = row[ovsdb.NuagePortTableColumnVRFId]
 	portState[port.StateKeyEvpnID] = row[ovsdb.NuagePortTableColumnEVPNID]
+
+	portState[port.StateKeyNuageZone] = row[ovsdb.NuagePortTableColumnNuageZone]
+	portState[port.StateKeyNuageDomain] = row[ovsdb.NuagePortTableColumnNuageDomain]
+	portState[port.StateKeyNuageNetwork] = row[ovsdb.NuagePortTableColumnNuageNetwork]
 
 	return portState, nil
 }
@@ -362,7 +367,7 @@ func (vrsConnection *VRSConnection) RemovePortFromAlubr0(portName string) error 
 
 	selectOperation := []libovsdb.Operation{selectOp}
 	reply, err := vrsConnection.ovsdbClient.Transact(OvsDBName, selectOperation...)
-	if err != nil || len(reply) != 1 {
+	if err != nil || len(reply) != 1 || len(reply[0].Rows) != 1 {
 		return fmt.Errorf("Problem selecting row in the OVSDB Port table for alubr0")
 	}
 
