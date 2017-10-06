@@ -178,13 +178,13 @@ func getPodMetadataFromNuageK8sMon(podname string, ns string) error {
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.Errorf("Error occured while reading response obtained from Nuage K8S monitor")
+		log.Errorf("Error occured while reading response obtained from Nuage K8S monitor: %v", err)
 		return err
 	}
 
 	err = json.Unmarshal(body, &result)
 	if err != nil {
-		log.Errorf("Error occured while unmarshalling Pod data obtained from Nuage K8S monitor")
+		log.Errorf("Error occured while unmarshalling Pod data obtained from Nuage K8S monitor: %v", err)
 		return err
 	}
 
