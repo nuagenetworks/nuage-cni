@@ -119,6 +119,19 @@ else
 iptables -w -I FORWARD 1 -d ${NUAGE_CLUSTER_NW_CIDR:-} -j ACCEPT -m comment --comment "nuage-underlay-overlay"  
 fi
 
+# Deleting any pre-existing iptable mangle forward rule to
+# mark underlay packets to support node port
+iptables -t mangle -D FORWARD -o svc-pat-tap -p tcp -m mark ! --mark 0x2 -j MARK --set-xmark 0xd/0xd
+while ! test -f "/var/run/openvswitch/db.sock"; do
+  sleep 10
+  echo "Waiting for VRS container to come up"
+done
+
+# Adding iptable mangle rule to mark the underlay packets
+# to support node port functionality
+sleep 2
+iptables -t mangle -A FORWARD -o svc-pat-tap -p tcp -m mark ! --mark 0x2 -j MARK --set-xmark 0xd/0xd
+
 # Start Nuage CNI audit daemon to run infinitely here.
 # This prevents Kubernetes from restarting the pod repeatedly.
 /opt/cni/bin/$1 -daemon
