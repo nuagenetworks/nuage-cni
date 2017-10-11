@@ -428,16 +428,12 @@ func networkDisconnect(args *skel.CmdArgs) error {
 	// Delete VRS OVSDB entries only if the ports for the entity
 	// exist in VRS tables
 	if len(portList) == 1 {
-		err = vrsConnection.DestroyEntity(entityInfo["uuid"])
-		if err != nil {
-			log.Errorf("Failed to remove entity from Nuage entity Table for entity %s", entityInfo["name"])
-		}
-
 		// Performing cleanup of port/entity on VRS
 		err = vrsConnection.DestroyPort(portName)
 		if err != nil {
 			log.Errorf("Failed to delete entity port from Nuage Port table for entity %s", entityInfo["name"])
 		} else {
+			log.Infof("Successfully deleted entity port and sending delete event to monitor")
 			// Send pod deletion notification to Nuage monitor only if port deletion
 			// in VRS succeeds
 			err = k8s.SendPodDeletionNotification(entityInfo["name"], entityInfo["zone"], orchestrator)
@@ -456,6 +452,15 @@ func networkDisconnect(args *skel.CmdArgs) error {
 		err = client.DeleteVethPair(portName, entityInfo["entityport"])
 		if err != nil {
 			log.Errorf("Failed to clear veth ports from VRS for entity %s", entityInfo["name"])
+		}
+	}
+
+	// Check if entity exists in OVSDB before trying deletion
+	entityExists, _ := vrsConnection.CheckEntityExists(entityInfo["uuid"])
+	if entityExists {
+		err = vrsConnection.DestroyEntity(entityInfo["uuid"])
+		if err != nil {
+			log.Errorf("Failed to remove entity from Nuage entity Table for entity %s", entityInfo["name"])
 		}
 	}
 
