@@ -167,14 +167,14 @@ func cleanupStalePortsEntities(vrsConnection vrsSdk.VRSConnection, orchestrator 
 		entityPortList = append(entityPortList, portList...)
 	}
 
-	err = cleanupPortTable(vrsConnection, entityPortList, vrsPortsList)
-	if err != nil {
-		log.Warnf("Cleaning up port table failed with error %v", err)
-	}
-
 	err = cleanupVMTable(vrsConnection, formattedEntityUUIDList, vrsEntitiesList)
 	if err != nil {
 		log.Warnf("Cleaning up VM table failed with error %v", err)
+	}
+
+	err = cleanupPortTable(vrsConnection, entityPortList, vrsPortsList)
+	if err != nil {
+		log.Warnf("Cleaning up port table failed with error %v", err)
 	}
 
 	return err
@@ -266,12 +266,23 @@ func cleanupVMTable(vrsConnection vrsSdk.VRSConnection, entityUUIDList []string,
 	staleIDs := computeStalePortsEntitiesDiff(vrsEntitiesList, entityUUIDList)
 	deleteStaleEntitiesList = getStaleEntityEntriesForDeletion(staleIDs)
 	for _, staleID := range deleteStaleEntitiesList {
+
+		entityName, err := vrsConnection.GetEntityName(staleID)
+		if err != nil {
+			log.Debugf("Error obtaining entity name from OVSDB: %v", err)
+		}
+
+		ports, err := vrsConnection.GetEntityPorts(staleID)
+		if err != nil {
+			log.Debugf("Failed getting port names from VRS: %v", err)
+		}
+
 		log.Infof("Removing stale entity entry %s", staleID)
 		err = vrsConnection.DestroyEntity(staleID)
 		if err != nil {
 			log.Warnf("Unable to delete entry from nuage VM table: %v", err)
 		} else {
-			sendStaleEntryDeleteNotification(vrsConnection, staleID)
+			sendStaleEntryDeleteNotification(vrsConnection, entityName, ports)
 		}
 		delete(staleEntityMap, staleID)
 	}
@@ -282,18 +293,9 @@ func cleanupVMTable(vrsConnection vrsSdk.VRSConnection, entityUUIDList []string,
 
 // sendStaleEntryDeleteNotification notifies monitor about
 // stale VRS entity and port entry deletion
-func sendStaleEntryDeleteNotification(vrsConnection vrsSdk.VRSConnection, staleID string) {
+func sendStaleEntryDeleteNotification(vrsConnection vrsSdk.VRSConnection, entityName string, ports []string) {
 
 	var err error
-	entityName, err := vrsConnection.GetEntityName(staleID)
-	if err != nil {
-		log.Debugf("Error obtaining entity name from OVSDB: %v", err)
-	}
-
-	ports, err := vrsConnection.GetEntityPorts(staleID)
-	if err != nil {
-		log.Debugf("Failed getting port names from VRS: %v", err)
-	}
 
 	var portInfo map[port.StateKey]interface{}
 	for _, port := range ports {
@@ -303,11 +305,13 @@ func sendStaleEntryDeleteNotification(vrsConnection vrsSdk.VRSConnection, staleI
 		}
 	}
 
-	log.Debugf("Sending delete notification for entity %s for zone %s", entityName, portInfo[port.StateKeyNuageZone].(string))
-	// Send pod deletion notification to Nuage monitor
-	err = k8s.SendPodDeletionNotification(entityName, portInfo[port.StateKeyNuageZone].(string), orchestratorType)
-	if err != nil {
-		log.Errorf("Error occured while sending delete notification for pod %s", entityName)
+	if _, ok := portInfo[port.StateKeyNuageZone].(string); ok {
+		log.Debugf("Sending delete notification for entity %s for zone %s", entityName, portInfo[port.StateKeyNuageZone].(string))
+		// Send pod deletion notification to Nuage monitor
+		err = k8s.SendPodDeletionNotification(entityName, portInfo[port.StateKeyNuageZone].(string), orchestratorType)
+		if err != nil {
+			log.Errorf("Error occured while sending delete notification for pod %s", entityName)
+		}
 	}
 }
 
