@@ -54,3 +54,18 @@ In Audit Daemon mode, the Nuage CNI plugin also operates as a background systemd
 - Please refer to the Nuage VSP OpenShift Integration Guide for detailed steps on Nuage Openshift CNI plugin Ansible installation on Openshift clusters (HA and single master)
 
 - Please refer to the Nuage VSP Kubernetes Integration Guide for detailed steps on Nuage Kubernetes CNI plugin Ansible installation on Kubernetes setups
+
+
+# Steps to generate Nuage CNI docker image for CNI daemon sets install
+
+- Clone https://github.com/nuagenetworks/nuage-cni.git to your $GOPATH/src folder on your host machine
+
+- Change directory to `nuage-cni` folder
+
+- Set desired image version for your CNI docker image using `export version=<image-version>` eg: export version=v5.1.2
+
+- Then run the build script `./scripts/build-nuage-cni-docker.sh`
+
+- At the end of this script execution `nuage-cni-docker-<image-version>.tar` will be generated under nuage-cni folder
+
+- To load the CNI docker image on your slave nodes, copy the `nuage-cni-docker-<image-version>.tar` file generated above to your slave nodes and do `docker load -i nuage-cni-docker-<image-version>.tar`
