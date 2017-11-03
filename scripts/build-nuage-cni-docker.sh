@@ -18,3 +18,4 @@ cd $GOPATH/src/nuage-cni
 make
 sudo docker build -t nuage/cni:${version} .
 docker save nuage/cni:${version} > nuage-cni-docker-${version}.tar
+docker rmi nuage/cni:${version}
