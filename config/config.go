@@ -12,12 +12,10 @@ type NuageVSPK8SConfig struct {
 	K8SAPIServer              string `yaml:"masterApiServer"`
 	NuageK8SMonServer         string `yaml:"nuageMonRestServer"`
 	DockerBridgeName          string `yaml:"dockerBridgeName"`
-	InterfaceMTU              string `yaml:"interfaceMTU"`
 	ServiceCIDR               string `yaml:"serviceCIDR"`
 	NuageK8SMonClientCertFile string `yaml:"nuageMonClientCert"`
 	NuageK8SMonClientKeyFile  string `yaml:"nuageMonClientKey"`
 	NuageK8SMonCAFile         string `yaml:"nuageMonCA"`
-	LogLevel                  string `yaml:"logLevel"`
 }
 
 // Config struct will be used to read values from Nuage CNI
