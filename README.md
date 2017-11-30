@@ -28,7 +28,7 @@ In Audit Daemon mode, the Nuage CNI plugin also operates as a background systemd
 
 ## Steps to generate CNI plugin binaries
 
-- Clone the nuage-cni repository under src folder in your GOPATH
+- Clone https://github.com/nuagenetworks/nuage-cni.git to your $GOPATH/src/github.com/nuagenetworks/ folder on your host machine
 
 - Execute "make" from "nuage-cni" folder. Following binaries will be generated under "nuage-cni" folder:
 
@@ -38,7 +38,7 @@ In Audit Daemon mode, the Nuage CNI plugin also operates as a background systemd
 
 ## Steps to generate CNI plugin rpm packages
 
-- Clone the nuage-cni repository under src folder in your GOPATH
+- Clone https://github.com/nuagenetworks/nuage-cni.git to your $GOPATH/src/github.com/nuagenetworks/ folder on your host machine
 
 - Set the version required for the rpm: export version=`desired rpm version`
 
@@ -49,7 +49,7 @@ In Audit Daemon mode, the Nuage CNI plugin also operates as a background systemd
 
 ## Steps to generate Nuage CNI docker image for CNI daemon sets install
 
-- Clone https://github.com/nuagenetworks/nuage-cni.git to your $GOPATH/src folder on your host machine
+- Clone https://github.com/nuagenetworks/nuage-cni.git to your $GOPATH/src/github.com/nuagenetworks/ folder on your host machine
 
 - Change directory to `nuage-cni` folder
 
