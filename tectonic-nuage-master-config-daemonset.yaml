@@ -8,7 +8,7 @@ data:
   # This will generate the required Nuage monitor configuration
   # on master nodes
   monitor_yaml_config: |
-      kubeConfig: /var/usr/share/vsp-k8s/nuage.kubeconfig
+      kubeConfig: /etc/kubernetes/kubeconfig
 
       masterConfig: /var/usr/share/nuagekubemon/net-config.yaml
       # URL of the VSD Architect
@@ -82,6 +82,11 @@ spec:
       containers:
       - name: install-nuage-monitor
         image: nuage/master:v5.2.1
+        ports:
+          - containerPort: 9443
+            hostPort: 9443
+        command: ["/configure-master.sh"]
+        args: ["k8s", "is_coreos"]
         securityContext:
           privileged: true
         env:

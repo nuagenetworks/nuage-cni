@@ -9,7 +9,7 @@ data:
   # config on each slave node
   plugin_yaml_config: |
       # Path to Nuage kubeconfig
-      kubeConfig: /usr/share/vsp-k8s/nuage.kubeconfig
+      kubeConfig: /etc/kubernetes/kubeconfig
       # Name of the enterprise in which pods will reside
       enterpriseName: kubernetes
       # Name of the domain in which pods will reside
@@ -79,7 +79,7 @@ spec:
       - name: install-cni
         image: nuage/cni:v5.2.1
         command: ["/install-cni.sh"]
-        args: ["nuage-cni-k8s", "is_tectonic_core_os"]
+        args: ["nuage-cni-k8s", "is_coreos"]
         securityContext:
           privileged: true
         env:
@@ -103,12 +103,6 @@ spec:
         # Nuage cluster network CIDR for iptables configuration
         - name: NUAGE_CLUSTER_NW_CIDR
           value: "70.70.0.0/16"
-        # Kubernetes Master api-server URL
-        - name: MASTER_API_SERVER_URL
-          value: "https://<master-ip>:6443"
-        # nuage user service account token string
-        - name: NUAGE_TOKEN
-          value: "Add Tectonic Generated nuage service account token here"
         volumeMounts:
         - name: cni-yaml-dir
           mountPath: /host/etc
@@ -118,6 +112,8 @@ spec:
           mountPath: /var/log
         - name: tectonic-var-dir
           mountPath: /host/var
+        - name: host-cni-bin
+          mountPath: /host/opt/cni/bin/
       hostNetwork: true
       tolerations:
       - key: "node-role.kubernetes.io/master"
@@ -136,6 +132,9 @@ spec:
         - name: tectonic-var-dir
           hostPath:
             path: /var
+        - name: host-cni-bin
+          hostPath:
+            path: /var/lib/cni/bin
   updateStrategy:
     rollingUpdate:
       maxUnavailable: 1

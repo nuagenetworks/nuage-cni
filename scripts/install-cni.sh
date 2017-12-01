@@ -35,15 +35,10 @@ if [ "$1" = "nuage-cni-k8s" ]; then
     NUAGE_CONF='/usr/share/vsp-k8s/vsp-k8s.yaml'
 fi
 
-if [ "$2" = "is_tectonic_core_os" ]; then
+if [ "$2" = "is_coreos" ]; then
     rm -irf /host/var/usr/share/vsp-k8s
     mkdir -p /host/var/usr/share/vsp-k8s
     chmod 755 /host/var/usr/share/vsp-k8s
-    rm -irf /host/var/lib/cni/bin
-    mkdir -p /host/var/lib/cni/bin
-    chmod 755 /host/var/lib/cni/bin
-    cp /opt/cni/bin/nuage-cni-k8s /host/var/lib/cni/bin
-    cp /opt/cni/bin/loopback /host/var/lib/cni/bin
     NUAGE_CONF='/host/var/usr/share/vsp-k8s/vsp-k8s.yaml'
 fi
 
@@ -156,34 +151,9 @@ else
 iptables -w -I FORWARD 1 -d ${NUAGE_CLUSTER_NW_CIDR:-} -j ACCEPT -m comment --comment "nuage-underlay-overlay"  
 fi
 
-if [ "$1" = "nuage-cni-k8s" ]; then
+if [ "$1" = "nuage-cni-k8s" ] && [ "$2" != "is_coreos" ]; then
 # Create Nuage kubeconfig file for api server communication
 cat > /usr/share/vsp-k8s/nuage.kubeconfig <<EOF
-apiVersion: v1
-kind: Config
-current-context: nuage-to-cluster.local
-preferences: {}
-clusters:
-- cluster:
-    insecure-skip-tls-verify: true
-    server: ${MASTER_API_SERVER_URL:-}
-  name: cluster.local
-contexts:
-- context:
-    cluster: cluster.local
-    user: nuage
-  name: nuage-to-cluster.local
-users:
-- name: nuage
-  user:
-    token: ${NUAGE_TOKEN:-}
-EOF
-fi
-
-if [ "$2" = "is_tectonic_core_os" ]; then
-# Create Nuage kubeconfig file for api server communication
-# for Tectonic nodes
-cat > /var/usr/share/vsp-k8s/nuage.kubeconfig <<EOF
 apiVersion: v1
 kind: Config
 current-context: nuage-to-cluster.local
