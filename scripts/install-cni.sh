@@ -35,6 +35,18 @@ if [ "$1" = "nuage-cni-k8s" ]; then
     NUAGE_CONF='/usr/share/vsp-k8s/vsp-k8s.yaml'
 fi
 
+if [ "$2" = "is_tectonic_core_os" ]; then
+    rm -irf /host/var/usr/share/vsp-k8s
+    mkdir -p /host/var/usr/share/vsp-k8s
+    chmod 755 /host/var/usr/share/vsp-k8s
+    rm -irf /host/var/lib/cni/bin
+    mkdir -p /host/var/lib/cni/bin
+    chmod 755 /host/var/lib/cni/bin
+    cp /opt/cni/bin/nuage-cni-k8s /host/var/lib/cni/bin
+    cp /opt/cni/bin/loopback /host/var/lib/cni/bin
+    NUAGE_CONF='/host/var/usr/share/vsp-k8s/vsp-k8s.yaml'
+fi
+
 if [ "$1" = "nuage-cni-openshift" ]; then
     TMP_CONF='/tmp/vsp-openshift.yaml'
     CONFIG_DIR='vsp-openshift'

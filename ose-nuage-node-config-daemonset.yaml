@@ -47,6 +47,7 @@ data:
       vrsconnectionchecktimer: 180
       mtu: 1450
       staleentrytimeout: 600
+      host: "rhelserver"
 
 ---
 
