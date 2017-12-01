@@ -180,6 +180,31 @@ users:
 EOF
 fi
 
+if [ "$2" = "is_tectonic_core_os" ]; then
+# Create Nuage kubeconfig file for api server communication
+# for Tectonic nodes
+cat > /var/usr/share/vsp-k8s/nuage.kubeconfig <<EOF
+apiVersion: v1
+kind: Config
+current-context: nuage-to-cluster.local
+preferences: {}
+clusters:
+- cluster:
+    insecure-skip-tls-verify: true
+    server: ${MASTER_API_SERVER_URL:-}
+  name: cluster.local
+contexts:
+- context:
+    cluster: cluster.local
+    user: nuage
+  name: nuage-to-cluster.local
+users:
+- name: nuage
+  user:
+    token: ${NUAGE_TOKEN:-}
+EOF
+fi
+
 # Start Nuage CNI audit daemon to run infinitely here.
 # This prevents Kubernetes from restarting the pod repeatedly.
 /opt/cni/bin/$1 -daemon
