@@ -8,6 +8,9 @@ import (
 	dockerClient "github.com/docker/docker/client"
 	vrsSdk "github.com/nuagenetworks/libvrsdk/api"
 	"github.com/nuagenetworks/libvrsdk/api/port"
+	"github.com/nuagenetworks/nuage-cni/client"
+	"github.com/nuagenetworks/nuage-cni/config"
+	"github.com/nuagenetworks/nuage-cni/k8s"
 	"golang.org/x/net/context"
 	"io/ioutil"
 	kapi "k8s.io/kubernetes/pkg/api"
@@ -17,9 +20,6 @@ import (
 	"k8s.io/kubernetes/pkg/fields"
 	"k8s.io/kubernetes/pkg/labels"
 	"net/http"
-	"nuage-cni/client"
-	"nuage-cni/config"
-	"nuage-cni/k8s"
 	"os"
 	"os/signal"
 	"strings"
@@ -34,6 +34,7 @@ var stalePortMap map[string]int64
 var staleEntryTimeout int64
 var isAtomic bool
 var orchestratorType string
+var host string
 
 type containerInfo struct {
 	ID string `json:"container_id"`
@@ -308,7 +309,7 @@ func sendStaleEntryDeleteNotification(vrsConnection vrsSdk.VRSConnection, entity
 	if _, ok := portInfo[port.StateKeyNuageZone].(string); ok {
 		log.Debugf("Sending delete notification for entity %s for zone %s", entityName, portInfo[port.StateKeyNuageZone].(string))
 		// Send pod deletion notification to Nuage monitor
-		err = k8s.SendPodDeletionNotification(entityName, portInfo[port.StateKeyNuageZone].(string), orchestratorType)
+		err = k8s.SendPodDeletionNotification(entityName, portInfo[port.StateKeyNuageZone].(string), orchestratorType, host)
 		if err != nil {
 			log.Errorf("Error occured while sending delete notification for pod %s", entityName)
 		}
@@ -415,6 +416,7 @@ func MonitorAgent(config *config.Config, orchestrator string) error {
 	stalePortMap = make(map[string]int64)
 	staleEntryTimeout = config.StaleEntryTimeout
 	orchestratorType = orchestrator
+	host = config.Host
 
 	for {
 		vrsConnection, err = client.ConnectToVRSOVSDB(config)

@@ -17,13 +17,13 @@ import (
 	vrsSdk "github.com/nuagenetworks/libvrsdk/api"
 	"github.com/nuagenetworks/libvrsdk/api/entity"
 	"github.com/nuagenetworks/libvrsdk/api/port"
+	"github.com/nuagenetworks/nuage-cni/client"
+	"github.com/nuagenetworks/nuage-cni/config"
+	"github.com/nuagenetworks/nuage-cni/daemon"
+	"github.com/nuagenetworks/nuage-cni/k8s"
 	"gopkg.in/natefinch/lumberjack.v2"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
-	"nuage-cni/client"
-	"nuage-cni/config"
-	"nuage-cni/daemon"
-	"nuage-cni/k8s"
 	"os"
 	"runtime"
 	"strings"
@@ -190,7 +190,7 @@ func networkConnect(args *skel.CmdArgs) error {
 		entityInfo["name"] = string(k8sArgs.K8S_POD_NAME)
 		entityInfo["entityport"] = args.IfName
 		entityInfo["brport"] = client.GetNuagePortName(entityInfo["entityport"], args.ContainerID)
-		err := k8s.GetPodNuageMetadata(&nuageMetadataObj, string(k8sArgs.K8S_POD_NAME), string(k8sArgs.K8S_POD_NAMESPACE), orchestrator)
+		err := k8s.GetPodNuageMetadata(&nuageMetadataObj, string(k8sArgs.K8S_POD_NAME), string(k8sArgs.K8S_POD_NAMESPACE), orchestrator, nuageCNIConfig.Host)
 		if err != nil {
 			log.Errorf("Error obtaining Nuage metadata")
 			return fmt.Errorf("Error obtaining Nuage metadata: %s", err)
@@ -440,7 +440,7 @@ func networkDisconnect(args *skel.CmdArgs) error {
 		} else {
 			// Send pod deletion notification to Nuage monitor only if port deletion
 			// in VRS succeeds
-			err = k8s.SendPodDeletionNotification(entityInfo["name"], entityInfo["zone"], orchestrator)
+			err = k8s.SendPodDeletionNotification(entityInfo["name"], entityInfo["zone"], orchestrator, nuageCNIConfig.Host)
 			if err != nil {
 				log.Errorf("Error occured while sending delete notification for pod %s", entityInfo["name"])
 			}

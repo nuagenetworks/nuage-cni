@@ -16,8 +16,9 @@ type NuageVSPK8SConfig struct {
 	ServiceCIDR               string `yaml:"serviceCIDR"`
 	NuageK8SMonClientCertFile string `yaml:"nuageMonClientCert"`
 	NuageK8SMonClientKeyFile  string `yaml:"nuageMonClientKey"`
-	NuageK8SMonCAFile         string `yaml:"nuageMonCA"`
+	NuageK8SMonCAFile         string `yaml:"nuageMonServerCA"`
 	LogLevel                  string `yaml:"logLevel"`
+	KubeConfig                string `yaml:"kubeConfig"`
 }
 
 // Config struct will be used to read values from Nuage CNI
@@ -33,4 +34,5 @@ type Config struct {
 	VRSConnectionCheckTimer int
 	MTU                     int
 	StaleEntryTimeout       int64
+	Host                    string
 }

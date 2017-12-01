@@ -7,14 +7,14 @@ import (
 	"encoding/json"
 	"fmt"
 	log "github.com/Sirupsen/logrus"
+	"github.com/nuagenetworks/nuage-cni/client"
+	"github.com/nuagenetworks/nuage-cni/config"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	krestclient "k8s.io/kubernetes/pkg/client/restclient"
 	kclient "k8s.io/kubernetes/pkg/client/unversioned"
 	"k8s.io/kubernetes/pkg/client/unversioned/clientcmd"
 	"net/http"
-	"nuage-cni/client"
-	"nuage-cni/config"
 	"os"
 )
 
@@ -204,7 +204,7 @@ func getPodMetadataFromNuageK8sMon(podname string, ns string) error {
 	return err
 }
 
-func initDataDir(orchestrator string) {
+func initDataDir(orchestrator string, host string) {
 
 	isHostAtomic = VerifyHostType()
 	var dir string
@@ -216,10 +216,9 @@ func initDataDir(orchestrator string) {
 
 	if orchestrator == "k8s" {
 		vspK8sConfigFile = dir + "/vsp-k8s/vsp-k8s.yaml"
-		kubeconfFile = dir + "/vsp-k8s/nuage.kubeconfig"
-		nuageMonClientCertFile = dir + "/vsp-k8s/nuageMonClient.crt"
-		nuageMonClientKeyFile = dir + "/vsp-k8s/nuageMonClient.key"
-		nuageMonClientCACertFile = dir + "/vsp-k8s/nuageMonCA.crt"
+		if host == "coreos" {
+			vspK8sConfigFile = "/var/usr/share/vsp-k8s/vsp-k8s.yaml"
+		}
 	} else {
 		vspK8sConfigFile = dir + "/vsp-openshift/vsp-openshift.yaml"
 		kubeconfFile = dir + "/vsp-openshift/nuage.kubeconfig"
@@ -245,9 +244,9 @@ func VerifyHostType() bool {
 
 // GetPodNuageMetadata will populate NuageMetadata struct
 // needed for port resolution using CNI plugin
-func GetPodNuageMetadata(nuageMetadata *client.NuageMetadata, name string, ns string, orchestrator string) error {
+func GetPodNuageMetadata(nuageMetadata *client.NuageMetadata, name string, ns string, orchestrator string, host string) error {
 
-	initDataDir(orchestrator)
+	initDataDir(orchestrator, host)
 	log.Infof("Obtaining Nuage Metadata for pod %s under namespace %s", name, ns)
 
 	var err error
@@ -257,6 +256,15 @@ func GetPodNuageMetadata(nuageMetadata *client.NuageMetadata, name string, ns st
 	if err != nil {
 		log.Errorf("Error in parsing Nuage k8s yaml file")
 		return fmt.Errorf("Error in parsing Nuage k8s yaml file: %s", err)
+	}
+
+	// Populating certificate and kubeconfig locations
+	// only for k8s as orchestrator
+	if orchestrator == "k8s" {
+		kubeconfFile = vspK8SConfig.KubeConfig
+		nuageMonClientCertFile = vspK8SConfig.NuageK8SMonClientCertFile
+		nuageMonClientKeyFile = vspK8SConfig.NuageK8SMonClientKeyFile
+		nuageMonClientCACertFile = vspK8SConfig.NuageK8SMonCAFile
 	}
 
 	// Obtaining pod labels if set from K8S API server
@@ -285,9 +293,9 @@ func GetPodNuageMetadata(nuageMetadata *client.NuageMetadata, name string, ns st
 
 // SendPodDeletionNotification will notify the Nuage monitor on master nodes
 // about pod deletion
-func SendPodDeletionNotification(podname string, ns string, orchestrator string) error {
+func SendPodDeletionNotification(podname string, ns string, orchestrator string, host string) error {
 
-	initDataDir(orchestrator)
+	initDataDir(orchestrator, host)
 	var err error
 
 	log.Infof("Sending delete notification for pod %s under namespace %s", podname, ns)

@@ -12,8 +12,15 @@
 HOST_CNI_NET_DIR=${CNI_NET_DIR:-/etc/cni/net.d}
 
 # Clean up any existing Nuage CNI binary, network config and yaml file
-rm -f /host/opt/cni/bin/$1
-rm -f /host/etc/cni/net.d/nuage-net.conf
+rm -irf /host/opt/cni
+rm -irf /host/etc/cni
+
+# Create directory structure to be created on the host for
+# CNI plugin binary and CNI netconf file under /etc and /opt
+mkdir -p /host/etc/cni/net.d
+mkdir -p /host/opt/cni/bin
+chmod 755 /host/etc/cni/net.d
+chmod 755 /host/opt/cni/bin
 
 # Choose which default cni binaries should be copied
 SKIP_CNI_BINARIES=${SKIP_CNI_BINARIES:-""}
@@ -21,18 +28,42 @@ SKIP_CNI_BINARIES=",$SKIP_CNI_BINARIES,"
 
 if [ "$1" = "nuage-cni-k8s" ]; then
     TMP_CONF='/tmp/vsp-k8s.yaml'
-    NUAGE_CONF='/usr/share/vsp-k8s/vsp-k8s.yaml'
     CONFIG_DIR='vsp-k8s'
+    rm -irf /usr/share/vsp-k8s
+    mkdir -p /usr/share/vsp-k8s
+    chmod 755 /usr/share/vsp-k8s
+    NUAGE_CONF='/usr/share/vsp-k8s/vsp-k8s.yaml'
+fi
+
+if [ "$2" = "is_coreos" ]; then
+    rm -irf /host/var/usr/share/vsp-k8s
+    mkdir -p /host/var/usr/share/vsp-k8s
+    chmod 755 /host/var/usr/share/vsp-k8s
+    NUAGE_CONF='/host/var/usr/share/vsp-k8s/vsp-k8s.yaml'
 fi
 
 if [ "$1" = "nuage-cni-openshift" ]; then
     TMP_CONF='/tmp/vsp-openshift.yaml'
-    NUAGE_CONF='/usr/share/vsp-openshift/vsp-openshift.yaml'
     CONFIG_DIR='vsp-openshift'
+    rm -irf /usr/share/vsp-openshift
+    mkdir -p /usr/share/vsp-openshift
+    chmod 755 /usr/share/vsp-openshift
+    rm -irf /usr/share/nuage-openshift-monitor
+    mkdir -p /usr/share/nuage-openshift-monitor
+    chmod 755 /usr/share/nuage-openshift-monitor
+    NUAGE_CONF='/usr/share/vsp-openshift/vsp-openshift.yaml'
 fi
 
 if [ "$2" = "is_atomic" ]; then
     DIR='/var/usr/share'
+    rm -irf /host/var/usr/share/vsp-openshift
+    mkdir -p /host/var/usr/share/vsp-openshift
+    chmod 755 /host/var/usr/share/vsp-openshift
+    rm -irf /host/var/opt/cni/bin/
+    mkdir -p /host/var/opt/cni/bin/
+    chmod 755 /host/var/opt/cni/bin/
+    cp /opt/cni/bin/nuage-cni-openshift /host/var/opt/cni/bin/
+    cp /opt/cni/bin/loopback /host/var/opt/cni/bin/
     NUAGE_CONF=$DIR/$CONFIG_DIR/$CONFIG_DIR.yaml
 fi
 
@@ -81,6 +112,7 @@ cat > $CNI_YAML_CONF <<EOF
 ${NUAGE_CNI_YAML_CONFIG:-}
 EOF
 fi
+cp $CNI_YAML_CONF /host/etc/default
 
 TMP_CONF='/nuage-net.conf.k8s'
 if [ "$1" = "nuage-cni-openshift" ]; then
@@ -117,6 +149,30 @@ then
 echo "iptables rule to allow Nuage underlay to overlay traffic is present"
 else
 iptables -w -I FORWARD 1 -d ${NUAGE_CLUSTER_NW_CIDR:-} -j ACCEPT -m comment --comment "nuage-underlay-overlay"  
+fi
+
+if [ "$1" = "nuage-cni-k8s" ] && [ "$2" != "is_coreos" ]; then
+# Create Nuage kubeconfig file for api server communication
+cat > /usr/share/vsp-k8s/nuage.kubeconfig <<EOF
+apiVersion: v1
+kind: Config
+current-context: nuage-to-cluster.local
+preferences: {}
+clusters:
+- cluster:
+    insecure-skip-tls-verify: true
+    server: ${MASTER_API_SERVER_URL:-}
+  name: cluster.local
+contexts:
+- context:
+    cluster: cluster.local
+    user: nuage
+  name: nuage-to-cluster.local
+users:
+- name: nuage
+  user:
+    token: ${NUAGE_TOKEN:-}
+EOF
 fi
 
 # Start Nuage CNI audit daemon to run infinitely here.
