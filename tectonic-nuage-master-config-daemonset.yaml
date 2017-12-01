@@ -56,7 +56,7 @@ data:
 ---
 
 # This manifest installs Nuage monitor on master nodes in a Tectonic cluster
-apiVersion: apps/v1beta2
+apiVersion: extensions/v1beta1
 kind: DaemonSet
 metadata:
   name: kube-nuage-monitor

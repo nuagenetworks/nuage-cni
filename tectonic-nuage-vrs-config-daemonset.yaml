@@ -1,0 +1,74 @@
+# This manifest installs Nuage VRS on each worker node in a Tectonic cluster.
+apiVersion: extensions/v1beta1
+kind: DaemonSet
+metadata:
+  name: kube-nuage-vrs
+  namespace: kube-system
+  labels:
+    tier: node
+    k8s-app: nuage
+spec:
+  selector:
+    matchLabels:
+      tier: node
+      k8s-app: nuage
+  updateStrategy:
+    rollingUpdate:
+      maxUnavailable: 1
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        tier: node
+        k8s-app: nuage
+    spec:
+      containers:
+      - name: install-nuage-vrs
+        image: nuage/vrs:v5.2.1
+        securityContext:
+          privileged: true
+        env:
+        # Configure parameters for VRS openvswitch file
+        - name: NUAGE_ACTIVE_CONTROLLER
+          value: "10.100.100.100"
+        - name: NUAGE_STANDBY_CONTROLLER
+          value: "10.100.100.101"
+        - name: NUAGE_PLATFORM
+          value: '"kvm, k8s"'
+        - name: NUAGE_K8S_SERVICE_IPV4_SUBNET
+          value: '192.168.0.0\/16'
+        - name: NUAGE_NETWORK_UPLINK_INTF
+          value: "eth0"
+        volumeMounts:
+        - name: vrs-run-dir
+          mountPath: /var/run
+        - name: vrs-log-dir
+          mountPath: /var/log
+        - name: sys-mod-dir
+          mountPath: /sys/module
+          readOnly: true
+        - name: lib-mod-dir
+          mountPath: /lib/modules
+          readOnly: true
+      hostNetwork: true
+      tolerations:
+      - key: "node-role.kubernetes.io/master"
+        operator: "Exists"
+        effect: "NoSchedule"
+      volumes:
+        - name: vrs-run-dir
+          hostPath:
+            path: /var/run
+        - name: vrs-log-dir
+          hostPath:
+            path: /var/log
+        - name: sys-mod-dir
+          hostPath:
+            path: /sys/module
+        - name: lib-mod-dir
+          hostPath:
+            path: /lib/modules
+  updateStrategy:
+    rollingUpdate:
+      maxUnavailable: 1
+    type: RollingUpdate

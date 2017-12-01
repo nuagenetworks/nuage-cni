@@ -52,7 +52,7 @@ data:
 
 # This manifest installs Nuage CNI plugins and network config on
 # each worker node in a Tectonic cluster.
-apiVersion: apps/v1beta2
+apiVersion: extensions/v1beta1
 kind: DaemonSet
 metadata:
   name: kube-nuage-cni
@@ -113,7 +113,9 @@ spec:
         - name: tectonic-var-dir
           mountPath: /host/var
         - name: host-cni-bin
-          mountPath: /host/opt/cni/bin/
+          mountPath: /host/opt/cni/bin
+        - name: cni-net-conf
+          mountPath: /host/etc/cni/net.d
       hostNetwork: true
       tolerations:
       - key: "node-role.kubernetes.io/master"
@@ -135,83 +137,9 @@ spec:
         - name: host-cni-bin
           hostPath:
             path: /var/lib/cni/bin
-  updateStrategy:
-    rollingUpdate:
-      maxUnavailable: 1
-    type: RollingUpdate
-
----
-
-# This manifest installs Nuage VRS on each worker node in a Tectonic cluster.
-apiVersion: apps/v1beta2
-kind: DaemonSet
-metadata:
-  name: kube-nuage-vrs
-  namespace: kube-system
-  labels:
-    tier: node
-    k8s-app: nuage
-spec:
-  selector:
-    matchLabels:
-      tier: node
-      k8s-app: nuage
-  updateStrategy:
-    rollingUpdate:
-      maxUnavailable: 1
-    type: RollingUpdate
-  template:
-    metadata:
-      labels:
-        tier: node
-        k8s-app: nuage
-    spec:
-      containers:
-      - name: install-nuage-vrs
-        image: nuage/vrs:v5.2.1
-        securityContext:
-          privileged: true
-        env:
-        # Configure parameters for VRS openvswitch file
-        - name: NUAGE_ACTIVE_CONTROLLER
-          value: "10.100.100.100"
-        - name: NUAGE_STANDBY_CONTROLLER
-          value: "10.100.100.101"
-        - name: NUAGE_PLATFORM
-          value: '"kvm, k8s"'
-        - name: NUAGE_K8S_SERVICE_IPV4_SUBNET
-          value: '192.168.0.0\/16'
-        - name: NUAGE_NETWORK_UPLINK_INTF
-          value: "eth0"
-        volumeMounts:
-        - name: vrs-run-dir
-          mountPath: /var/run
-        - name: vrs-log-dir
-          mountPath: /var/log
-        - name: sys-mod-dir
-          mountPath: /sys/module
-          readOnly: true
-        - name: lib-mod-dir
-          mountPath: /lib/modules
-          readOnly: true
-      hostNetwork: true
-      tolerations:
-      - key: "node-role.kubernetes.io/master"
-        operator: "Exists"
-        effect: "NoSchedule"
-      volumes:
-        - name: vrs-run-dir
+        - name: cni-net-conf
           hostPath:
-            path: /var/run
-        - name: vrs-log-dir
-          hostPath:
-            path: /var/log
-        - name: sys-mod-dir
-          hostPath:
-            path: /sys/module
-        - name: lib-mod-dir
-          hostPath:
-            path: /lib/modules
+            path: /etc/kubernetes/cni/net.d
   updateStrategy:
     rollingUpdate:
       maxUnavailable: 1
