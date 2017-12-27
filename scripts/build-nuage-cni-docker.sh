@@ -14,7 +14,7 @@ fi
 
 NUAGE_BUILD_NUMBER=${NUAGE_BUILD_NUMBER:-0}
 version=$version-$NUAGE_BUILD_NUMBER
-cd $GOPATH/src/nuage-cni
+cd $GOPATH/src/github.com/nuagenetworks/nuage-cni
 make
 sudo docker build -t nuage/cni:${version} .
 docker save nuage/cni:${version} > nuage-cni-docker-${version}.tar

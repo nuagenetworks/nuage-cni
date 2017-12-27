@@ -7,14 +7,14 @@ import (
 	"encoding/json"
 	"fmt"
 	log "github.com/Sirupsen/logrus"
+	"github.com/nuagenetworks/nuage-cni/client"
+	"github.com/nuagenetworks/nuage-cni/config"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	krestclient "k8s.io/kubernetes/pkg/client/restclient"
 	kclient "k8s.io/kubernetes/pkg/client/unversioned"
 	"k8s.io/kubernetes/pkg/client/unversioned/clientcmd"
 	"net/http"
-	"nuage-cni/client"
-	"nuage-cni/config"
 	"os"
 )
 
@@ -216,10 +216,6 @@ func initDataDir(orchestrator string) {
 
 	if orchestrator == "k8s" {
 		vspK8sConfigFile = dir + "/vsp-k8s/vsp-k8s.yaml"
-		kubeconfFile = dir + "/vsp-k8s/nuage.kubeconfig"
-		nuageMonClientCertFile = dir + "/vsp-k8s/nuageMonClient.crt"
-		nuageMonClientKeyFile = dir + "/vsp-k8s/nuageMonClient.key"
-		nuageMonClientCACertFile = dir + "/vsp-k8s/nuageMonCA.crt"
 	} else {
 		vspK8sConfigFile = dir + "/vsp-openshift/vsp-openshift.yaml"
 		kubeconfFile = dir + "/vsp-openshift/nuage.kubeconfig"
@@ -257,6 +253,15 @@ func GetPodNuageMetadata(nuageMetadata *client.NuageMetadata, name string, ns st
 	if err != nil {
 		log.Errorf("Error in parsing Nuage k8s yaml file")
 		return fmt.Errorf("Error in parsing Nuage k8s yaml file: %s", err)
+	}
+
+	// Populating certificate and kubeconfig locations
+	// only for k8s as orchestrator
+	if orchestrator == "k8s" {
+		kubeconfFile = vspK8SConfig.KubeConfig
+		nuageMonClientCertFile = vspK8SConfig.NuageK8SMonClientCertFile
+		nuageMonClientKeyFile = vspK8SConfig.NuageK8SMonClientKeyFile
+		nuageMonClientCACertFile = vspK8SConfig.NuageK8SMonCAFile
 	}
 
 	// Obtaining pod labels if set from K8S API server
