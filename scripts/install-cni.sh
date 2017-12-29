@@ -38,25 +38,11 @@ fi
 if [ "$1" = "nuage-cni-openshift" ]; then
     TMP_CONF='/tmp/vsp-openshift.yaml'
     CONFIG_DIR='vsp-openshift'
-    rm -irf /usr/share/vsp-openshift
-    mkdir -p /usr/share/vsp-openshift
-    chmod 755 /usr/share/vsp-openshift
-    rm -irf /usr/share/nuage-openshift-monitor
-    mkdir -p /usr/share/nuage-openshift-monitor
-    chmod 755 /usr/share/nuage-openshift-monitor
     NUAGE_CONF='/usr/share/vsp-openshift/vsp-openshift.yaml'
 fi
 
 if [ "$2" = "is_atomic" ]; then
     DIR='/var/usr/share'
-    rm -irf /host/var/usr/share/vsp-openshift
-    mkdir -p /host/var/usr/share/vsp-openshift
-    chmod 755 /host/var/usr/share/vsp-openshift
-    rm -irf /host/var/opt/cni/bin/
-    mkdir -p /host/var/opt/cni/bin/
-    chmod 755 /host/var/opt/cni/bin/
-    cp /opt/cni/bin/nuage-cni-openshift /host/var/opt/cni/bin/
-    cp /opt/cni/bin/loopback /host/var/opt/cni/bin/
     NUAGE_CONF=$DIR/$CONFIG_DIR/$CONFIG_DIR.yaml
 fi
 
