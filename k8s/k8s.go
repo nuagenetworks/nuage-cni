@@ -57,20 +57,20 @@ func getK8SLabelsPodUIDFromAPIServer(podNs string, podname string) error {
 	loader := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(loadingRules, &clientcmd.ConfigOverrides{})
 	kubeConfig, err := loader.ClientConfig()
 	if err != nil {
-		log.Errorf("Error loading kubeconfig file")
+		log.Errorf("Error loading kubeconfig file: %v", err)
 		return err
 	}
 
 	k8RESTConfig = kubeConfig
 	kubeClient, err := kclient.New(k8RESTConfig)
 	if err != nil {
-		log.Errorf("Error trying to create kubeclient")
+		log.Errorf("Error trying to create kubeclient: %v", err)
 		return err
 	}
 
 	pod, err := kubeClient.Pods(podNs).Get(podname)
 	if err != nil {
-		log.Errorf("Error occured while querying pod %s under pod namespace %s", podname, podNs)
+		log.Errorf("Error occured while querying pod %s under pod namespace %s: %v", podname, podNs, err)
 		return err
 	}
 
@@ -133,14 +133,14 @@ func getPodMetadataFromNuageK8sMon(podname string, ns string) error {
 	// Load client cert
 	cert, err := tls.LoadX509KeyPair(nuageMonClientCertFile, nuageMonClientKeyFile)
 	if err != nil {
-		log.Errorf("Error loading client cert file to communicate with Nuage K8S monitor")
+		log.Errorf("Error loading client cert file to communicate with Nuage K8S monitor: %v", err)
 		return err
 	}
 
 	// Load CA cert
 	caCert, err := ioutil.ReadFile(nuageMonClientCACertFile)
 	if err != nil {
-		log.Errorf("Error loading CA cert file to communicate with Nuage K8S monitor")
+		log.Errorf("Error loading CA cert file to communicate with Nuage K8S monitor: %v", err)
 		return err
 	}
 	caCertPool := x509.NewCertPool()
@@ -163,7 +163,7 @@ func getPodMetadataFromNuageK8sMon(podname string, ns string) error {
 	}
 	out, err := json.Marshal(pod)
 	if err != nil {
-		log.Errorf("Error occured while marshalling Pod data to communicate with Nuage K8S monitor")
+		log.Errorf("Error occured while marshalling Pod data to communicate with Nuage K8S monitor: %v", err)
 		return err
 	}
 
@@ -178,13 +178,13 @@ func getPodMetadataFromNuageK8sMon(podname string, ns string) error {
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.Errorf("Error occured while reading response obtained from Nuage K8S monitor")
+		log.Errorf("Error occured while reading response obtained from Nuage K8S monitor: %v", err)
 		return err
 	}
 
 	err = json.Unmarshal(body, &result)
 	if err != nil {
-		log.Errorf("Error occured while unmarshalling Pod data obtained from Nuage K8S monitor")
+		log.Errorf("Error occured while unmarshalling Pod data obtained from Nuage K8S monitor: %v", err)
 		return err
 	}
 
@@ -304,19 +304,28 @@ func SendPodDeletionNotification(podname string, ns string, orchestrator string)
 		return fmt.Errorf("Error in parsing Nuage config file: %s", err)
 	}
 
+	// Populating certificate and kubeconfig locations
+	// only for k8s as orchestrator
+	if orchestrator == "k8s" {
+		kubeconfFile = vspK8SConfig.KubeConfig
+		nuageMonClientCertFile = vspK8SConfig.NuageK8SMonClientCertFile
+		nuageMonClientKeyFile = vspK8SConfig.NuageK8SMonClientKeyFile
+		nuageMonClientCACertFile = vspK8SConfig.NuageK8SMonCAFile
+	}
+
 	url := vspK8SConfig.NuageK8SMonServer + "/namespaces/" + ns + "/pods"
 
 	// Load client cert
 	cert, err := tls.LoadX509KeyPair(nuageMonClientCertFile, nuageMonClientKeyFile)
 	if err != nil {
-		log.Errorf("Error loading client cert file to communicate with Nuage monitor")
+		log.Errorf("Error loading client cert file to communicate with Nuage monitor: %v", err)
 		return err
 	}
 
 	// Load CA cert
 	caCert, err := ioutil.ReadFile(nuageMonClientCACertFile)
 	if err != nil {
-		log.Errorf("Error loading CA cert file to communicate with Nuage monitor")
+		log.Errorf("Error loading CA cert file to communicate with Nuage monitor: %v", err)
 		return err
 	}
 	caCertPool := x509.NewCertPool()
@@ -335,7 +344,7 @@ func SendPodDeletionNotification(podname string, ns string, orchestrator string)
 	pod := &Pod{Name: podname, Action: "delete"}
 	out, err := json.Marshal(pod)
 	if err != nil {
-		log.Errorf("Error occured while marshalling Pod data to communicate with Nuage monitor")
+		log.Errorf("Error occured while marshalling Pod data to communicate with Nuage monitor: %v", err)
 		return err
 	}
 
