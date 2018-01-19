@@ -58,6 +58,12 @@ ${NUAGE_VSP_CONFIG:-}
 EOF
 fi
 
+# This is to create the VSP yaml file on RHEL masters
+# on atomic setups
+if [ "$2" = "is_atomic" ]; then
+    cp $TMP_CONF /usr/share/vsp-openshift/
+fi
+
 # Copy the generated yaml file to usr/share Nuage folder
 mv $TMP_CONF $NUAGE_CONF
 
