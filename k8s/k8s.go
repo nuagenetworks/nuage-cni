@@ -244,20 +244,6 @@ func VerifyHostType() bool {
 	return true
 }
 
-// verifyNodeType will determine whether the node is
-// a master node or not
-func isMasterNode(filePath string) bool {
-
-	// check if the current node is a master node
-	_, err := os.Stat(filePath)
-	if err != nil {
-		log.Debugf("This is a slave node")
-		return false
-	}
-	log.Debugf("This is a master node")
-	return true
-}
-
 // GetPodNuageMetadata will populate NuageMetadata struct
 // needed for port resolution using CNI plugin
 func GetPodNuageMetadata(nuageMetadata *client.NuageMetadata, name string, ns string, orchestrator string) error {
@@ -281,10 +267,6 @@ func GetPodNuageMetadata(nuageMetadata *client.NuageMetadata, name string, ns st
 		nuageMonClientCertFile = vspK8SConfig.NuageK8SMonClientCertFile
 		nuageMonClientKeyFile = vspK8SConfig.NuageK8SMonClientKeyFile
 		nuageMonClientCACertFile = vspK8SConfig.NuageK8SMonCAFile
-		if isMasterNode(k8sMasterConfigFile) == true {
-			nuageMonClientCertFile = vspK8SConfig.NuageK8SMonClientCertFileOnMaster
-			nuageMonClientKeyFile = vspK8SConfig.NuageK8SMonClientKeyFileOnMaster
-		}
 	}
 
 	// Obtaining pod labels if set from K8S API server
@@ -334,10 +316,6 @@ func SendPodDeletionNotification(podname string, ns string, orchestrator string)
 		nuageMonClientCertFile = vspK8SConfig.NuageK8SMonClientCertFile
 		nuageMonClientKeyFile = vspK8SConfig.NuageK8SMonClientKeyFile
 		nuageMonClientCACertFile = vspK8SConfig.NuageK8SMonCAFile
-		if isMasterNode(k8sMasterConfigFile) == true {
-			nuageMonClientCertFile = vspK8SConfig.NuageK8SMonClientCertFileOnMaster
-			nuageMonClientKeyFile = vspK8SConfig.NuageK8SMonClientKeyFileOnMaster
-		}
 	}
 
 	url := vspK8SConfig.NuageK8SMonServer + "/namespaces/" + ns + "/pods"

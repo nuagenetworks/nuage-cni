@@ -26,10 +26,6 @@ data:
       nuageMonClientKey: /var/lib/kubelet/pki/kubelet-client.key
       # CA certificate for verifying the master's rest server
       nuageMonServerCA: /etc/kubernetes/pki/ca.crt
-      # Certificate for connecting to the kubemon REST API on master nodes
-      nuageMonClientCertOnMaster: /etc/kubernetes/pki/apiserver-kubelet-client.crt
-      # Key to the certificate for connecting to the kubemon REST API on master nodes
-      nuageMonClientKeyOnMaster: /etc/kubernetes/pki/apiserver-kubelet-client.key
       # Nuage vport mtu size
       interfaceMTU: 1460
       # Service CIDR
