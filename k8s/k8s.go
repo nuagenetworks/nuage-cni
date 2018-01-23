@@ -33,11 +33,6 @@ var nuageMonClientCACertFile string
 
 var isHostAtomic bool
 
-// Const definitions for plugin log location and input parameter file
-const (
-	k8sMasterConfigFile = "/usr/share/nuagekubemon/nuagekubemon.yaml"
-)
-
 // NuageKubeMonResp will unmarshal JSON
 // response from Nuage kubemon service
 type NuageKubeMonResp struct {
