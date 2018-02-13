@@ -12,12 +12,10 @@ type NuageVSPK8SConfig struct {
 	K8SAPIServer              string `yaml:"masterApiServer"`
 	NuageK8SMonServer         string `yaml:"nuageMonRestServer"`
 	DockerBridgeName          string `yaml:"dockerBridgeName"`
-	InterfaceMTU              string `yaml:"interfaceMTU"`
 	ServiceCIDR               string `yaml:"serviceCIDR"`
 	NuageK8SMonClientCertFile string `yaml:"nuageMonClientCert"`
 	NuageK8SMonClientKeyFile  string `yaml:"nuageMonClientKey"`
 	NuageK8SMonCAFile         string `yaml:"nuageMonServerCA"`
-	LogLevel                  string `yaml:"logLevel"`
 	KubeConfig                string `yaml:"kubeConfig"`
 }
 

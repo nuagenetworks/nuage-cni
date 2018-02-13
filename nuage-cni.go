@@ -169,6 +169,7 @@ func networkConnect(args *skel.CmdArgs) error {
 		if err != nil {
 			log.Errorf("Error connecting to VRS. Will re-try connection")
 		} else {
+			defer vrsConnection.Disconnect()
 			break
 		}
 		time.Sleep(time.Duration(3) * time.Second)
@@ -370,8 +371,6 @@ func networkConnect(args *skel.CmdArgs) error {
 		log.Errorf("Error de-registering for port updates from VRS for entity port %s", entityInfo["brport"])
 	}
 
-	vrsConnection.Disconnect()
-
 	return result.Print()
 }
 
@@ -416,6 +415,7 @@ func networkDisconnect(args *skel.CmdArgs) error {
 		if err != nil {
 			log.Errorf("Error connecting to VRS. Will re-try connection")
 		} else {
+			defer vrsConnection.Disconnect()
 			break
 		}
 		time.Sleep(time.Duration(3) * time.Second)
@@ -428,38 +428,36 @@ func networkDisconnect(args *skel.CmdArgs) error {
 	// Delete VRS OVSDB entries only if the ports for the entity
 	// exist in VRS tables
 	if len(portList) == 1 {
+
+		err = k8s.SendPodDeletionNotification(entityInfo["name"], entityInfo["zone"], orchestrator)
+		if err != nil {
+			log.Errorf("Error occured while sending delete notification for pod %s: %v", entityInfo["name"], err)
+			return err
+		}
+
 		err = vrsConnection.DestroyEntity(entityInfo["uuid"])
 		if err != nil {
-			log.Errorf("Failed to remove entity from Nuage entity Table for entity %s", entityInfo["name"])
+			log.Errorf("Failed to remove entity from Nuage entity Table for entity %s: %v", entityInfo["name"], err)
 		}
 
 		// Performing cleanup of port/entity on VRS
 		err = vrsConnection.DestroyPort(portName)
 		if err != nil {
-			log.Errorf("Failed to delete entity port from Nuage Port table for entity %s", entityInfo["name"])
-		} else {
-			// Send pod deletion notification to Nuage monitor only if port deletion
-			// in VRS succeeds
-			err = k8s.SendPodDeletionNotification(entityInfo["name"], entityInfo["zone"], orchestrator)
-			if err != nil {
-				log.Errorf("Error occured while sending delete notification for pod %s", entityInfo["name"])
-			}
+			log.Errorf("Failed to delete entity port from Nuage Port table for entity %s: %v", entityInfo["name"], err)
 		}
 
 		// Purging out the veth port from VRS alubr0
 		err = vrsConnection.RemovePortFromAlubr0(portName)
 		if err != nil {
-			log.Errorf("Failed to remove veth port %s for entity %s from alubr0", portName, entityInfo["name"])
+			log.Errorf("Failed to remove veth port %s for entity %s from alubr0: %v", portName, entityInfo["name"], err)
 		}
 
 		// Cleaning up veth paired ports from VRS
 		err = client.DeleteVethPair(portName, entityInfo["entityport"])
 		if err != nil {
-			log.Errorf("Failed to clear veth ports from VRS for entity %s", entityInfo["name"])
+			log.Errorf("Failed to clear veth ports from VRS for entity %s: %v", entityInfo["name"], err)
 		}
 	}
-
-	vrsConnection.Disconnect()
 
 	return nil
 }
