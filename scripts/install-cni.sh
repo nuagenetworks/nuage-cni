@@ -38,11 +38,15 @@ fi
 if [ "$1" = "nuage-cni-openshift" ]; then
     TMP_CONF='/tmp/vsp-openshift.yaml'
     CONFIG_DIR='vsp-openshift'
+    mkdir -p /usr/share/vsp-openshift
+    chmod 755 /usr/share/vsp-openshift
     NUAGE_CONF='/usr/share/vsp-openshift/vsp-openshift.yaml'
 fi
 
 if [ "$2" = "is_atomic" ]; then
     DIR='/var/usr/share'
+    mkdir -p /var/usr/share/vsp-openshift
+    chmod 755 /var/usr/share/vsp-openshift
     NUAGE_CONF=$DIR/$CONFIG_DIR/$CONFIG_DIR.yaml
 fi
 
