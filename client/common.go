@@ -307,4 +307,9 @@ func SetDefaultsForNuageCNIConfig(conf *config.Config) {
 		log.Warnf("VRS Connection keep alive timer not set. Using default value")
 		conf.VRSConnectionCheckTimer = 180
 	}
+
+	if conf.NuageSiteId == 0 {
+		log.Warnf("SiteId not set. It will not be used when specifying metadata")
+		conf.NuageSiteId = -1
+	}
 }

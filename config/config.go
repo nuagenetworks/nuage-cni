@@ -32,4 +32,5 @@ type Config struct {
 	VRSConnectionCheckTimer int
 	MTU                     int
 	StaleEntryTimeout       int64
+	NuageSiteId             int
 }
