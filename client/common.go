@@ -18,6 +18,7 @@ import (
 	"github.com/vishvananda/netlink"
 	"net"
 	"os"
+	"os/exec"
 	"regexp"
 	"strings"
 )
@@ -288,19 +289,9 @@ func SetDefaultsForNuageCNIConfig(conf *config.Config) {
 		conf.CNIVersion = "0.2.0"
 	}
 
-	if conf.LogLevel == "" {
-		log.Warnf("Expected log level not set. Using default value")
-		conf.LogLevel = "info"
-	}
-
 	if conf.PortResolveTimer == 0 {
 		log.Warnf("OVSDB port resolution wait timer not set. Using default value")
 		conf.PortResolveTimer = 60
-	}
-
-	if conf.LogFileSize == 0 {
-		log.Warnf("CNI log file size in MB not set. Using default value")
-		conf.LogFileSize = 1
 	}
 
 	if conf.VRSConnectionCheckTimer == 0 {
@@ -312,4 +303,22 @@ func SetDefaultsForNuageCNIConfig(conf *config.Config) {
 		log.Warnf("SiteId not set. It will not be used when specifying metadata")
 		conf.NuageSiteId = -1
 	}
+}
+
+func IsVSPFunctional() bool {
+
+	log.Debugf("Verifying VRS-VSC connection state")
+	cmd := "docker ps | grep 'install-nuage-vrs' | awk '{ print $1 }'"
+	out, _ := exec.Command("bash", "-c", cmd).Output()
+	id := strings.Replace(string(out), "\n", "", -1)
+	cmd = "sudo docker exec " + id + " bash -c 'ovs-vsctl show' | grep is_connected"
+	out, _ = exec.Command("bash", "-c", cmd).Output()
+	isConnected := string(out)
+	if strings.Contains(isConnected, "true") {
+		log.Debugf("VRS-VSC connection is functional")
+		return true
+	}
+
+	log.Errorf("VRS-VSC connection is not functional")
+	return false
 }
