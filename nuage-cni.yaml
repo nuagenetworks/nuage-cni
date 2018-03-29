@@ -8,4 +8,3 @@ logfilesize: 1
 vrsconnectionchecktimer: 180
 mtu: 1450
 staleentrytimeout: 600
-nuagesiteid: -1
