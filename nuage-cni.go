@@ -85,10 +85,6 @@ func init() {
 		log.Errorf("Error in unmarshalling data from Nuage CNI parameter file: %s\n", err)
 	}
 
-	// Set default values if some values were not set
-	// in Nuage CNI yaml file
-	client.SetDefaultsForNuageCNIConfig(nuageCNIConfig)
-
 	if _, err = os.Stat(logFolder); err != nil {
 		if os.IsNotExist(err) {
 			err = os.Mkdir(logFolder, 777)
@@ -120,6 +116,14 @@ func init() {
 		logfile = cniLogFile
 	}
 
+	if nuageCNIConfig.LogLevel == "" {
+		nuageCNIConfig.LogLevel = "info"
+	}
+
+	if nuageCNIConfig.LogFileSize == 0 {
+		nuageCNIConfig.LogFileSize = 1
+	}
+
 	customFormatter := new(logTextFormatter)
 	log.SetFormatter(customFormatter)
 	log.SetOutput(&lumberjack.Logger{
@@ -128,6 +132,10 @@ func init() {
 		MaxAge:   30,
 	})
 	log.SetLevel(supportedLogLevels[strings.ToLower(nuageCNIConfig.LogLevel)])
+
+	// Set default values if some values were not set
+	// in Nuage CNI yaml file
+	client.SetDefaultsForNuageCNIConfig(nuageCNIConfig)
 
 	// Determine which orchestrator is making the CNI call
 	var arg string

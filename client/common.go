@@ -288,19 +288,9 @@ func SetDefaultsForNuageCNIConfig(conf *config.Config) {
 		conf.CNIVersion = "0.2.0"
 	}
 
-	if conf.LogLevel == "" {
-		log.Warnf("Expected log level not set. Using default value")
-		conf.LogLevel = "info"
-	}
-
 	if conf.PortResolveTimer == 0 {
 		log.Warnf("OVSDB port resolution wait timer not set. Using default value")
 		conf.PortResolveTimer = 60
-	}
-
-	if conf.LogFileSize == 0 {
-		log.Warnf("CNI log file size in MB not set. Using default value")
-		conf.LogFileSize = 1
 	}
 
 	if conf.VRSConnectionCheckTimer == 0 {
