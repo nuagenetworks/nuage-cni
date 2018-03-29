@@ -26,7 +26,6 @@ import (
 	"io/ioutil"
 	"os"
 	"runtime"
-	"strconv"
 	"strings"
 	"time"
 )
@@ -292,9 +291,6 @@ func networkConnect(args *skel.CmdArgs) error {
 		entityMetadata := make(map[entity.MetadataKey]string)
 		entityMetadata[entity.MetadataKeyUser] = nuageMetadataObj.User
 		entityMetadata[entity.MetadataKeyEnterprise] = nuageMetadataObj.Enterprise
-		if nuageCNIConfig.NuageSiteId != -1 {
-			entityMetadata[entity.MetadataKeySiteID] = strconv.Itoa(nuageCNIConfig.NuageSiteId)
-		}
 
 		// Define ports associated with the entity
 		ports := []string{entityInfo["brport"]}
