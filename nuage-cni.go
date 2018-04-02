@@ -85,10 +85,6 @@ func init() {
 		log.Errorf("Error in unmarshalling data from Nuage CNI parameter file: %s\n", err)
 	}
 
-	// Set default values if some values were not set
-	// in Nuage CNI yaml file
-	client.SetDefaultsForNuageCNIConfig(nuageCNIConfig)
-
 	if _, err = os.Stat(logFolder); err != nil {
 		if os.IsNotExist(err) {
 			err = os.Mkdir(logFolder, 777)
@@ -120,6 +116,14 @@ func init() {
 		logfile = cniLogFile
 	}
 
+	if nuageCNIConfig.LogLevel == "" {
+		nuageCNIConfig.LogLevel = "info"
+	}
+
+	if nuageCNIConfig.LogFileSize == 0 {
+		nuageCNIConfig.LogFileSize = 1
+	}
+
 	customFormatter := new(logTextFormatter)
 	log.SetFormatter(customFormatter)
 	log.SetOutput(&lumberjack.Logger{
@@ -128,6 +132,10 @@ func init() {
 		MaxAge:   30,
 	})
 	log.SetLevel(supportedLogLevels[strings.ToLower(nuageCNIConfig.LogLevel)])
+
+	// Set default values if some values were not set
+	// in Nuage CNI yaml file
+	client.SetDefaultsForNuageCNIConfig(nuageCNIConfig)
 
 	// Determine which orchestrator is making the CNI call
 	var arg string
@@ -176,6 +184,23 @@ func networkConnect(args *skel.CmdArgs) error {
 		time.Sleep(time.Duration(3) * time.Second)
 	}
 	log.Debugf("Successfully established a connection to Nuage VRS")
+
+	// Here we want to verify if Nuage VSP in good state before we create
+	// OVSDB entries to resolve pods in Nuage overlay networks
+	for retry_count := 1; retry_count <= 10; retry_count++ {
+		isVSPFunctional := client.IsVSPFunctional()
+		if isVSPFunctional == false && retry_count == 10 {
+			log.Errorf("VRS-VSC connection is not in functional state. Cannot resolve any pods")
+			return fmt.Errorf("VRS-VSC connection is not in functional state. Exiting")
+		}
+
+		if isVSPFunctional == true {
+			log.Debugf("VRS-VSC connection is in functional state. Pods can be spawned")
+			break
+		}
+
+		time.Sleep(time.Duration(3) * time.Second)
+	}
 
 	if orchestrator == kubernetes || orchestrator == openshift {
 		log.Debugf("Orchestrator ID is %s", orchestrator)
