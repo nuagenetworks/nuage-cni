@@ -21,6 +21,7 @@ import (
 	"k8s.io/kubernetes/pkg/labels"
 	"net/http"
 	"os"
+	"os/exec"
 	"os/signal"
 	"strings"
 	"syscall"
@@ -443,6 +444,12 @@ func MonitorAgent(config *config.Config, orchestrator string) error {
 
 	// Determine whether the base host is RHEL server or RHEL atomic
 	isAtomic = k8s.VerifyHostType()
+
+	if isAtomic == false && orchestrator == "ose" {
+		cmdstr := fmt.Sprintf("rm -irf /var/usr/")
+		cmd := exec.Command("bash", "-c", cmdstr)
+		_, _ = cmd.Output()
+	}
 
 	vrsStaleEntriesCleanupTicker := time.NewTicker(time.Duration(config.MonitorInterval) * time.Second)
 	vrsConnectionCheckTicker := time.NewTicker(time.Duration(config.VRSConnectionCheckTimer) * time.Second)

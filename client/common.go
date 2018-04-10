@@ -311,7 +311,7 @@ func IsVSPFunctional() bool {
 	cmd := "docker ps | grep 'install-nuage-vrs' | awk '{ print $1 }'"
 	out, _ := exec.Command("bash", "-c", cmd).Output()
 	id := strings.Replace(string(out), "\n", "", -1)
-	cmd = "sudo docker exec " + id + " bash -c 'ovs-vsctl show' | grep is_connected"
+	cmd = "docker exec " + id + " bash -c 'ovs-vsctl show' | grep is_connected"
 	out, _ = exec.Command("bash", "-c", cmd).Output()
 	isConnected := string(out)
 	if strings.Contains(isConnected, "true") {
