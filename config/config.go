@@ -29,8 +29,10 @@ type Config struct {
 	LogLevel                string
 	PortResolveTimer        int
 	LogFileSize             int
+	LogFileMaxAge           int
 	VRSConnectionCheckTimer int
 	MTU                     int
 	StaleEntryTimeout       int64
 	NuageSiteId             int
+	Platform                string
 }
