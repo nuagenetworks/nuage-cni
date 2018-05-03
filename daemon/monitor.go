@@ -258,6 +258,22 @@ func getStalePortEntriesForDeletion(ids []string) []string {
 	return deletePortList
 }
 
+func auditEntity(vrsConnection vrsSdk.VRSConnection, id string) bool {
+
+	vrsPortsList, err := vrsConnection.GetEntityPorts(id)
+	if err != nil {
+		log.Errorf("Failed getting port names from VRS: %v", err)
+		return true
+	}
+
+	for _, port := range vrsPortsList {
+		if strings.HasPrefix(port, "nu") {
+			return true
+		}
+	}
+	return false
+}
+
 // cleanupVMTable removes stale entity entries from Nuage VM table
 func cleanupVMTable(vrsConnection vrsSdk.VRSConnection, entityUUIDList []string, vrsEntitiesList []string) error {
 
@@ -267,25 +283,30 @@ func cleanupVMTable(vrsConnection vrsSdk.VRSConnection, entityUUIDList []string,
 	staleIDs := computeStalePortsEntitiesDiff(vrsEntitiesList, entityUUIDList)
 	deleteStaleEntitiesList = getStaleEntityEntriesForDeletion(staleIDs)
 	for _, staleID := range deleteStaleEntitiesList {
+		doAudit := auditEntity(vrsConnection, staleID)
+		if doAudit == true {
+			entityName, err := vrsConnection.GetEntityName(staleID)
+			if err != nil {
+				log.Debugf("Error obtaining entity name from OVSDB: %v", err)
+			}
 
-		entityName, err := vrsConnection.GetEntityName(staleID)
-		if err != nil {
-			log.Debugf("Error obtaining entity name from OVSDB: %v", err)
-		}
+			ports, err := vrsConnection.GetEntityPorts(staleID)
+			if err != nil {
+				log.Debugf("Failed getting port names from VRS: %v", err)
+			}
 
-		ports, err := vrsConnection.GetEntityPorts(staleID)
-		if err != nil {
-			log.Debugf("Failed getting port names from VRS: %v", err)
-		}
-
-		log.Infof("Removing stale entity entry %s", staleID)
-		err = vrsConnection.DestroyEntity(staleID)
-		if err != nil {
-			log.Warnf("Unable to delete entry from nuage VM table: %v", err)
+			log.Infof("Removing stale entity entry %s", staleID)
+			err = vrsConnection.DestroyEntity(staleID)
+			if err != nil {
+				log.Warnf("Unable to delete entry from nuage VM table: %v", err)
+			} else {
+				sendStaleEntryDeleteNotification(vrsConnection, entityName, ports)
+			}
+			delete(staleEntityMap, staleID)
 		} else {
-			sendStaleEntryDeleteNotification(vrsConnection, entityName, ports)
+			log.Debugf("Skipping Nuage audit as this is not CNI created entity entry")
+			return nil
 		}
-		delete(staleEntityMap, staleID)
 	}
 
 	log.Infof("Stale entities cleaned up from VRS %v", deleteStaleEntitiesList)
@@ -325,24 +346,29 @@ func cleanupPortTable(vrsConnection vrsSdk.VRSConnection, entityPortList []strin
 	stalePorts := computeStalePortsEntitiesDiff(vrsPortsList, entityPortList)
 	deleteStalePortsList = getStalePortEntriesForDeletion(stalePorts)
 	for _, stalePort := range deleteStalePortsList {
-		log.Infof("Removing stale port %s", stalePort)
-		err = vrsConnection.DestroyPort(stalePort)
-		if err != nil {
-			log.Warnf("Unable to delete port from Nuage Port table: %v", err)
-		}
+		if strings.HasPrefix(stalePort, "nu") {
+			log.Infof("Removing stale port %s", stalePort)
+			err = vrsConnection.DestroyPort(stalePort)
+			if err != nil {
+				log.Warnf("Unable to delete port from Nuage Port table: %v", err)
+			}
 
-		// Purging out the veth port from VRS alubr0
-		err = vrsConnection.RemovePortFromAlubr0(stalePort)
-		if err != nil {
-			log.Warnf("Unable to delete veth port as part of cleanup from alubr0: %v", err)
-		}
+			// Purging out the veth port from VRS alubr0
+			err = vrsConnection.RemovePortFromAlubr0(stalePort)
+			if err != nil {
+				log.Warnf("Unable to delete veth port as part of cleanup from alubr0: %v", err)
+			}
 
-		err = client.DeleteVethPair(stalePort, "eth0")
-		if err != nil {
-			log.Warnf("Failed to clear veth ports from VRS: %v", err)
-		}
+			err = client.DeleteVethPair(stalePort, "eth0")
+			if err != nil {
+				log.Warnf("Failed to clear veth ports from VRS: %v", err)
+			}
 
-		delete(stalePortMap, stalePort)
+			delete(stalePortMap, stalePort)
+		} else {
+			log.Debugf("Skipping Nuage audit as this is not CNI created port entry")
+			return nil
+		}
 	}
 
 	log.Infof("Stale ports cleaned up from VRS %v", deleteStalePortsList)
