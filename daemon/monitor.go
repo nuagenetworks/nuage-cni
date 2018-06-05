@@ -282,6 +282,8 @@ func cleanupVMTable(vrsConnection vrsSdk.VRSConnection, entityUUIDList []string,
 	log.Debugf("Cleaning up stale entity entries from Nuage VM table")
 	staleIDs := computeStalePortsEntitiesDiff(vrsEntitiesList, entityUUIDList)
 	deleteStaleEntitiesList = getStaleEntityEntriesForDeletion(staleIDs)
+	log.Debugf("Stale entities present on VRS which will be deleted %v", deleteStaleEntitiesList)
+
 	for _, staleID := range deleteStaleEntitiesList {
 		doAudit := auditEntity(vrsConnection, staleID)
 		if doAudit == true {
@@ -345,6 +347,8 @@ func cleanupPortTable(vrsConnection vrsSdk.VRSConnection, entityPortList []strin
 	log.Debugf("Cleaning up stale entity entries from Nuage VM table")
 	stalePorts := computeStalePortsEntitiesDiff(vrsPortsList, entityPortList)
 	deleteStalePortsList = getStalePortEntriesForDeletion(stalePorts)
+	log.Debugf("Stale ports present on VRS which will be deleted %v", deleteStalePortsList)
+
 	for _, stalePort := range deleteStalePortsList {
 		if strings.HasPrefix(stalePort, "nu") {
 			log.Infof("Removing stale port %s", stalePort)
@@ -563,10 +567,7 @@ func getActiveK8SPods(orchestrator string) ([]string, error) {
 
 	var infraIDList []string
 	for _, id := range idList {
-		contUUID, err := getPodContainerUUID(id)
-		if err != nil {
-			log.Errorf("Failed to obtain container UUID for the pod ID %s", id)
-		}
+		contUUID, _ := getPodContainerUUID(id)
 		infraIDList = append(infraIDList, contUUID)
 	}
 
@@ -576,11 +577,7 @@ func getActiveK8SPods(orchestrator string) ([]string, error) {
 func getPodContainerUUID(uuid string) (string, error) {
 	var err error
 	var containerInspect types.ContainerJSON
-	containerInspect, err = nuagedocker.dclient.ContainerInspect(context.Background(), uuid)
-	if err != nil {
-		log.Errorf("Inspect on container failed with error: %v", err)
-		return "", err
-	}
+	containerInspect, _ = nuagedocker.dclient.ContainerInspect(context.Background(), uuid)
 
 	newUUIDStr := strings.Replace(string(containerInspect.HostConfig.NetworkMode), "\n", "", -1)
 	contUUID := strings.Split(newUUIDStr, ":")

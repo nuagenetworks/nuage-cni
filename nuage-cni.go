@@ -129,7 +129,8 @@ func init() {
 	log.SetOutput(&lumberjack.Logger{
 		Filename: logfile,
 		MaxSize:  nuageCNIConfig.LogFileSize,
-		MaxAge:   30,
+		MaxAge:   nuageCNIConfig.LogFileMaxAge,
+		Compress: true,
 	})
 	log.SetLevel(supportedLogLevels[strings.ToLower(nuageCNIConfig.LogLevel)])
 
@@ -378,6 +379,11 @@ func networkConnect(args *skel.CmdArgs) error {
 		log.Debugf("Received an update from VRS for entity port %s", entityInfo["brport"])
 	case <-ticker.C:
 		log.Errorf("Failed to receive an update from VRS for entity port %s", entityInfo["brport"])
+		log.Infof("Cleaning up OVSDB entry, alubr0 port and veth entry for entity %s", entityInfo["uuid"])
+		_ = vrsConnection.DestroyEntity(entityInfo["uuid"])
+		_ = vrsConnection.DestroyPort(entityInfo["brport"])
+		_ = vrsConnection.RemovePortFromAlubr0(entityInfo["brport"])
+		_ = client.DeleteVethPair(entityInfo["brport"], entityInfo["entityport"])
 		return fmt.Errorf("Failed to receive an IP address from Nuage CNI plugin%v", err)
 	}
 

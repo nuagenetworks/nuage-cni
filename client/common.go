@@ -294,7 +294,9 @@ func SetDefaultsForNuageCNIConfig(conf *config.Config) {
 	}
 
 	if conf.NuageSiteId == 0 {
-		log.Warnf("SiteId not set. It will not be used when specifying metadata")
+		if conf.Platform == "evdf" {
+			log.Warnf("SiteId not set. It will not be used when specifying metadata")
+		}
 		conf.NuageSiteId = -1
 	}
 }
