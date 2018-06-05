@@ -21,7 +21,7 @@ import (
 	"github.com/nuagenetworks/nuage-cni/config"
 	"github.com/nuagenetworks/nuage-cni/daemon"
 	"github.com/nuagenetworks/nuage-cni/k8s"
-	"gopkg.in/natefinch/lumberjack.v2"
+	"gopkg.in/natefinch/lumberjack"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"os"
@@ -129,7 +129,8 @@ func init() {
 	log.SetOutput(&lumberjack.Logger{
 		Filename: logfile,
 		MaxSize:  nuageCNIConfig.LogFileSize,
-		MaxAge:   30,
+		MaxAge:   nuageCNIConfig.LogFileMaxAge,
+		Compress: true,
 	})
 	log.SetLevel(supportedLogLevels[strings.ToLower(nuageCNIConfig.LogLevel)])
 

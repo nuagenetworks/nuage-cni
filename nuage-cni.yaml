@@ -5,7 +5,9 @@ cniversion: 0.2.0
 loglevel: "info"
 portresolvetimer: 60
 logfilesize: 1
+logfilemaxage: 2
 vrsconnectionchecktimer: 180
 mtu: 1450
 staleentrytimeout: 600
 nuagesiteid: -1
+platform: "k8s"
