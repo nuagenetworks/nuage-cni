@@ -554,15 +554,10 @@ func getActiveK8SPods(orchestrator string) ([]string, error) {
 		return podsList, err
 	}
 
-	selector := fmt.Sprintf("spec.nodeName=%s", hostname)
-	transform := func(field, value string) (string, string, error) { return field, value, nil }
-	fieldSelector, err := fields.ParseAndTransformSelector(selector, transform)
-	if err != nil {
-		log.Errorf("creating field selector failed with error: %v", err)
-		return podsList, err
+	var listOpts = &kapi.ListOptions{
+		LabelSelector: labels.Everything(),
+		FieldSelector: fields.OneTermEqualSelector(kapi.PodHostField, string(hostname)),
 	}
-
-	var listOpts = &kapi.ListOptions{LabelSelector: labels.Everything(), FieldSelector: fieldSelector}
 	pods, err := kubeClient.Pods(kapi.NamespaceAll).List(*listOpts)
 	if err != nil {
 		log.Errorf("Error occured while fetching pods from k8s api server")
