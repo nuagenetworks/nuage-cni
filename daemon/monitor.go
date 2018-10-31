@@ -1,6 +1,7 @@
 package daemon
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	log "github.com/Sirupsen/logrus"
@@ -35,6 +36,7 @@ var stalePortMap map[string]int64
 var staleEntryTimeout int64
 var isAtomic bool
 var orchestratorType string
+var hostname string
 
 type containerInfo struct {
 	ID string `json:"container_id"`
@@ -443,6 +445,12 @@ func MonitorAgent(config *config.Config, orchestrator string) error {
 	staleEntryTimeout = config.StaleEntryTimeout
 	orchestratorType = orchestrator
 
+	hostname, err = findHostFQDN()
+	if err != nil {
+		log.Errorf("finding hostname failed with error: %v", err)
+		return err
+	}
+
 	for {
 		vrsConnection, err = client.ConnectToVRSOVSDB(config)
 		if err != nil {
@@ -517,11 +525,13 @@ func getActiveK8SPods(orchestrator string) ([]string, error) {
 	var config *krestclient.Config
 	var kubeconfFile string
 	var dir string
+
 	if isAtomic == true {
 		dir = "/var/usr/share"
 	} else {
 		dir = "/usr/share"
 	}
+
 	if orchestrator == "k8s" {
 		kubeconfFile = dir + "/vsp-k8s/nuage.kubeconfig"
 	} else {
@@ -544,7 +554,15 @@ func getActiveK8SPods(orchestrator string) ([]string, error) {
 		return podsList, err
 	}
 
-	var listOpts = &kapi.ListOptions{LabelSelector: labels.Everything(), FieldSelector: fields.Everything()}
+	selector := fmt.Sprintf("spec.nodeName=%s", hostname)
+	transform := func(field, value string) (string, string, error) { return field, value, nil }
+	fieldSelector, err := fields.ParseAndTransformSelector(selector, transform)
+	if err != nil {
+		log.Errorf("creating field selector failed with error: %v", err)
+		return podsList, err
+	}
+
+	var listOpts = &kapi.ListOptions{LabelSelector: labels.Everything(), FieldSelector: fieldSelector}
 	pods, err := kubeClient.Pods(kapi.NamespaceAll).List(*listOpts)
 	if err != nil {
 		log.Errorf("Error occured while fetching pods from k8s api server")
@@ -599,4 +617,20 @@ func connectToDockerDaemon(socketFile string) (*dockerClient.Client, error) {
 		return nil, err
 	}
 	return client, nil
+}
+
+func findHostFQDN() (string, error) {
+	cmd := exec.Command("/bin/hostname", "-f")
+	var out bytes.Buffer
+	cmd.Stdout = &out
+	err := cmd.Run()
+
+	if err != nil {
+		log.Errorf("fetching fqdn failed with error: ", err)
+		return "", err
+	}
+
+	fqdn := out.String()
+	fqdn = fqdn[:len(fqdn)-1]
+	return fqdn, nil
 }
