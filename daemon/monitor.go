@@ -621,7 +621,7 @@ func findHostFQDN() (string, error) {
 	err := cmd.Run()
 
 	if err != nil {
-		log.Errorf("fetching fqdn failed with error: ", err)
+		log.Errorf("fetching fqdn failed with error: %v", err)
 		return "", err
 	}
 
