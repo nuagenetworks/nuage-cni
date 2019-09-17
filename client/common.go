@@ -8,18 +8,18 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	log "github.com/Sirupsen/logrus"
+	"net"
+	"os"
+	"strings"
+
 	"github.com/containernetworking/cni/pkg/ip"
 	"github.com/containernetworking/cni/pkg/ns"
 	"github.com/containernetworking/cni/pkg/skel"
 	"github.com/containernetworking/cni/pkg/types"
 	vrsSdk "github.com/nuagenetworks/libvrsdk/api"
 	"github.com/nuagenetworks/nuage-cni/config"
+	log "github.com/sirupsen/logrus"
 	"github.com/vishvananda/netlink"
-	"net"
-	"os"
-	"os/exec"
-	"strings"
 )
 
 const (
@@ -299,20 +299,13 @@ func SetDefaultsForNuageCNIConfig(conf *config.Config) {
 	}
 }
 
-func IsVSPFunctional() bool {
+func IsVSPFunctional(vrsConnection vrsSdk.VRSConnection) bool {
 
 	log.Debugf("Verifying VRS-VSC connection state")
-	cmd := "docker ps | grep 'install-nuage-vrs' | awk '{ print $1 }'"
-	out, _ := exec.Command("bash", "-c", cmd).Output()
-	id := strings.Replace(string(out), "\n", "", -1)
-	cmd = "docker exec " + id + " bash -c 'ovs-vsctl show' | grep is_connected"
-	out, _ = exec.Command("bash", "-c", cmd).Output()
-	isConnected := string(out)
-	if strings.Contains(isConnected, "true") {
-		log.Debugf("VRS-VSC connection is functional")
-		return true
+	state, err := vrsConnection.GetControllerState()
+	if err != nil {
+		log.Errorf("failed getting controller state %v", err)
+		return false
 	}
-
-	log.Errorf("VRS-VSC connection is not functional")
-	return false
+	return state == vrsSdk.ControllerConnected
 }
