@@ -38,39 +38,51 @@ var IngressACLTemplateIdentity = bambou.Identity{
 // IngressACLTemplatesList represents a list of IngressACLTemplates
 type IngressACLTemplatesList []*IngressACLTemplate
 
-// IngressACLTemplatesAncestor is the interface of an ancestor of a IngressACLTemplate must implement.
+// IngressACLTemplatesAncestor is the interface that an ancestor of a IngressACLTemplate must implement.
+// An Ancestor is defined as an entity that has IngressACLTemplate as a descendant.
+// An Ancestor can get a list of its child IngressACLTemplates, but not necessarily create one.
 type IngressACLTemplatesAncestor interface {
 	IngressACLTemplates(*bambou.FetchingInfo) (IngressACLTemplatesList, *bambou.Error)
-	CreateIngressACLTemplates(*IngressACLTemplate) *bambou.Error
+}
+
+// IngressACLTemplatesParent is the interface that a parent of a IngressACLTemplate must implement.
+// A Parent is defined as an entity that has IngressACLTemplate as a child.
+// A Parent is an Ancestor which can create a IngressACLTemplate.
+type IngressACLTemplatesParent interface {
+	IngressACLTemplatesAncestor
+	CreateIngressACLTemplate(*IngressACLTemplate) *bambou.Error
 }
 
 // IngressACLTemplate represents the model of a ingressacltemplate
 type IngressACLTemplate struct {
-	ID                     string `json:"ID,omitempty"`
-	ParentID               string `json:"parentID,omitempty"`
-	ParentType             string `json:"parentType,omitempty"`
-	Owner                  string `json:"owner,omitempty"`
-	Name                   string `json:"name,omitempty"`
-	LastUpdatedBy          string `json:"lastUpdatedBy,omitempty"`
-	Active                 bool   `json:"active"`
-	DefaultAllowIP         bool   `json:"defaultAllowIP"`
-	DefaultAllowNonIP      bool   `json:"defaultAllowNonIP"`
-	Description            string `json:"description,omitempty"`
-	AllowAddressSpoof      bool   `json:"allowAddressSpoof"`
-	AllowL2AddressSpoof    bool   `json:"allowL2AddressSpoof"`
-	EntityScope            string `json:"entityScope,omitempty"`
-	PolicyState            string `json:"policyState,omitempty"`
-	Priority               int    `json:"priority,omitempty"`
-	PriorityType           string `json:"priorityType,omitempty"`
-	AssocAclTemplateId     string `json:"assocAclTemplateId,omitempty"`
-	AssociatedLiveEntityID string `json:"associatedLiveEntityID,omitempty"`
-	ExternalID             string `json:"externalID,omitempty"`
+	ID                                string        `json:"ID,omitempty"`
+	ParentID                          string        `json:"parentID,omitempty"`
+	ParentType                        string        `json:"parentType,omitempty"`
+	Owner                             string        `json:"owner,omitempty"`
+	Name                              string        `json:"name,omitempty"`
+	LastUpdatedBy                     string        `json:"lastUpdatedBy,omitempty"`
+	Active                            bool          `json:"active"`
+	DefaultAllowIP                    bool          `json:"defaultAllowIP"`
+	DefaultAllowNonIP                 bool          `json:"defaultAllowNonIP"`
+	Description                       string        `json:"description,omitempty"`
+	AllowAddressSpoof                 bool          `json:"allowAddressSpoof"`
+	EmbeddedMetadata                  []interface{} `json:"embeddedMetadata,omitempty"`
+	EntityScope                       string        `json:"entityScope,omitempty"`
+	PolicyState                       string        `json:"policyState,omitempty"`
+	Priority                          int           `json:"priority,omitempty"`
+	PriorityType                      string        `json:"priorityType,omitempty"`
+	AssociatedLiveEntityID            string        `json:"associatedLiveEntityID,omitempty"`
+	AssociatedVirtualFirewallPolicyID string        `json:"associatedVirtualFirewallPolicyID,omitempty"`
+	AutoGeneratePriority              bool          `json:"autoGeneratePriority"`
+	ExternalID                        string        `json:"externalID,omitempty"`
 }
 
 // NewIngressACLTemplate returns a new *IngressACLTemplate
 func NewIngressACLTemplate() *IngressACLTemplate {
 
-	return &IngressACLTemplate{}
+	return &IngressACLTemplate{
+		DefaultAllowNonIP: true,
+	}
 }
 
 // Identity returns the Identity of the object.
@@ -145,12 +157,6 @@ func (o *IngressACLTemplate) VMs(info *bambou.FetchingInfo) (VMsList, *bambou.Er
 	return list, err
 }
 
-// CreateVM creates a new child VM under the IngressACLTemplate
-func (o *IngressACLTemplate) CreateVM(child *VM) *bambou.Error {
-
-	return bambou.CurrentSession().CreateChild(o, child)
-}
-
 // IngressACLEntryTemplates retrieves the list of child IngressACLEntryTemplates of the IngressACLTemplate
 func (o *IngressACLTemplate) IngressACLEntryTemplates(info *bambou.FetchingInfo) (IngressACLEntryTemplatesList, *bambou.Error) {
 
@@ -187,22 +193,10 @@ func (o *IngressACLTemplate) Containers(info *bambou.FetchingInfo) (ContainersLi
 	return list, err
 }
 
-// CreateContainer creates a new child Container under the IngressACLTemplate
-func (o *IngressACLTemplate) CreateContainer(child *Container) *bambou.Error {
-
-	return bambou.CurrentSession().CreateChild(o, child)
-}
-
 // EventLogs retrieves the list of child EventLogs of the IngressACLTemplate
 func (o *IngressACLTemplate) EventLogs(info *bambou.FetchingInfo) (EventLogsList, *bambou.Error) {
 
 	var list EventLogsList
 	err := bambou.CurrentSession().FetchChildren(o, EventLogIdentity, &list, info)
 	return list, err
-}
-
-// CreateEventLog creates a new child EventLog under the IngressACLTemplate
-func (o *IngressACLTemplate) CreateEventLog(child *EventLog) *bambou.Error {
-
-	return bambou.CurrentSession().CreateChild(o, child)
 }

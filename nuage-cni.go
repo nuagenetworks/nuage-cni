@@ -10,7 +10,13 @@ package main
 import (
 	"flag"
 	"fmt"
-	log "github.com/Sirupsen/logrus"
+	"io/ioutil"
+	"os"
+	"runtime"
+	"strconv"
+	"strings"
+	"time"
+
 	"github.com/containernetworking/cni/pkg/skel"
 	"github.com/containernetworking/cni/pkg/types"
 	"github.com/containernetworking/cni/pkg/version"
@@ -21,14 +27,9 @@ import (
 	"github.com/nuagenetworks/nuage-cni/config"
 	"github.com/nuagenetworks/nuage-cni/daemon"
 	"github.com/nuagenetworks/nuage-cni/k8s"
+	log "github.com/sirupsen/logrus"
 	"gopkg.in/natefinch/lumberjack.v2"
 	"gopkg.in/yaml.v2"
-	"io/ioutil"
-	"os"
-	"runtime"
-	"strconv"
-	"strings"
-	"time"
 )
 
 var hostname string
@@ -188,7 +189,7 @@ func networkConnect(args *skel.CmdArgs) error {
 	// Here we want to verify if Nuage VSP in good state before we create
 	// OVSDB entries to resolve pods in Nuage overlay networks
 	for retry_count := 1; retry_count <= 10; retry_count++ {
-		isVSPFunctional := client.IsVSPFunctional()
+		isVSPFunctional := client.IsVSPFunctional(vrsConnection)
 		if isVSPFunctional == false && retry_count == 10 {
 			log.Errorf("VRS-VSC connection is not in functional state. Cannot resolve any pods")
 			return fmt.Errorf("VRS-VSC connection is not in functional state. Exiting")

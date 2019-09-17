@@ -38,44 +38,62 @@ var SubnetTemplateIdentity = bambou.Identity{
 // SubnetTemplatesList represents a list of SubnetTemplates
 type SubnetTemplatesList []*SubnetTemplate
 
-// SubnetTemplatesAncestor is the interface of an ancestor of a SubnetTemplate must implement.
+// SubnetTemplatesAncestor is the interface that an ancestor of a SubnetTemplate must implement.
+// An Ancestor is defined as an entity that has SubnetTemplate as a descendant.
+// An Ancestor can get a list of its child SubnetTemplates, but not necessarily create one.
 type SubnetTemplatesAncestor interface {
 	SubnetTemplates(*bambou.FetchingInfo) (SubnetTemplatesList, *bambou.Error)
-	CreateSubnetTemplates(*SubnetTemplate) *bambou.Error
+}
+
+// SubnetTemplatesParent is the interface that a parent of a SubnetTemplate must implement.
+// A Parent is defined as an entity that has SubnetTemplate as a child.
+// A Parent is an Ancestor which can create a SubnetTemplate.
+type SubnetTemplatesParent interface {
+	SubnetTemplatesAncestor
+	CreateSubnetTemplate(*SubnetTemplate) *bambou.Error
 }
 
 // SubnetTemplate represents the model of a subnettemplate
 type SubnetTemplate struct {
-	ID                              string `json:"ID,omitempty"`
-	ParentID                        string `json:"parentID,omitempty"`
-	ParentType                      string `json:"parentType,omitempty"`
-	Owner                           string `json:"owner,omitempty"`
-	DPI                             string `json:"DPI,omitempty"`
-	IPType                          string `json:"IPType,omitempty"`
-	IPv6Gateway                     string `json:"IPv6Gateway,omitempty"`
-	IPv6address                     string `json:"IPv6address,omitempty"`
-	Name                            string `json:"name,omitempty"`
-	LastUpdatedBy                   string `json:"lastUpdatedBy,omitempty"`
-	Gateway                         string `json:"gateway,omitempty"`
-	Address                         string `json:"address,omitempty"`
-	Description                     string `json:"description,omitempty"`
-	Netmask                         string `json:"netmask,omitempty"`
-	Encryption                      string `json:"encryption,omitempty"`
-	EntityScope                     string `json:"entityScope,omitempty"`
-	SplitSubnet                     bool   `json:"splitSubnet"`
-	ProxyARP                        bool   `json:"proxyARP"`
-	UseGlobalMAC                    string `json:"useGlobalMAC,omitempty"`
-	AssociatedMulticastChannelMapID string `json:"associatedMulticastChannelMapID,omitempty"`
-	Multicast                       string `json:"multicast,omitempty"`
-	ExternalID                      string `json:"externalID,omitempty"`
+	ID                              string        `json:"ID,omitempty"`
+	ParentID                        string        `json:"parentID,omitempty"`
+	ParentType                      string        `json:"parentType,omitempty"`
+	Owner                           string        `json:"owner,omitempty"`
+	DPI                             string        `json:"DPI,omitempty"`
+	IPType                          string        `json:"IPType,omitempty"`
+	IPv6Address                     string        `json:"IPv6Address,omitempty"`
+	IPv6Gateway                     string        `json:"IPv6Gateway,omitempty"`
+	Name                            string        `json:"name,omitempty"`
+	LastUpdatedBy                   string        `json:"lastUpdatedBy,omitempty"`
+	Gateway                         string        `json:"gateway,omitempty"`
+	Address                         string        `json:"address,omitempty"`
+	Description                     string        `json:"description,omitempty"`
+	Netmask                         string        `json:"netmask,omitempty"`
+	EmbeddedMetadata                []interface{} `json:"embeddedMetadata,omitempty"`
+	EnableDHCPv4                    bool          `json:"enableDHCPv4"`
+	EnableDHCPv6                    bool          `json:"enableDHCPv6"`
+	Encryption                      string        `json:"encryption,omitempty"`
+	EntityScope                     string        `json:"entityScope,omitempty"`
+	SplitSubnet                     bool          `json:"splitSubnet"`
+	ProxyARP                        bool          `json:"proxyARP"`
+	UseGlobalMAC                    string        `json:"useGlobalMAC,omitempty"`
+	AssociatedMulticastChannelMapID string        `json:"associatedMulticastChannelMapID,omitempty"`
+	DualStackDynamicIPAllocation    bool          `json:"dualStackDynamicIPAllocation"`
+	Multicast                       string        `json:"multicast,omitempty"`
+	ExternalID                      string        `json:"externalID,omitempty"`
 }
 
 // NewSubnetTemplate returns a new *SubnetTemplate
 func NewSubnetTemplate() *SubnetTemplate {
 
 	return &SubnetTemplate{
-		Multicast: "INHERITED",
-		IPType:    "IPV4",
+		DPI:                          "INHERITED",
+		IPType:                       "IPV4",
+		EnableDHCPv4:                 true,
+		EnableDHCPv6:                 false,
+		UseGlobalMAC:                 "ENTERPRISE_DEFAULT",
+		DualStackDynamicIPAllocation: false,
+		Multicast:                    "INHERITED",
 	}
 }
 
@@ -179,22 +197,10 @@ func (o *SubnetTemplate) Subnets(info *bambou.FetchingInfo) (SubnetsList, *bambo
 	return list, err
 }
 
-// CreateSubnet creates a new child Subnet under the SubnetTemplate
-func (o *SubnetTemplate) CreateSubnet(child *Subnet) *bambou.Error {
-
-	return bambou.CurrentSession().CreateChild(o, child)
-}
-
 // EventLogs retrieves the list of child EventLogs of the SubnetTemplate
 func (o *SubnetTemplate) EventLogs(info *bambou.FetchingInfo) (EventLogsList, *bambou.Error) {
 
 	var list EventLogsList
 	err := bambou.CurrentSession().FetchChildren(o, EventLogIdentity, &list, info)
 	return list, err
-}
-
-// CreateEventLog creates a new child EventLog under the SubnetTemplate
-func (o *SubnetTemplate) CreateEventLog(child *EventLog) *bambou.Error {
-
-	return bambou.CurrentSession().CreateChild(o, child)
 }

@@ -38,32 +38,51 @@ var VLANTemplateIdentity = bambou.Identity{
 // VLANTemplatesList represents a list of VLANTemplates
 type VLANTemplatesList []*VLANTemplate
 
-// VLANTemplatesAncestor is the interface of an ancestor of a VLANTemplate must implement.
+// VLANTemplatesAncestor is the interface that an ancestor of a VLANTemplate must implement.
+// An Ancestor is defined as an entity that has VLANTemplate as a descendant.
+// An Ancestor can get a list of its child VLANTemplates, but not necessarily create one.
 type VLANTemplatesAncestor interface {
 	VLANTemplates(*bambou.FetchingInfo) (VLANTemplatesList, *bambou.Error)
-	CreateVLANTemplates(*VLANTemplate) *bambou.Error
+}
+
+// VLANTemplatesParent is the interface that a parent of a VLANTemplate must implement.
+// A Parent is defined as an entity that has VLANTemplate as a child.
+// A Parent is an Ancestor which can create a VLANTemplate.
+type VLANTemplatesParent interface {
+	VLANTemplatesAncestor
+	CreateVLANTemplate(*VLANTemplate) *bambou.Error
 }
 
 // VLANTemplate represents the model of a vlantemplate
 type VLANTemplate struct {
-	ID                          string `json:"ID,omitempty"`
-	ParentID                    string `json:"parentID,omitempty"`
-	ParentType                  string `json:"parentType,omitempty"`
-	Owner                       string `json:"owner,omitempty"`
-	Value                       int    `json:"value,omitempty"`
-	LastUpdatedBy               string `json:"lastUpdatedBy,omitempty"`
-	Description                 string `json:"description,omitempty"`
-	EntityScope                 string `json:"entityScope,omitempty"`
-	AssociatedEgressQOSPolicyID string `json:"associatedEgressQOSPolicyID,omitempty"`
-	AssociatedVSCProfileID      string `json:"associatedVSCProfileID,omitempty"`
-	DucVlan                     bool   `json:"ducVlan"`
-	ExternalID                  string `json:"externalID,omitempty"`
+	ID                                    string        `json:"ID,omitempty"`
+	ParentID                              string        `json:"parentID,omitempty"`
+	ParentType                            string        `json:"parentType,omitempty"`
+	Owner                                 string        `json:"owner,omitempty"`
+	Value                                 int           `json:"value,omitempty"`
+	LastUpdatedBy                         string        `json:"lastUpdatedBy,omitempty"`
+	Description                           string        `json:"description,omitempty"`
+	EmbeddedMetadata                      []interface{} `json:"embeddedMetadata,omitempty"`
+	EntityScope                           string        `json:"entityScope,omitempty"`
+	IsUplink                              bool          `json:"isUplink"`
+	AssociatedConnectionType              string        `json:"associatedConnectionType,omitempty"`
+	AssociatedEgressQOSPolicyID           string        `json:"associatedEgressQOSPolicyID,omitempty"`
+	AssociatedIngressOverlayQoSPolicerID  string        `json:"associatedIngressOverlayQoSPolicerID,omitempty"`
+	AssociatedIngressQOSPolicyID          string        `json:"associatedIngressQOSPolicyID,omitempty"`
+	AssociatedIngressUnderlayQoSPolicerID string        `json:"associatedIngressUnderlayQoSPolicerID,omitempty"`
+	AssociatedUplinkConnectionID          string        `json:"associatedUplinkConnectionID,omitempty"`
+	AssociatedVSCProfileID                string        `json:"associatedVSCProfileID,omitempty"`
+	DucVlan                               bool          `json:"ducVlan"`
+	ExternalID                            string        `json:"externalID,omitempty"`
+	Type                                  string        `json:"type,omitempty"`
 }
 
 // NewVLANTemplate returns a new *VLANTemplate
 func NewVLANTemplate() *VLANTemplate {
 
-	return &VLANTemplate{}
+	return &VLANTemplate{
+		IsUplink: false,
+	}
 }
 
 // Identity returns the Identity of the object.

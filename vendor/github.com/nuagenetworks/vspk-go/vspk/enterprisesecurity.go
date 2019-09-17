@@ -38,24 +38,34 @@ var EnterpriseSecurityIdentity = bambou.Identity{
 // EnterpriseSecuritiesList represents a list of EnterpriseSecurities
 type EnterpriseSecuritiesList []*EnterpriseSecurity
 
-// EnterpriseSecuritiesAncestor is the interface of an ancestor of a EnterpriseSecurity must implement.
+// EnterpriseSecuritiesAncestor is the interface that an ancestor of a EnterpriseSecurity must implement.
+// An Ancestor is defined as an entity that has EnterpriseSecurity as a descendant.
+// An Ancestor can get a list of its child EnterpriseSecurities, but not necessarily create one.
 type EnterpriseSecuritiesAncestor interface {
 	EnterpriseSecurities(*bambou.FetchingInfo) (EnterpriseSecuritiesList, *bambou.Error)
-	CreateEnterpriseSecurities(*EnterpriseSecurity) *bambou.Error
+}
+
+// EnterpriseSecuritiesParent is the interface that a parent of a EnterpriseSecurity must implement.
+// A Parent is defined as an entity that has EnterpriseSecurity as a child.
+// A Parent is an Ancestor which can create a EnterpriseSecurity.
+type EnterpriseSecuritiesParent interface {
+	EnterpriseSecuritiesAncestor
+	CreateEnterpriseSecurity(*EnterpriseSecurity) *bambou.Error
 }
 
 // EnterpriseSecurity represents the model of a enterprisesecurity
 type EnterpriseSecurity struct {
-	ID                      string `json:"ID,omitempty"`
-	ParentID                string `json:"parentID,omitempty"`
-	ParentType              string `json:"parentType,omitempty"`
-	Owner                   string `json:"owner,omitempty"`
-	LastUpdatedBy           string `json:"lastUpdatedBy,omitempty"`
-	GatewaySecurityRevision int    `json:"gatewaySecurityRevision,omitempty"`
-	Revision                int    `json:"revision,omitempty"`
-	EnterpriseID            string `json:"enterpriseID,omitempty"`
-	EntityScope             string `json:"entityScope,omitempty"`
-	ExternalID              string `json:"externalID,omitempty"`
+	ID                      string        `json:"ID,omitempty"`
+	ParentID                string        `json:"parentID,omitempty"`
+	ParentType              string        `json:"parentType,omitempty"`
+	Owner                   string        `json:"owner,omitempty"`
+	LastUpdatedBy           string        `json:"lastUpdatedBy,omitempty"`
+	GatewaySecurityRevision int           `json:"gatewaySecurityRevision,omitempty"`
+	Revision                int           `json:"revision,omitempty"`
+	EmbeddedMetadata        []interface{} `json:"embeddedMetadata,omitempty"`
+	EnterpriseID            string        `json:"enterpriseID,omitempty"`
+	EntityScope             string        `json:"entityScope,omitempty"`
+	ExternalID              string        `json:"externalID,omitempty"`
 }
 
 // NewEnterpriseSecurity returns a new *EnterpriseSecurity

@@ -38,31 +38,43 @@ var EgressACLTemplateIdentity = bambou.Identity{
 // EgressACLTemplatesList represents a list of EgressACLTemplates
 type EgressACLTemplatesList []*EgressACLTemplate
 
-// EgressACLTemplatesAncestor is the interface of an ancestor of a EgressACLTemplate must implement.
+// EgressACLTemplatesAncestor is the interface that an ancestor of a EgressACLTemplate must implement.
+// An Ancestor is defined as an entity that has EgressACLTemplate as a descendant.
+// An Ancestor can get a list of its child EgressACLTemplates, but not necessarily create one.
 type EgressACLTemplatesAncestor interface {
 	EgressACLTemplates(*bambou.FetchingInfo) (EgressACLTemplatesList, *bambou.Error)
-	CreateEgressACLTemplates(*EgressACLTemplate) *bambou.Error
+}
+
+// EgressACLTemplatesParent is the interface that a parent of a EgressACLTemplate must implement.
+// A Parent is defined as an entity that has EgressACLTemplate as a child.
+// A Parent is an Ancestor which can create a EgressACLTemplate.
+type EgressACLTemplatesParent interface {
+	EgressACLTemplatesAncestor
+	CreateEgressACLTemplate(*EgressACLTemplate) *bambou.Error
 }
 
 // EgressACLTemplate represents the model of a egressacltemplate
 type EgressACLTemplate struct {
-	ID                             string `json:"ID,omitempty"`
-	ParentID                       string `json:"parentID,omitempty"`
-	ParentType                     string `json:"parentType,omitempty"`
-	Owner                          string `json:"owner,omitempty"`
-	Name                           string `json:"name,omitempty"`
-	LastUpdatedBy                  string `json:"lastUpdatedBy,omitempty"`
-	Active                         bool   `json:"active"`
-	DefaultAllowIP                 bool   `json:"defaultAllowIP"`
-	DefaultAllowNonIP              bool   `json:"defaultAllowNonIP"`
-	DefaultInstallACLImplicitRules bool   `json:"defaultInstallACLImplicitRules"`
-	Description                    string `json:"description,omitempty"`
-	EntityScope                    string `json:"entityScope,omitempty"`
-	PolicyState                    string `json:"policyState,omitempty"`
-	Priority                       int    `json:"priority,omitempty"`
-	PriorityType                   string `json:"priorityType,omitempty"`
-	AssociatedLiveEntityID         string `json:"associatedLiveEntityID,omitempty"`
-	ExternalID                     string `json:"externalID,omitempty"`
+	ID                                string        `json:"ID,omitempty"`
+	ParentID                          string        `json:"parentID,omitempty"`
+	ParentType                        string        `json:"parentType,omitempty"`
+	Owner                             string        `json:"owner,omitempty"`
+	Name                              string        `json:"name,omitempty"`
+	LastUpdatedBy                     string        `json:"lastUpdatedBy,omitempty"`
+	Active                            bool          `json:"active"`
+	DefaultAllowIP                    bool          `json:"defaultAllowIP"`
+	DefaultAllowNonIP                 bool          `json:"defaultAllowNonIP"`
+	DefaultInstallACLImplicitRules    bool          `json:"defaultInstallACLImplicitRules"`
+	Description                       string        `json:"description,omitempty"`
+	EmbeddedMetadata                  []interface{} `json:"embeddedMetadata,omitempty"`
+	EntityScope                       string        `json:"entityScope,omitempty"`
+	PolicyState                       string        `json:"policyState,omitempty"`
+	Priority                          int           `json:"priority,omitempty"`
+	PriorityType                      string        `json:"priorityType,omitempty"`
+	AssociatedLiveEntityID            string        `json:"associatedLiveEntityID,omitempty"`
+	AssociatedVirtualFirewallPolicyID string        `json:"associatedVirtualFirewallPolicyID,omitempty"`
+	AutoGeneratePriority              bool          `json:"autoGeneratePriority"`
+	ExternalID                        string        `json:"externalID,omitempty"`
 }
 
 // NewEgressACLTemplate returns a new *EgressACLTemplate
@@ -157,12 +169,6 @@ func (o *EgressACLTemplate) VMs(info *bambou.FetchingInfo) (VMsList, *bambou.Err
 	return list, err
 }
 
-// CreateVM creates a new child VM under the EgressACLTemplate
-func (o *EgressACLTemplate) CreateVM(child *VM) *bambou.Error {
-
-	return bambou.CurrentSession().CreateChild(o, child)
-}
-
 // Jobs retrieves the list of child Jobs of the EgressACLTemplate
 func (o *EgressACLTemplate) Jobs(info *bambou.FetchingInfo) (JobsList, *bambou.Error) {
 
@@ -185,22 +191,10 @@ func (o *EgressACLTemplate) Containers(info *bambou.FetchingInfo) (ContainersLis
 	return list, err
 }
 
-// CreateContainer creates a new child Container under the EgressACLTemplate
-func (o *EgressACLTemplate) CreateContainer(child *Container) *bambou.Error {
-
-	return bambou.CurrentSession().CreateChild(o, child)
-}
-
 // EventLogs retrieves the list of child EventLogs of the EgressACLTemplate
 func (o *EgressACLTemplate) EventLogs(info *bambou.FetchingInfo) (EventLogsList, *bambou.Error) {
 
 	var list EventLogsList
 	err := bambou.CurrentSession().FetchChildren(o, EventLogIdentity, &list, info)
 	return list, err
-}
-
-// CreateEventLog creates a new child EventLog under the EgressACLTemplate
-func (o *EgressACLTemplate) CreateEventLog(child *EventLog) *bambou.Error {
-
-	return bambou.CurrentSession().CreateChild(o, child)
 }

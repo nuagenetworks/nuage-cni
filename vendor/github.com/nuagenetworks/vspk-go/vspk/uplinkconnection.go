@@ -38,36 +38,79 @@ var UplinkConnectionIdentity = bambou.Identity{
 // UplinkConnectionsList represents a list of UplinkConnections
 type UplinkConnectionsList []*UplinkConnection
 
-// UplinkConnectionsAncestor is the interface of an ancestor of a UplinkConnection must implement.
+// UplinkConnectionsAncestor is the interface that an ancestor of a UplinkConnection must implement.
+// An Ancestor is defined as an entity that has UplinkConnection as a descendant.
+// An Ancestor can get a list of its child UplinkConnections, but not necessarily create one.
 type UplinkConnectionsAncestor interface {
 	UplinkConnections(*bambou.FetchingInfo) (UplinkConnectionsList, *bambou.Error)
-	CreateUplinkConnections(*UplinkConnection) *bambou.Error
+}
+
+// UplinkConnectionsParent is the interface that a parent of a UplinkConnection must implement.
+// A Parent is defined as an entity that has UplinkConnection as a child.
+// A Parent is an Ancestor which can create a UplinkConnection.
+type UplinkConnectionsParent interface {
+	UplinkConnectionsAncestor
+	CreateUplinkConnection(*UplinkConnection) *bambou.Error
 }
 
 // UplinkConnection represents the model of a uplinkconnection
 type UplinkConnection struct {
-	ID                     string `json:"ID,omitempty"`
-	ParentID               string `json:"parentID,omitempty"`
-	ParentType             string `json:"parentType,omitempty"`
-	Owner                  string `json:"owner,omitempty"`
-	DNSAddress             string `json:"DNSAddress,omitempty"`
-	Password               string `json:"password,omitempty"`
-	Gateway                string `json:"gateway,omitempty"`
-	Address                string `json:"address,omitempty"`
-	AdvertisementCriteria  string `json:"advertisementCriteria,omitempty"`
-	Netmask                string `json:"netmask,omitempty"`
-	Mode                   string `json:"mode,omitempty"`
-	Role                   string `json:"role,omitempty"`
-	UplinkID               string `json:"uplinkID,omitempty"`
-	Username               string `json:"username,omitempty"`
-	AssocUnderlayID        string `json:"assocUnderlayID,omitempty"`
-	AssociatedVSCProfileID string `json:"associatedVSCProfileID,omitempty"`
+	ID                      string        `json:"ID,omitempty"`
+	ParentID                string        `json:"parentID,omitempty"`
+	ParentType              string        `json:"parentType,omitempty"`
+	Owner                   string        `json:"owner,omitempty"`
+	PATEnabled              bool          `json:"PATEnabled"`
+	DNSAddress              string        `json:"DNSAddress,omitempty"`
+	DNSAddressV6            string        `json:"DNSAddressV6,omitempty"`
+	Password                string        `json:"password,omitempty"`
+	LastUpdatedBy           string        `json:"lastUpdatedBy,omitempty"`
+	Gateway                 string        `json:"gateway,omitempty"`
+	GatewayV6               string        `json:"gatewayV6,omitempty"`
+	Address                 string        `json:"address,omitempty"`
+	AddressFamily           string        `json:"addressFamily,omitempty"`
+	AddressV6               string        `json:"addressV6,omitempty"`
+	AdvertisementCriteria   string        `json:"advertisementCriteria,omitempty"`
+	SecondaryAddress        string        `json:"secondaryAddress,omitempty"`
+	Netmask                 string        `json:"netmask,omitempty"`
+	Vlan                    int           `json:"vlan,omitempty"`
+	EmbeddedMetadata        []interface{} `json:"embeddedMetadata,omitempty"`
+	UnderlayEnabled         bool          `json:"underlayEnabled"`
+	UnderlayID              int           `json:"underlayID,omitempty"`
+	Inherited               bool          `json:"inherited"`
+	InstallerManaged        bool          `json:"installerManaged"`
+	InterfaceConnectionType string        `json:"interfaceConnectionType,omitempty"`
+	EntityScope             string        `json:"entityScope,omitempty"`
+	Mode                    string        `json:"mode,omitempty"`
+	Role                    string        `json:"role,omitempty"`
+	RoleOrder               int           `json:"roleOrder,omitempty"`
+	PortName                string        `json:"portName,omitempty"`
+	DownloadRateLimit       float64       `json:"downloadRateLimit,omitempty"`
+	UplinkID                int           `json:"uplinkID,omitempty"`
+	Username                string        `json:"username,omitempty"`
+	AssocUnderlayID         string        `json:"assocUnderlayID,omitempty"`
+	AssociatedBGPNeighborID string        `json:"associatedBGPNeighborID,omitempty"`
+	AssociatedUnderlayName  string        `json:"associatedUnderlayName,omitempty"`
+	AuxMode                 string        `json:"auxMode,omitempty"`
+	AuxiliaryLink           bool          `json:"auxiliaryLink"`
+	ExternalID              string        `json:"externalID,omitempty"`
 }
 
 // NewUplinkConnection returns a new *UplinkConnection
 func NewUplinkConnection() *UplinkConnection {
 
-	return &UplinkConnection{}
+	return &UplinkConnection{
+		PATEnabled:              true,
+		AddressFamily:           "IPV4",
+		UnderlayEnabled:         true,
+		Inherited:               false,
+		InstallerManaged:        false,
+		InterfaceConnectionType: "AUTOMATIC",
+		Mode:                    "Dynamic",
+		Role:                    "PRIMARY",
+		DownloadRateLimit:       8.0,
+		AuxMode:                 "NONE",
+		AuxiliaryLink:           false,
+	}
 }
 
 // Identity returns the Identity of the object.
@@ -106,16 +149,58 @@ func (o *UplinkConnection) Delete() *bambou.Error {
 	return bambou.CurrentSession().DeleteEntity(o)
 }
 
-// Underlays retrieves the list of child Underlays of the UplinkConnection
-func (o *UplinkConnection) Underlays(info *bambou.FetchingInfo) (UnderlaysList, *bambou.Error) {
+// Metadatas retrieves the list of child Metadatas of the UplinkConnection
+func (o *UplinkConnection) Metadatas(info *bambou.FetchingInfo) (MetadatasList, *bambou.Error) {
 
-	var list UnderlaysList
-	err := bambou.CurrentSession().FetchChildren(o, UnderlayIdentity, &list, info)
+	var list MetadatasList
+	err := bambou.CurrentSession().FetchChildren(o, MetadataIdentity, &list, info)
 	return list, err
 }
 
-// CreateUnderlay creates a new child Underlay under the UplinkConnection
-func (o *UplinkConnection) CreateUnderlay(child *Underlay) *bambou.Error {
+// CreateMetadata creates a new child Metadata under the UplinkConnection
+func (o *UplinkConnection) CreateMetadata(child *Metadata) *bambou.Error {
+
+	return bambou.CurrentSession().CreateChild(o, child)
+}
+
+// BFDSessions retrieves the list of child BFDSessions of the UplinkConnection
+func (o *UplinkConnection) BFDSessions(info *bambou.FetchingInfo) (BFDSessionsList, *bambou.Error) {
+
+	var list BFDSessionsList
+	err := bambou.CurrentSession().FetchChildren(o, BFDSessionIdentity, &list, info)
+	return list, err
+}
+
+// CreateBFDSession creates a new child BFDSession under the UplinkConnection
+func (o *UplinkConnection) CreateBFDSession(child *BFDSession) *bambou.Error {
+
+	return bambou.CurrentSession().CreateChild(o, child)
+}
+
+// GlobalMetadatas retrieves the list of child GlobalMetadatas of the UplinkConnection
+func (o *UplinkConnection) GlobalMetadatas(info *bambou.FetchingInfo) (GlobalMetadatasList, *bambou.Error) {
+
+	var list GlobalMetadatasList
+	err := bambou.CurrentSession().FetchChildren(o, GlobalMetadataIdentity, &list, info)
+	return list, err
+}
+
+// CreateGlobalMetadata creates a new child GlobalMetadata under the UplinkConnection
+func (o *UplinkConnection) CreateGlobalMetadata(child *GlobalMetadata) *bambou.Error {
+
+	return bambou.CurrentSession().CreateChild(o, child)
+}
+
+// CustomProperties retrieves the list of child CustomProperties of the UplinkConnection
+func (o *UplinkConnection) CustomProperties(info *bambou.FetchingInfo) (CustomPropertiesList, *bambou.Error) {
+
+	var list CustomPropertiesList
+	err := bambou.CurrentSession().FetchChildren(o, CustomPropertyIdentity, &list, info)
+	return list, err
+}
+
+// CreateCustomProperty creates a new child CustomProperty under the UplinkConnection
+func (o *UplinkConnection) CreateCustomProperty(child *CustomProperty) *bambou.Error {
 
 	return bambou.CurrentSession().CreateChild(o, child)
 }

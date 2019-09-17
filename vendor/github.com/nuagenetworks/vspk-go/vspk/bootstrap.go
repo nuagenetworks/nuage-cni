@@ -38,26 +38,38 @@ var BootstrapIdentity = bambou.Identity{
 // BootstrapsList represents a list of Bootstraps
 type BootstrapsList []*Bootstrap
 
-// BootstrapsAncestor is the interface of an ancestor of a Bootstrap must implement.
+// BootstrapsAncestor is the interface that an ancestor of a Bootstrap must implement.
+// An Ancestor is defined as an entity that has Bootstrap as a descendant.
+// An Ancestor can get a list of its child Bootstraps, but not necessarily create one.
 type BootstrapsAncestor interface {
 	Bootstraps(*bambou.FetchingInfo) (BootstrapsList, *bambou.Error)
-	CreateBootstraps(*Bootstrap) *bambou.Error
+}
+
+// BootstrapsParent is the interface that a parent of a Bootstrap must implement.
+// A Parent is defined as an entity that has Bootstrap as a child.
+// A Parent is an Ancestor which can create a Bootstrap.
+type BootstrapsParent interface {
+	BootstrapsAncestor
+	CreateBootstrap(*Bootstrap) *bambou.Error
 }
 
 // Bootstrap represents the model of a bootstrap
 type Bootstrap struct {
-	ID                string `json:"ID,omitempty"`
-	ParentID          string `json:"parentID,omitempty"`
-	ParentType        string `json:"parentType,omitempty"`
-	Owner             string `json:"owner,omitempty"`
-	ZFBInfo           string `json:"ZFBInfo,omitempty"`
-	ZFBMatchAttribute string `json:"ZFBMatchAttribute,omitempty"`
-	ZFBMatchValue     string `json:"ZFBMatchValue,omitempty"`
-	LastUpdatedBy     string `json:"lastUpdatedBy,omitempty"`
-	InstallerID       string `json:"installerID,omitempty"`
-	EntityScope       string `json:"entityScope,omitempty"`
-	Status            string `json:"status,omitempty"`
-	ExternalID        string `json:"externalID,omitempty"`
+	ID                   string        `json:"ID,omitempty"`
+	ParentID             string        `json:"parentID,omitempty"`
+	ParentType           string        `json:"parentType,omitempty"`
+	Owner                string        `json:"owner,omitempty"`
+	ZFBInfo              string        `json:"ZFBInfo,omitempty"`
+	ZFBMatchAttribute    string        `json:"ZFBMatchAttribute,omitempty"`
+	ZFBMatchValue        string        `json:"ZFBMatchValue,omitempty"`
+	LastUpdatedBy        string        `json:"lastUpdatedBy,omitempty"`
+	ActivationURL        string        `json:"activationURL,omitempty"`
+	EmbeddedMetadata     []interface{} `json:"embeddedMetadata,omitempty"`
+	InstallerID          string        `json:"installerID,omitempty"`
+	EntityScope          string        `json:"entityScope,omitempty"`
+	AssociatedEntityType string        `json:"associatedEntityType,omitempty"`
+	Status               string        `json:"status,omitempty"`
+	ExternalID           string        `json:"externalID,omitempty"`
 }
 
 // NewBootstrap returns a new *Bootstrap

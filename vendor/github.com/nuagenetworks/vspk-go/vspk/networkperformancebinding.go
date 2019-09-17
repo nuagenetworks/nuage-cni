@@ -38,27 +38,42 @@ var NetworkPerformanceBindingIdentity = bambou.Identity{
 // NetworkPerformanceBindingsList represents a list of NetworkPerformanceBindings
 type NetworkPerformanceBindingsList []*NetworkPerformanceBinding
 
-// NetworkPerformanceBindingsAncestor is the interface of an ancestor of a NetworkPerformanceBinding must implement.
+// NetworkPerformanceBindingsAncestor is the interface that an ancestor of a NetworkPerformanceBinding must implement.
+// An Ancestor is defined as an entity that has NetworkPerformanceBinding as a descendant.
+// An Ancestor can get a list of its child NetworkPerformanceBindings, but not necessarily create one.
 type NetworkPerformanceBindingsAncestor interface {
 	NetworkPerformanceBindings(*bambou.FetchingInfo) (NetworkPerformanceBindingsList, *bambou.Error)
-	CreateNetworkPerformanceBindings(*NetworkPerformanceBinding) *bambou.Error
+}
+
+// NetworkPerformanceBindingsParent is the interface that a parent of a NetworkPerformanceBinding must implement.
+// A Parent is defined as an entity that has NetworkPerformanceBinding as a child.
+// A Parent is an Ancestor which can create a NetworkPerformanceBinding.
+type NetworkPerformanceBindingsParent interface {
+	NetworkPerformanceBindingsAncestor
+	CreateNetworkPerformanceBinding(*NetworkPerformanceBinding) *bambou.Error
 }
 
 // NetworkPerformanceBinding represents the model of a networkperformancebinding
 type NetworkPerformanceBinding struct {
-	ID                             string `json:"ID,omitempty"`
-	ParentID                       string `json:"parentID,omitempty"`
-	ParentType                     string `json:"parentType,omitempty"`
-	Owner                          string `json:"owner,omitempty"`
-	ReadOnly                       bool   `json:"readOnly"`
-	Priority                       int    `json:"priority,omitempty"`
-	AssociatedNetworkMeasurementID string `json:"associatedNetworkMeasurementID,omitempty"`
+	ID                             string        `json:"ID,omitempty"`
+	ParentID                       string        `json:"parentID,omitempty"`
+	ParentType                     string        `json:"parentType,omitempty"`
+	Owner                          string        `json:"owner,omitempty"`
+	LastUpdatedBy                  string        `json:"lastUpdatedBy,omitempty"`
+	ReadOnly                       bool          `json:"readOnly"`
+	EmbeddedMetadata               []interface{} `json:"embeddedMetadata,omitempty"`
+	EntityScope                    string        `json:"entityScope,omitempty"`
+	Priority                       int           `json:"priority,omitempty"`
+	AssociatedNetworkMeasurementID string        `json:"associatedNetworkMeasurementID,omitempty"`
+	ExternalID                     string        `json:"externalID,omitempty"`
 }
 
 // NewNetworkPerformanceBinding returns a new *NetworkPerformanceBinding
 func NewNetworkPerformanceBinding() *NetworkPerformanceBinding {
 
-	return &NetworkPerformanceBinding{}
+	return &NetworkPerformanceBinding{
+		ReadOnly: false,
+	}
 }
 
 // Identity returns the Identity of the object.
@@ -95,4 +110,32 @@ func (o *NetworkPerformanceBinding) Save() *bambou.Error {
 func (o *NetworkPerformanceBinding) Delete() *bambou.Error {
 
 	return bambou.CurrentSession().DeleteEntity(o)
+}
+
+// Metadatas retrieves the list of child Metadatas of the NetworkPerformanceBinding
+func (o *NetworkPerformanceBinding) Metadatas(info *bambou.FetchingInfo) (MetadatasList, *bambou.Error) {
+
+	var list MetadatasList
+	err := bambou.CurrentSession().FetchChildren(o, MetadataIdentity, &list, info)
+	return list, err
+}
+
+// CreateMetadata creates a new child Metadata under the NetworkPerformanceBinding
+func (o *NetworkPerformanceBinding) CreateMetadata(child *Metadata) *bambou.Error {
+
+	return bambou.CurrentSession().CreateChild(o, child)
+}
+
+// GlobalMetadatas retrieves the list of child GlobalMetadatas of the NetworkPerformanceBinding
+func (o *NetworkPerformanceBinding) GlobalMetadatas(info *bambou.FetchingInfo) (GlobalMetadatasList, *bambou.Error) {
+
+	var list GlobalMetadatasList
+	err := bambou.CurrentSession().FetchChildren(o, GlobalMetadataIdentity, &list, info)
+	return list, err
+}
+
+// CreateGlobalMetadata creates a new child GlobalMetadata under the NetworkPerformanceBinding
+func (o *NetworkPerformanceBinding) CreateGlobalMetadata(child *GlobalMetadata) *bambou.Error {
+
+	return bambou.CurrentSession().CreateChild(o, child)
 }

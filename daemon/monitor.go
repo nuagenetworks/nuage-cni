@@ -3,22 +3,7 @@ package daemon
 import (
 	"encoding/json"
 	"fmt"
-	log "github.com/Sirupsen/logrus"
-	"github.com/docker/docker/api/types"
-	dockerClient "github.com/docker/docker/client"
-	vrsSdk "github.com/nuagenetworks/libvrsdk/api"
-	"github.com/nuagenetworks/libvrsdk/api/port"
-	"github.com/nuagenetworks/nuage-cni/client"
-	"github.com/nuagenetworks/nuage-cni/config"
-	"github.com/nuagenetworks/nuage-cni/k8s"
-	"golang.org/x/net/context"
 	"io/ioutil"
-	kapi "k8s.io/kubernetes/pkg/api"
-	krestclient "k8s.io/kubernetes/pkg/client/restclient"
-	kclient "k8s.io/kubernetes/pkg/client/unversioned"
-	"k8s.io/kubernetes/pkg/client/unversioned/clientcmd"
-	"k8s.io/kubernetes/pkg/fields"
-	"k8s.io/kubernetes/pkg/labels"
 	"net/http"
 	"os"
 	"os/exec"
@@ -26,6 +11,20 @@ import (
 	"strings"
 	"syscall"
 	"time"
+
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
+
+	"github.com/docker/docker/api/types"
+	dockerClient "github.com/docker/docker/client"
+	vrsSdk "github.com/nuagenetworks/libvrsdk/api"
+	"github.com/nuagenetworks/libvrsdk/api/port"
+	"github.com/nuagenetworks/nuage-cni/client"
+	"github.com/nuagenetworks/nuage-cni/config"
+	"github.com/nuagenetworks/nuage-cni/k8s"
+	log "github.com/sirupsen/logrus"
+	"golang.org/x/net/context"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 var interruptChannel chan bool
@@ -514,38 +513,21 @@ func getActiveK8SPods(orchestrator string) ([]string, error) {
 
 	log.Infof("Obtaining currently active K8S pods on agent node")
 	var podsList []string
-	var config *krestclient.Config
-	var kubeconfFile string
 	var dir string
-	if isAtomic == true {
-		dir = "/var/usr/share"
-	} else {
-		dir = "/usr/share"
-	}
-	if orchestrator == "k8s" {
-		kubeconfFile = dir + "/vsp-k8s/nuage.kubeconfig"
-	} else {
-		kubeconfFile = dir + "/vsp-openshift/nuage.kubeconfig"
-	}
 
-	loadingRules := &clientcmd.ClientConfigLoadingRules{}
-	loadingRules.ExplicitPath = kubeconfFile
-	loader := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(loadingRules, &clientcmd.ConfigOverrides{})
-	kubeConfig, err := loader.ClientConfig()
+	// creates the in-cluster config
+	config, err := rest.InClusterConfig()
 	if err != nil {
-		log.Errorf("Error loading kubeconfig file")
-		return podsList, err
+		panic(err.Error())
 	}
-
-	config = kubeConfig
-	kubeClient, err := kclient.New(config)
+	// creates the clientset
+	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
-		log.Errorf("Error trying to create kubeclient")
-		return podsList, err
+		panic(err.Error())
 	}
 
-	var listOpts = &kapi.ListOptions{LabelSelector: labels.Everything(), FieldSelector: fields.Everything()}
-	pods, err := kubeClient.Pods(kapi.NamespaceAll).List(*listOpts)
+	var listOpts = metav1.ListOptions{}
+	pods, err := clientset.CoreV1().Pods("").List(*listOpts)
 	if err != nil {
 		log.Errorf("Error occured while fetching pods from k8s api server")
 		return podsList, err

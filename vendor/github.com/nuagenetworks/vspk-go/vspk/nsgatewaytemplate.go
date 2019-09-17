@@ -38,35 +38,48 @@ var NSGatewayTemplateIdentity = bambou.Identity{
 // NSGatewayTemplatesList represents a list of NSGatewayTemplates
 type NSGatewayTemplatesList []*NSGatewayTemplate
 
-// NSGatewayTemplatesAncestor is the interface of an ancestor of a NSGatewayTemplate must implement.
+// NSGatewayTemplatesAncestor is the interface that an ancestor of a NSGatewayTemplate must implement.
+// An Ancestor is defined as an entity that has NSGatewayTemplate as a descendant.
+// An Ancestor can get a list of its child NSGatewayTemplates, but not necessarily create one.
 type NSGatewayTemplatesAncestor interface {
 	NSGatewayTemplates(*bambou.FetchingInfo) (NSGatewayTemplatesList, *bambou.Error)
-	CreateNSGatewayTemplates(*NSGatewayTemplate) *bambou.Error
+}
+
+// NSGatewayTemplatesParent is the interface that a parent of a NSGatewayTemplate must implement.
+// A Parent is defined as an entity that has NSGatewayTemplate as a child.
+// A Parent is an Ancestor which can create a NSGatewayTemplate.
+type NSGatewayTemplatesParent interface {
+	NSGatewayTemplatesAncestor
+	CreateNSGatewayTemplate(*NSGatewayTemplate) *bambou.Error
 }
 
 // NSGatewayTemplate represents the model of a nsgatewaytemplate
 type NSGatewayTemplate struct {
-	ID                            string `json:"ID,omitempty"`
-	ParentID                      string `json:"parentID,omitempty"`
-	ParentType                    string `json:"parentType,omitempty"`
-	Owner                         string `json:"owner,omitempty"`
-	SSHService                    string `json:"SSHService,omitempty"`
-	Name                          string `json:"name,omitempty"`
-	LastUpdatedBy                 string `json:"lastUpdatedBy,omitempty"`
-	Personality                   string `json:"personality,omitempty"`
-	Description                   string `json:"description,omitempty"`
-	InfrastructureAccessProfileID string `json:"infrastructureAccessProfileID,omitempty"`
-	InfrastructureProfileID       string `json:"infrastructureProfileID,omitempty"`
-	InstanceSSHOverride           string `json:"instanceSSHOverride,omitempty"`
-	EnterpriseID                  string `json:"enterpriseID,omitempty"`
-	EntityScope                   string `json:"entityScope,omitempty"`
-	ExternalID                    string `json:"externalID,omitempty"`
+	ID                            string        `json:"ID,omitempty"`
+	ParentID                      string        `json:"parentID,omitempty"`
+	ParentType                    string        `json:"parentType,omitempty"`
+	Owner                         string        `json:"owner,omitempty"`
+	SSHService                    string        `json:"SSHService,omitempty"`
+	Name                          string        `json:"name,omitempty"`
+	LastUpdatedBy                 string        `json:"lastUpdatedBy,omitempty"`
+	Personality                   string        `json:"personality,omitempty"`
+	Description                   string        `json:"description,omitempty"`
+	EmbeddedMetadata              []interface{} `json:"embeddedMetadata,omitempty"`
+	InfrastructureAccessProfileID string        `json:"infrastructureAccessProfileID,omitempty"`
+	InfrastructureProfileID       string        `json:"infrastructureProfileID,omitempty"`
+	InstanceSSHOverride           string        `json:"instanceSSHOverride,omitempty"`
+	EnterpriseID                  string        `json:"enterpriseID,omitempty"`
+	EntityScope                   string        `json:"entityScope,omitempty"`
+	ExternalID                    string        `json:"externalID,omitempty"`
 }
 
 // NewNSGatewayTemplate returns a new *NSGatewayTemplate
 func NewNSGatewayTemplate() *NSGatewayTemplate {
 
-	return &NSGatewayTemplate{}
+	return &NSGatewayTemplate{
+		SSHService:          "ENABLED",
+		InstanceSSHOverride: "DISALLOWED",
+	}
 }
 
 // Identity returns the Identity of the object.

@@ -38,31 +38,44 @@ var VirtualIPIdentity = bambou.Identity{
 // VirtualIPsList represents a list of VirtualIPs
 type VirtualIPsList []*VirtualIP
 
-// VirtualIPsAncestor is the interface of an ancestor of a VirtualIP must implement.
+// VirtualIPsAncestor is the interface that an ancestor of a VirtualIP must implement.
+// An Ancestor is defined as an entity that has VirtualIP as a descendant.
+// An Ancestor can get a list of its child VirtualIPs, but not necessarily create one.
 type VirtualIPsAncestor interface {
 	VirtualIPs(*bambou.FetchingInfo) (VirtualIPsList, *bambou.Error)
-	CreateVirtualIPs(*VirtualIP) *bambou.Error
+}
+
+// VirtualIPsParent is the interface that a parent of a VirtualIP must implement.
+// A Parent is defined as an entity that has VirtualIP as a child.
+// A Parent is an Ancestor which can create a VirtualIP.
+type VirtualIPsParent interface {
+	VirtualIPsAncestor
+	CreateVirtualIP(*VirtualIP) *bambou.Error
 }
 
 // VirtualIP represents the model of a virtualip
 type VirtualIP struct {
-	ID                     string `json:"ID,omitempty"`
-	ParentID               string `json:"parentID,omitempty"`
-	ParentType             string `json:"parentType,omitempty"`
-	Owner                  string `json:"owner,omitempty"`
-	MAC                    string `json:"MAC,omitempty"`
-	LastUpdatedBy          string `json:"lastUpdatedBy,omitempty"`
-	VirtualIP              string `json:"virtualIP,omitempty"`
-	EntityScope            string `json:"entityScope,omitempty"`
-	AssociatedFloatingIPID string `json:"associatedFloatingIPID,omitempty"`
-	SubnetID               string `json:"subnetID,omitempty"`
-	ExternalID             string `json:"externalID,omitempty"`
+	ID                     string        `json:"ID,omitempty"`
+	ParentID               string        `json:"parentID,omitempty"`
+	ParentType             string        `json:"parentType,omitempty"`
+	Owner                  string        `json:"owner,omitempty"`
+	MAC                    string        `json:"MAC,omitempty"`
+	IPType                 string        `json:"IPType,omitempty"`
+	LastUpdatedBy          string        `json:"lastUpdatedBy,omitempty"`
+	VirtualIP              string        `json:"virtualIP,omitempty"`
+	EmbeddedMetadata       []interface{} `json:"embeddedMetadata,omitempty"`
+	EntityScope            string        `json:"entityScope,omitempty"`
+	AssociatedFloatingIPID string        `json:"associatedFloatingIPID,omitempty"`
+	SubnetID               string        `json:"subnetID,omitempty"`
+	ExternalID             string        `json:"externalID,omitempty"`
 }
 
 // NewVirtualIP returns a new *VirtualIP
 func NewVirtualIP() *VirtualIP {
 
-	return &VirtualIP{}
+	return &VirtualIP{
+		IPType: "IPV4",
+	}
 }
 
 // Identity returns the Identity of the object.
@@ -135,10 +148,4 @@ func (o *VirtualIP) EventLogs(info *bambou.FetchingInfo) (EventLogsList, *bambou
 	var list EventLogsList
 	err := bambou.CurrentSession().FetchChildren(o, EventLogIdentity, &list, info)
 	return list, err
-}
-
-// CreateEventLog creates a new child EventLog under the VirtualIP
-func (o *VirtualIP) CreateEventLog(child *EventLog) *bambou.Error {
-
-	return bambou.CurrentSession().CreateChild(o, child)
 }
