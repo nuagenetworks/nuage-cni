@@ -17,6 +17,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/util/keyutil"
 )
 
 var vspK8SConfig = &config.NuageVSPK8SConfig{}
@@ -128,13 +129,11 @@ func getPodMetadataFromNuageK8sMon(podname string, ns string) error {
 	var result = new(NuageKubeMonResp)
 	url := vspK8SConfig.NuageK8SMonServer + "/namespaces/" + ns + "/pods"
 
-	// Load client cert
-	cert, err := tls.LoadX509KeyPair(nuageMonClientCertFile, nuageMonClientKeyFile)
+	cert, err := loadCertFromPemFile()
 	if err != nil {
-		log.Errorf("Error loading client cert file to communicate with Nuage K8S monitor: %v", err)
+		log.Errorf("Error loading client cert file to communicate with Nuage monitor: %v", err)
 		return err
 	}
-
 	// Load CA cert
 	caCert, err := ioutil.ReadFile(nuageMonClientCACertFile)
 	if err != nil {
@@ -313,13 +312,11 @@ func SendPodDeletionNotification(podname string, ns string, orchestrator string)
 
 	url := vspK8SConfig.NuageK8SMonServer + "/namespaces/" + ns + "/pods"
 
-	// Load client cert
-	cert, err := tls.LoadX509KeyPair(nuageMonClientCertFile, nuageMonClientKeyFile)
+	cert, err := loadCertFromPemFile()
 	if err != nil {
 		log.Errorf("Error loading client cert file to communicate with Nuage monitor: %v", err)
 		return err
 	}
-
 	// Load CA cert
 	caCert, err := ioutil.ReadFile(nuageMonClientCACertFile)
 	if err != nil {
@@ -354,4 +351,26 @@ func SendPodDeletionNotification(podname string, ns string, orchestrator string)
 	}
 
 	return err
+}
+
+func loadCertFromPemFile() (tls.Certificate, error) {
+	var cert tls.Certificate
+	pubKeys, err := keyutil.PublicKeysFromFile(nuageMonClientCertFile)
+	if err != nil && len(pubKeys) != 1 {
+		log.Errorf("loading public keys failed %v", err)
+		return cert, err
+	}
+
+	privKey, err := keyutil.PrivateKeyFromFile(nuageMonClientKeyFile)
+	if err != nil {
+		log.Errorf("loading private keys failed %v", err)
+		return cert, err
+	}
+	// Load client cert
+	cert, err = tls.X509KeyPair(pubKeys[0].([]byte), privKey.([]byte))
+	if err != nil {
+		return cert, err
+	}
+
+	return cert, nil
 }
