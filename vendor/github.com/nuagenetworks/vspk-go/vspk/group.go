@@ -38,28 +38,39 @@ var GroupIdentity = bambou.Identity{
 // GroupsList represents a list of Groups
 type GroupsList []*Group
 
-// GroupsAncestor is the interface of an ancestor of a Group must implement.
+// GroupsAncestor is the interface that an ancestor of a Group must implement.
+// An Ancestor is defined as an entity that has Group as a descendant.
+// An Ancestor can get a list of its child Groups, but not necessarily create one.
 type GroupsAncestor interface {
 	Groups(*bambou.FetchingInfo) (GroupsList, *bambou.Error)
-	CreateGroups(*Group) *bambou.Error
+}
+
+// GroupsParent is the interface that a parent of a Group must implement.
+// A Parent is defined as an entity that has Group as a child.
+// A Parent is an Ancestor which can create a Group.
+type GroupsParent interface {
+	GroupsAncestor
+	CreateGroup(*Group) *bambou.Error
 }
 
 // Group represents the model of a group
 type Group struct {
-	ID                  string  `json:"ID,omitempty"`
-	ParentID            string  `json:"parentID,omitempty"`
-	ParentType          string  `json:"parentType,omitempty"`
-	Owner               string  `json:"owner,omitempty"`
-	Name                string  `json:"name,omitempty"`
-	ManagementMode      string  `json:"managementMode,omitempty"`
-	LastUpdatedBy       string  `json:"lastUpdatedBy,omitempty"`
-	AccountRestrictions bool    `json:"accountRestrictions"`
-	Description         string  `json:"description,omitempty"`
-	RestrictionDate     float64 `json:"restrictionDate,omitempty"`
-	EntityScope         string  `json:"entityScope,omitempty"`
-	Role                string  `json:"role,omitempty"`
-	Private             bool    `json:"private"`
-	ExternalID          string  `json:"externalID,omitempty"`
+	ID                  string        `json:"ID,omitempty"`
+	ParentID            string        `json:"parentID,omitempty"`
+	ParentType          string        `json:"parentType,omitempty"`
+	Owner               string        `json:"owner,omitempty"`
+	LDAPGroupDN         string        `json:"LDAPGroupDN,omitempty"`
+	Name                string        `json:"name,omitempty"`
+	ManagementMode      string        `json:"managementMode,omitempty"`
+	LastUpdatedBy       string        `json:"lastUpdatedBy,omitempty"`
+	AccountRestrictions bool          `json:"accountRestrictions"`
+	Description         string        `json:"description,omitempty"`
+	RestrictionDate     float64       `json:"restrictionDate,omitempty"`
+	EmbeddedMetadata    []interface{} `json:"embeddedMetadata,omitempty"`
+	EntityScope         string        `json:"entityScope,omitempty"`
+	Role                string        `json:"role,omitempty"`
+	Private             bool          `json:"private"`
+	ExternalID          string        `json:"externalID,omitempty"`
 }
 
 // NewGroup returns a new *Group
@@ -157,10 +168,4 @@ func (o *Group) EventLogs(info *bambou.FetchingInfo) (EventLogsList, *bambou.Err
 	var list EventLogsList
 	err := bambou.CurrentSession().FetchChildren(o, EventLogIdentity, &list, info)
 	return list, err
-}
-
-// CreateEventLog creates a new child EventLog under the Group
-func (o *Group) CreateEventLog(child *EventLog) *bambou.Error {
-
-	return bambou.CurrentSession().CreateChild(o, child)
 }

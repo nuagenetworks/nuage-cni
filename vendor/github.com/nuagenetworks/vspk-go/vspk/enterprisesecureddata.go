@@ -38,26 +38,37 @@ var EnterpriseSecuredDataIdentity = bambou.Identity{
 // EnterpriseSecuredDatasList represents a list of EnterpriseSecuredDatas
 type EnterpriseSecuredDatasList []*EnterpriseSecuredData
 
-// EnterpriseSecuredDatasAncestor is the interface of an ancestor of a EnterpriseSecuredData must implement.
+// EnterpriseSecuredDatasAncestor is the interface that an ancestor of a EnterpriseSecuredData must implement.
+// An Ancestor is defined as an entity that has EnterpriseSecuredData as a descendant.
+// An Ancestor can get a list of its child EnterpriseSecuredDatas, but not necessarily create one.
 type EnterpriseSecuredDatasAncestor interface {
 	EnterpriseSecuredDatas(*bambou.FetchingInfo) (EnterpriseSecuredDatasList, *bambou.Error)
-	CreateEnterpriseSecuredDatas(*EnterpriseSecuredData) *bambou.Error
+}
+
+// EnterpriseSecuredDatasParent is the interface that a parent of a EnterpriseSecuredData must implement.
+// A Parent is defined as an entity that has EnterpriseSecuredData as a child.
+// A Parent is an Ancestor which can create a EnterpriseSecuredData.
+type EnterpriseSecuredDatasParent interface {
+	EnterpriseSecuredDatasAncestor
+	CreateEnterpriseSecuredData(*EnterpriseSecuredData) *bambou.Error
 }
 
 // EnterpriseSecuredData represents the model of a enterprisesecureddata
 type EnterpriseSecuredData struct {
-	ID                        string `json:"ID,omitempty"`
-	ParentID                  string `json:"parentID,omitempty"`
-	ParentType                string `json:"parentType,omitempty"`
-	Owner                     string `json:"owner,omitempty"`
-	Hash                      string `json:"hash,omitempty"`
-	LastUpdatedBy             string `json:"lastUpdatedBy,omitempty"`
-	Data                      string `json:"data,omitempty"`
-	SekId                     int    `json:"sekId,omitempty"`
-	KeyserverCertSerialNumber string `json:"keyserverCertSerialNumber,omitempty"`
-	SignedHash                string `json:"signedHash,omitempty"`
-	EntityScope               string `json:"entityScope,omitempty"`
-	ExternalID                string `json:"externalID,omitempty"`
+	ID                        string        `json:"ID,omitempty"`
+	ParentID                  string        `json:"parentID,omitempty"`
+	ParentType                string        `json:"parentType,omitempty"`
+	Owner                     string        `json:"owner,omitempty"`
+	Hash                      string        `json:"hash,omitempty"`
+	LastUpdatedBy             string        `json:"lastUpdatedBy,omitempty"`
+	Data                      string        `json:"data,omitempty"`
+	SeedType                  string        `json:"seedType,omitempty"`
+	SekId                     int           `json:"sekId,omitempty"`
+	KeyserverCertSerialNumber string        `json:"keyserverCertSerialNumber,omitempty"`
+	SignedHash                string        `json:"signedHash,omitempty"`
+	EmbeddedMetadata          []interface{} `json:"embeddedMetadata,omitempty"`
+	EntityScope               string        `json:"entityScope,omitempty"`
+	ExternalID                string        `json:"externalID,omitempty"`
 }
 
 // NewEnterpriseSecuredData returns a new *EnterpriseSecuredData

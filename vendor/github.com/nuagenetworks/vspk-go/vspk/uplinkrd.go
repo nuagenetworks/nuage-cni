@@ -38,29 +38,41 @@ var UplinkRDIdentity = bambou.Identity{
 // UplinkRDsList represents a list of UplinkRDs
 type UplinkRDsList []*UplinkRD
 
-// UplinkRDsAncestor is the interface of an ancestor of a UplinkRD must implement.
+// UplinkRDsAncestor is the interface that an ancestor of a UplinkRD must implement.
+// An Ancestor is defined as an entity that has UplinkRD as a descendant.
+// An Ancestor can get a list of its child UplinkRDs, but not necessarily create one.
 type UplinkRDsAncestor interface {
 	UplinkRDs(*bambou.FetchingInfo) (UplinkRDsList, *bambou.Error)
-	CreateUplinkRDs(*UplinkRD) *bambou.Error
+}
+
+// UplinkRDsParent is the interface that a parent of a UplinkRD must implement.
+// A Parent is defined as an entity that has UplinkRD as a child.
+// A Parent is an Ancestor which can create a UplinkRD.
+type UplinkRDsParent interface {
+	UplinkRDsAncestor
+	CreateUplinkRD(*UplinkRD) *bambou.Error
 }
 
 // UplinkRD represents the model of a uplinkroutedistinguisher
 type UplinkRD struct {
-	ID                 string `json:"ID,omitempty"`
-	ParentID           string `json:"parentID,omitempty"`
-	ParentType         string `json:"parentType,omitempty"`
-	Owner              string `json:"owner,omitempty"`
-	LastUpdatedBy      string `json:"lastUpdatedBy,omitempty"`
-	EntityScope        string `json:"entityScope,omitempty"`
-	RouteDistinguisher string `json:"routeDistinguisher,omitempty"`
-	UplinkType         string `json:"uplinkType,omitempty"`
-	ExternalID         string `json:"externalID,omitempty"`
+	ID                 string        `json:"ID,omitempty"`
+	ParentID           string        `json:"parentID,omitempty"`
+	ParentType         string        `json:"parentType,omitempty"`
+	Owner              string        `json:"owner,omitempty"`
+	LastUpdatedBy      string        `json:"lastUpdatedBy,omitempty"`
+	EmbeddedMetadata   []interface{} `json:"embeddedMetadata,omitempty"`
+	EntityScope        string        `json:"entityScope,omitempty"`
+	RouteDistinguisher string        `json:"routeDistinguisher,omitempty"`
+	UplinkType         string        `json:"uplinkType,omitempty"`
+	ExternalID         string        `json:"externalID,omitempty"`
 }
 
 // NewUplinkRD returns a new *UplinkRD
 func NewUplinkRD() *UplinkRD {
 
-	return &UplinkRD{}
+	return &UplinkRD{
+		UplinkType: "RD_PRIMARY1",
+	}
 }
 
 // Identity returns the Identity of the object.

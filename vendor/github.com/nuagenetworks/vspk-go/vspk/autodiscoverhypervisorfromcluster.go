@@ -38,24 +38,34 @@ var AutoDiscoverHypervisorFromClusterIdentity = bambou.Identity{
 // AutoDiscoverHypervisorFromClustersList represents a list of AutoDiscoverHypervisorFromClusters
 type AutoDiscoverHypervisorFromClustersList []*AutoDiscoverHypervisorFromCluster
 
-// AutoDiscoverHypervisorFromClustersAncestor is the interface of an ancestor of a AutoDiscoverHypervisorFromCluster must implement.
+// AutoDiscoverHypervisorFromClustersAncestor is the interface that an ancestor of a AutoDiscoverHypervisorFromCluster must implement.
+// An Ancestor is defined as an entity that has AutoDiscoverHypervisorFromCluster as a descendant.
+// An Ancestor can get a list of its child AutoDiscoverHypervisorFromClusters, but not necessarily create one.
 type AutoDiscoverHypervisorFromClustersAncestor interface {
 	AutoDiscoverHypervisorFromClusters(*bambou.FetchingInfo) (AutoDiscoverHypervisorFromClustersList, *bambou.Error)
-	CreateAutoDiscoverHypervisorFromClusters(*AutoDiscoverHypervisorFromCluster) *bambou.Error
+}
+
+// AutoDiscoverHypervisorFromClustersParent is the interface that a parent of a AutoDiscoverHypervisorFromCluster must implement.
+// A Parent is defined as an entity that has AutoDiscoverHypervisorFromCluster as a child.
+// A Parent is an Ancestor which can create a AutoDiscoverHypervisorFromCluster.
+type AutoDiscoverHypervisorFromClustersParent interface {
+	AutoDiscoverHypervisorFromClustersAncestor
+	CreateAutoDiscoverHypervisorFromCluster(*AutoDiscoverHypervisorFromCluster) *bambou.Error
 }
 
 // AutoDiscoverHypervisorFromCluster represents the model of a autodiscoveredhypervisor
 type AutoDiscoverHypervisorFromCluster struct {
-	ID            string        `json:"ID,omitempty"`
-	ParentID      string        `json:"parentID,omitempty"`
-	ParentType    string        `json:"parentType,omitempty"`
-	Owner         string        `json:"owner,omitempty"`
-	LastUpdatedBy string        `json:"lastUpdatedBy,omitempty"`
-	NetworkList   []interface{} `json:"networkList,omitempty"`
-	EntityScope   string        `json:"entityScope,omitempty"`
-	AssocEntityID string        `json:"assocEntityID,omitempty"`
-	ExternalID    string        `json:"externalID,omitempty"`
-	HypervisorIP  string        `json:"hypervisorIP,omitempty"`
+	ID              string        `json:"ID,omitempty"`
+	ParentID        string        `json:"parentID,omitempty"`
+	ParentType      string        `json:"parentType,omitempty"`
+	Owner           string        `json:"owner,omitempty"`
+	ManagedObjectID string        `json:"managedObjectID,omitempty"`
+	LastUpdatedBy   string        `json:"lastUpdatedBy,omitempty"`
+	NetworkList     []interface{} `json:"networkList,omitempty"`
+	EntityScope     string        `json:"entityScope,omitempty"`
+	AssocEntityID   string        `json:"assocEntityID,omitempty"`
+	ExternalID      string        `json:"externalID,omitempty"`
+	HypervisorIP    string        `json:"hypervisorIP,omitempty"`
 }
 
 // NewAutoDiscoverHypervisorFromCluster returns a new *AutoDiscoverHypervisorFromCluster

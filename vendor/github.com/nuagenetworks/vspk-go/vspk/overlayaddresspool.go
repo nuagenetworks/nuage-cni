@@ -38,23 +38,37 @@ var OverlayAddressPoolIdentity = bambou.Identity{
 // OverlayAddressPoolsList represents a list of OverlayAddressPools
 type OverlayAddressPoolsList []*OverlayAddressPool
 
-// OverlayAddressPoolsAncestor is the interface of an ancestor of a OverlayAddressPool must implement.
+// OverlayAddressPoolsAncestor is the interface that an ancestor of a OverlayAddressPool must implement.
+// An Ancestor is defined as an entity that has OverlayAddressPool as a descendant.
+// An Ancestor can get a list of its child OverlayAddressPools, but not necessarily create one.
 type OverlayAddressPoolsAncestor interface {
 	OverlayAddressPools(*bambou.FetchingInfo) (OverlayAddressPoolsList, *bambou.Error)
-	CreateOverlayAddressPools(*OverlayAddressPool) *bambou.Error
+}
+
+// OverlayAddressPoolsParent is the interface that a parent of a OverlayAddressPool must implement.
+// A Parent is defined as an entity that has OverlayAddressPool as a child.
+// A Parent is an Ancestor which can create a OverlayAddressPool.
+type OverlayAddressPoolsParent interface {
+	OverlayAddressPoolsAncestor
+	CreateOverlayAddressPool(*OverlayAddressPool) *bambou.Error
 }
 
 // OverlayAddressPool represents the model of a overlayaddresspool
 type OverlayAddressPool struct {
-	ID                 string `json:"ID,omitempty"`
-	ParentID           string `json:"parentID,omitempty"`
-	ParentType         string `json:"parentType,omitempty"`
-	Owner              string `json:"owner,omitempty"`
-	Name               string `json:"name,omitempty"`
-	Description        string `json:"description,omitempty"`
-	EndAddressRange    string `json:"endAddressRange,omitempty"`
-	AssociatedDomainID string `json:"associatedDomainID,omitempty"`
-	StartAddressRange  string `json:"startAddressRange,omitempty"`
+	ID                 string        `json:"ID,omitempty"`
+	ParentID           string        `json:"parentID,omitempty"`
+	ParentType         string        `json:"parentType,omitempty"`
+	Owner              string        `json:"owner,omitempty"`
+	IPType             string        `json:"IPType,omitempty"`
+	Name               string        `json:"name,omitempty"`
+	LastUpdatedBy      string        `json:"lastUpdatedBy,omitempty"`
+	Description        string        `json:"description,omitempty"`
+	EmbeddedMetadata   []interface{} `json:"embeddedMetadata,omitempty"`
+	EndAddressRange    string        `json:"endAddressRange,omitempty"`
+	EntityScope        string        `json:"entityScope,omitempty"`
+	AssociatedDomainID string        `json:"associatedDomainID,omitempty"`
+	StartAddressRange  string        `json:"startAddressRange,omitempty"`
+	ExternalID         string        `json:"externalID,omitempty"`
 }
 
 // NewOverlayAddressPool returns a new *OverlayAddressPool
@@ -97,6 +111,34 @@ func (o *OverlayAddressPool) Save() *bambou.Error {
 func (o *OverlayAddressPool) Delete() *bambou.Error {
 
 	return bambou.CurrentSession().DeleteEntity(o)
+}
+
+// Metadatas retrieves the list of child Metadatas of the OverlayAddressPool
+func (o *OverlayAddressPool) Metadatas(info *bambou.FetchingInfo) (MetadatasList, *bambou.Error) {
+
+	var list MetadatasList
+	err := bambou.CurrentSession().FetchChildren(o, MetadataIdentity, &list, info)
+	return list, err
+}
+
+// CreateMetadata creates a new child Metadata under the OverlayAddressPool
+func (o *OverlayAddressPool) CreateMetadata(child *Metadata) *bambou.Error {
+
+	return bambou.CurrentSession().CreateChild(o, child)
+}
+
+// GlobalMetadatas retrieves the list of child GlobalMetadatas of the OverlayAddressPool
+func (o *OverlayAddressPool) GlobalMetadatas(info *bambou.FetchingInfo) (GlobalMetadatasList, *bambou.Error) {
+
+	var list GlobalMetadatasList
+	err := bambou.CurrentSession().FetchChildren(o, GlobalMetadataIdentity, &list, info)
+	return list, err
+}
+
+// CreateGlobalMetadata creates a new child GlobalMetadata under the OverlayAddressPool
+func (o *OverlayAddressPool) CreateGlobalMetadata(child *GlobalMetadata) *bambou.Error {
+
+	return bambou.CurrentSession().CreateChild(o, child)
 }
 
 // OverlayPATNATEntries retrieves the list of child OverlayPATNATEntries of the OverlayAddressPool

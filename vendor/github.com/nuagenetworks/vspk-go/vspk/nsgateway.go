@@ -38,60 +38,112 @@ var NSGatewayIdentity = bambou.Identity{
 // NSGatewaysList represents a list of NSGateways
 type NSGatewaysList []*NSGateway
 
-// NSGatewaysAncestor is the interface of an ancestor of a NSGateway must implement.
+// NSGatewaysAncestor is the interface that an ancestor of a NSGateway must implement.
+// An Ancestor is defined as an entity that has NSGateway as a descendant.
+// An Ancestor can get a list of its child NSGateways, but not necessarily create one.
 type NSGatewaysAncestor interface {
 	NSGateways(*bambou.FetchingInfo) (NSGatewaysList, *bambou.Error)
-	CreateNSGateways(*NSGateway) *bambou.Error
+}
+
+// NSGatewaysParent is the interface that a parent of a NSGateway must implement.
+// A Parent is defined as an entity that has NSGateway as a child.
+// A Parent is an Ancestor which can create a NSGateway.
+type NSGatewaysParent interface {
+	NSGatewaysAncestor
+	CreateNSGateway(*NSGateway) *bambou.Error
 }
 
 // NSGateway represents the model of a nsgateway
 type NSGateway struct {
-	ID                                 string `json:"ID,omitempty"`
-	ParentID                           string `json:"parentID,omitempty"`
-	ParentType                         string `json:"parentType,omitempty"`
-	Owner                              string `json:"owner,omitempty"`
-	MACAddress                         string `json:"MACAddress,omitempty"`
-	NATTraversalEnabled                bool   `json:"NATTraversalEnabled"`
-	SKU                                string `json:"SKU,omitempty"`
-	TPMStatus                          string `json:"TPMStatus,omitempty"`
-	CPUType                            string `json:"CPUType,omitempty"`
-	NSGVersion                         string `json:"NSGVersion,omitempty"`
-	SSHService                         string `json:"SSHService,omitempty"`
-	UUID                               string `json:"UUID,omitempty"`
-	Name                               string `json:"name,omitempty"`
-	Family                             string `json:"family,omitempty"`
-	LastConfigurationReloadTimestamp   int    `json:"lastConfigurationReloadTimestamp,omitempty"`
-	LastUpdatedBy                      string `json:"lastUpdatedBy,omitempty"`
-	DatapathID                         string `json:"datapathID,omitempty"`
-	RedundancyGroupID                  string `json:"redundancyGroupID,omitempty"`
-	TemplateID                         string `json:"templateID,omitempty"`
-	Pending                            bool   `json:"pending"`
-	SerialNumber                       string `json:"serialNumber,omitempty"`
-	DerivedSSHServiceState             string `json:"derivedSSHServiceState,omitempty"`
-	PermittedAction                    string `json:"permittedAction,omitempty"`
-	Personality                        string `json:"personality,omitempty"`
-	Description                        string `json:"description,omitempty"`
-	Libraries                          string `json:"libraries,omitempty"`
-	InheritedSSHServiceState           string `json:"inheritedSSHServiceState,omitempty"`
-	EnterpriseID                       string `json:"enterpriseID,omitempty"`
-	EntityScope                        string `json:"entityScope,omitempty"`
-	LocationID                         string `json:"locationID,omitempty"`
-	ConfigurationReloadState           string `json:"configurationReloadState,omitempty"`
-	ConfigurationStatus                string `json:"configurationStatus,omitempty"`
-	BootstrapID                        string `json:"bootstrapID,omitempty"`
-	BootstrapStatus                    string `json:"bootstrapStatus,omitempty"`
-	AssociatedGatewaySecurityID        string `json:"associatedGatewaySecurityID,omitempty"`
-	AssociatedGatewaySecurityProfileID string `json:"associatedGatewaySecurityProfileID,omitempty"`
-	AssociatedNSGInfoID                string `json:"associatedNSGInfoID,omitempty"`
-	AutoDiscGatewayID                  string `json:"autoDiscGatewayID,omitempty"`
-	ExternalID                         string `json:"externalID,omitempty"`
-	SystemID                           string `json:"systemID,omitempty"`
+	ID                                   string        `json:"ID,omitempty"`
+	ParentID                             string        `json:"parentID,omitempty"`
+	ParentType                           string        `json:"parentType,omitempty"`
+	Owner                                string        `json:"owner,omitempty"`
+	MACAddress                           string        `json:"MACAddress,omitempty"`
+	AARApplicationReleaseDate            string        `json:"AARApplicationReleaseDate,omitempty"`
+	AARApplicationVersion                string        `json:"AARApplicationVersion,omitempty"`
+	NATTraversalEnabled                  bool          `json:"NATTraversalEnabled"`
+	TCPMSSEnabled                        bool          `json:"TCPMSSEnabled"`
+	TCPMaximumSegmentSize                int           `json:"TCPMaximumSegmentSize,omitempty"`
+	ZFBMatchAttribute                    string        `json:"ZFBMatchAttribute,omitempty"`
+	ZFBMatchValue                        string        `json:"ZFBMatchValue,omitempty"`
+	BIOSReleaseDate                      string        `json:"BIOSReleaseDate,omitempty"`
+	BIOSVersion                          string        `json:"BIOSVersion,omitempty"`
+	SKU                                  string        `json:"SKU,omitempty"`
+	TPMStatus                            string        `json:"TPMStatus,omitempty"`
+	TPMVersion                           string        `json:"TPMVersion,omitempty"`
+	CPUType                              string        `json:"CPUType,omitempty"`
+	VSDAARApplicationVersion             string        `json:"VSDAARApplicationVersion,omitempty"`
+	NSGVersion                           string        `json:"NSGVersion,omitempty"`
+	SSHService                           string        `json:"SSHService,omitempty"`
+	UUID                                 string        `json:"UUID,omitempty"`
+	Name                                 string        `json:"name,omitempty"`
+	Family                               string        `json:"family,omitempty"`
+	LastConfigurationReloadTimestamp     int           `json:"lastConfigurationReloadTimestamp,omitempty"`
+	LastUpdatedBy                        string        `json:"lastUpdatedBy,omitempty"`
+	DatapathID                           string        `json:"datapathID,omitempty"`
+	GatewayConfigRawVersion              string        `json:"gatewayConfigRawVersion,omitempty"`
+	GatewayConfigVersion                 string        `json:"gatewayConfigVersion,omitempty"`
+	GatewayConnected                     bool          `json:"gatewayConnected"`
+	RedundancyGroupID                    string        `json:"redundancyGroupID,omitempty"`
+	TemplateID                           string        `json:"templateID,omitempty"`
+	Pending                              bool          `json:"pending"`
+	SerialNumber                         string        `json:"serialNumber,omitempty"`
+	DerivedSSHServiceState               string        `json:"derivedSSHServiceState,omitempty"`
+	PermittedAction                      string        `json:"permittedAction,omitempty"`
+	Personality                          string        `json:"personality,omitempty"`
+	Description                          string        `json:"description,omitempty"`
+	NetworkAcceleration                  string        `json:"networkAcceleration,omitempty"`
+	Libraries                            string        `json:"libraries,omitempty"`
+	EmbeddedMetadata                     []interface{} `json:"embeddedMetadata,omitempty"`
+	InheritedSSHServiceState             string        `json:"inheritedSSHServiceState,omitempty"`
+	EnterpriseID                         string        `json:"enterpriseID,omitempty"`
+	EntityScope                          string        `json:"entityScope,omitempty"`
+	LocationID                           string        `json:"locationID,omitempty"`
+	ConfigurationReloadState             string        `json:"configurationReloadState,omitempty"`
+	ConfigurationStatus                  string        `json:"configurationStatus,omitempty"`
+	ConfigureLoadBalancing               string        `json:"configureLoadBalancing,omitempty"`
+	ControlTrafficCOSValue               int           `json:"controlTrafficCOSValue,omitempty"`
+	ControlTrafficDSCPValue              int           `json:"controlTrafficDSCPValue,omitempty"`
+	BootstrapID                          string        `json:"bootstrapID,omitempty"`
+	BootstrapStatus                      string        `json:"bootstrapStatus,omitempty"`
+	OperationMode                        string        `json:"operationMode,omitempty"`
+	OperationStatus                      string        `json:"operationStatus,omitempty"`
+	ProductName                          string        `json:"productName,omitempty"`
+	AssociatedGatewaySecurityID          string        `json:"associatedGatewaySecurityID,omitempty"`
+	AssociatedGatewaySecurityProfileID   string        `json:"associatedGatewaySecurityProfileID,omitempty"`
+	AssociatedNSGInfoID                  string        `json:"associatedNSGInfoID,omitempty"`
+	AssociatedNSGUpgradeProfileID        string        `json:"associatedNSGUpgradeProfileID,omitempty"`
+	AssociatedOverlayManagementProfileID string        `json:"associatedOverlayManagementProfileID,omitempty"`
+	Functions                            []interface{} `json:"functions,omitempty"`
+	TunnelShaping                        string        `json:"tunnelShaping,omitempty"`
+	AutoDiscGatewayID                    string        `json:"autoDiscGatewayID,omitempty"`
+	ExternalID                           string        `json:"externalID,omitempty"`
+	SyslogLevel                          string        `json:"syslogLevel,omitempty"`
+	SystemID                             string        `json:"systemID,omitempty"`
 }
 
 // NewNSGateway returns a new *NSGateway
 func NewNSGateway() *NSGateway {
 
-	return &NSGateway{}
+	return &NSGateway{
+		TCPMSSEnabled:                    false,
+		TCPMaximumSegmentSize:            1330,
+		ZFBMatchAttribute:                "NONE",
+		TPMStatus:                        "UNKNOWN",
+		SSHService:                       "INHERITED",
+		LastConfigurationReloadTimestamp: -1,
+		GatewayConnected:                 false,
+		NetworkAcceleration:              "NONE",
+		InheritedSSHServiceState:         "ENABLED",
+		ConfigurationReloadState:         "UNKNOWN",
+		ConfigurationStatus:              "UNKNOWN",
+		ConfigureLoadBalancing:           "INHERITED",
+		ControlTrafficCOSValue:           7,
+		ControlTrafficDSCPValue:          56,
+		TunnelShaping:                    "DISABLED",
+		SyslogLevel:                      "INFO",
+	}
 }
 
 // Identity returns the Identity of the object.
@@ -130,18 +182,20 @@ func (o *NSGateway) Delete() *bambou.Error {
 	return bambou.CurrentSession().DeleteEntity(o)
 }
 
+// Patchs retrieves the list of child Patchs of the NSGateway
+func (o *NSGateway) Patchs(info *bambou.FetchingInfo) (PatchsList, *bambou.Error) {
+
+	var list PatchsList
+	err := bambou.CurrentSession().FetchChildren(o, PatchIdentity, &list, info)
+	return list, err
+}
+
 // GatewaySecurities retrieves the list of child GatewaySecurities of the NSGateway
 func (o *NSGateway) GatewaySecurities(info *bambou.FetchingInfo) (GatewaySecuritiesList, *bambou.Error) {
 
 	var list GatewaySecuritiesList
 	err := bambou.CurrentSession().FetchChildren(o, GatewaySecurityIdentity, &list, info)
 	return list, err
-}
-
-// CreateGatewaySecurity creates a new child GatewaySecurity under the NSGateway
-func (o *NSGateway) CreateGatewaySecurity(child *GatewaySecurity) *bambou.Error {
-
-	return bambou.CurrentSession().CreateChild(o, child)
 }
 
 // PATNATPools retrieves the list of child PATNATPools of the NSGateway
@@ -191,18 +245,26 @@ func (o *NSGateway) CreateMetadata(child *Metadata) *bambou.Error {
 	return bambou.CurrentSession().CreateChild(o, child)
 }
 
+// WirelessPorts retrieves the list of child WirelessPorts of the NSGateway
+func (o *NSGateway) WirelessPorts(info *bambou.FetchingInfo) (WirelessPortsList, *bambou.Error) {
+
+	var list WirelessPortsList
+	err := bambou.CurrentSession().FetchChildren(o, WirelessPortIdentity, &list, info)
+	return list, err
+}
+
+// CreateWirelessPort creates a new child WirelessPort under the NSGateway
+func (o *NSGateway) CreateWirelessPort(child *WirelessPort) *bambou.Error {
+
+	return bambou.CurrentSession().CreateChild(o, child)
+}
+
 // Alarms retrieves the list of child Alarms of the NSGateway
 func (o *NSGateway) Alarms(info *bambou.FetchingInfo) (AlarmsList, *bambou.Error) {
 
 	var list AlarmsList
 	err := bambou.CurrentSession().FetchChildren(o, AlarmIdentity, &list, info)
 	return list, err
-}
-
-// CreateAlarm creates a new child Alarm under the NSGateway
-func (o *NSGateway) CreateAlarm(child *Alarm) *bambou.Error {
-
-	return bambou.CurrentSession().CreateChild(o, child)
 }
 
 // GlobalMetadatas retrieves the list of child GlobalMetadatas of the NSGateway
@@ -219,18 +281,20 @@ func (o *NSGateway) CreateGlobalMetadata(child *GlobalMetadata) *bambou.Error {
 	return bambou.CurrentSession().CreateChild(o, child)
 }
 
+// VNFs retrieves the list of child VNFs of the NSGateway
+func (o *NSGateway) VNFs(info *bambou.FetchingInfo) (VNFsList, *bambou.Error) {
+
+	var list VNFsList
+	err := bambou.CurrentSession().FetchChildren(o, VNFIdentity, &list, info)
+	return list, err
+}
+
 // InfrastructureConfigs retrieves the list of child InfrastructureConfigs of the NSGateway
 func (o *NSGateway) InfrastructureConfigs(info *bambou.FetchingInfo) (InfrastructureConfigsList, *bambou.Error) {
 
 	var list InfrastructureConfigsList
 	err := bambou.CurrentSession().FetchChildren(o, InfrastructureConfigIdentity, &list, info)
 	return list, err
-}
-
-// CreateInfrastructureConfig creates a new child InfrastructureConfig under the NSGateway
-func (o *NSGateway) CreateInfrastructureConfig(child *InfrastructureConfig) *bambou.Error {
-
-	return bambou.CurrentSession().CreateChild(o, child)
 }
 
 // EnterprisePermissions retrieves the list of child EnterprisePermissions of the NSGateway
@@ -269,22 +333,16 @@ func (o *NSGateway) Locations(info *bambou.FetchingInfo) (LocationsList, *bambou
 	return list, err
 }
 
-// CreateLocation creates a new child Location under the NSGateway
-func (o *NSGateway) CreateLocation(child *Location) *bambou.Error {
+// Commands retrieves the list of child Commands of the NSGateway
+func (o *NSGateway) Commands(info *bambou.FetchingInfo) (CommandsList, *bambou.Error) {
 
-	return bambou.CurrentSession().CreateChild(o, child)
-}
-
-// Monitorscopes retrieves the list of child Monitorscopes of the NSGateway
-func (o *NSGateway) Monitorscopes(info *bambou.FetchingInfo) (MonitorscopesList, *bambou.Error) {
-
-	var list MonitorscopesList
-	err := bambou.CurrentSession().FetchChildren(o, MonitorscopeIdentity, &list, info)
+	var list CommandsList
+	err := bambou.CurrentSession().FetchChildren(o, CommandIdentity, &list, info)
 	return list, err
 }
 
-// CreateMonitorscope creates a new child Monitorscope under the NSGateway
-func (o *NSGateway) CreateMonitorscope(child *Monitorscope) *bambou.Error {
+// CreateCommand creates a new child Command under the NSGateway
+func (o *NSGateway) CreateCommand(child *Command) *bambou.Error {
 
 	return bambou.CurrentSession().CreateChild(o, child)
 }
@@ -297,24 +355,42 @@ func (o *NSGateway) Bootstraps(info *bambou.FetchingInfo) (BootstrapsList, *bamb
 	return list, err
 }
 
-// CreateBootstrap creates a new child Bootstrap under the NSGateway
-func (o *NSGateway) CreateBootstrap(child *Bootstrap) *bambou.Error {
-
-	return bambou.CurrentSession().CreateChild(o, child)
-}
-
-// BootstrapActivations retrieves the list of child BootstrapActivations of the NSGateway
-func (o *NSGateway) BootstrapActivations(info *bambou.FetchingInfo) (BootstrapActivationsList, *bambou.Error) {
-
-	var list BootstrapActivationsList
-	err := bambou.CurrentSession().FetchChildren(o, BootstrapActivationIdentity, &list, info)
-	return list, err
-}
-
 // CreateBootstrapActivation creates a new child BootstrapActivation under the NSGateway
 func (o *NSGateway) CreateBootstrapActivation(child *BootstrapActivation) *bambou.Error {
 
 	return bambou.CurrentSession().CreateChild(o, child)
+}
+
+// NSPortInfos retrieves the list of child NSPortInfos of the NSGateway
+func (o *NSGateway) NSPortInfos(info *bambou.FetchingInfo) (NSPortInfosList, *bambou.Error) {
+
+	var list NSPortInfosList
+	err := bambou.CurrentSession().FetchChildren(o, NSPortInfoIdentity, &list, info)
+	return list, err
+}
+
+// UplinkConnections retrieves the list of child UplinkConnections of the NSGateway
+func (o *NSGateway) UplinkConnections(info *bambou.FetchingInfo) (UplinkConnectionsList, *bambou.Error) {
+
+	var list UplinkConnectionsList
+	err := bambou.CurrentSession().FetchChildren(o, UplinkConnectionIdentity, &list, info)
+	return list, err
+}
+
+// NSGatewayMonitors retrieves the list of child NSGatewayMonitors of the NSGateway
+func (o *NSGateway) NSGatewayMonitors(info *bambou.FetchingInfo) (NSGatewayMonitorsList, *bambou.Error) {
+
+	var list NSGatewayMonitorsList
+	err := bambou.CurrentSession().FetchChildren(o, NSGatewayMonitorIdentity, &list, info)
+	return list, err
+}
+
+// NSGatewaySummaries retrieves the list of child NSGatewaySummaries of the NSGateway
+func (o *NSGateway) NSGatewaySummaries(info *bambou.FetchingInfo) (NSGatewaySummariesList, *bambou.Error) {
+
+	var list NSGatewaySummariesList
+	err := bambou.CurrentSession().FetchChildren(o, NSGatewaySummaryIdentity, &list, info)
+	return list, err
 }
 
 // NSGInfos retrieves the list of child NSGInfos of the NSGateway
@@ -323,12 +399,6 @@ func (o *NSGateway) NSGInfos(info *bambou.FetchingInfo) (NSGInfosList, *bambou.E
 	var list NSGInfosList
 	err := bambou.CurrentSession().FetchChildren(o, NSGInfoIdentity, &list, info)
 	return list, err
-}
-
-// CreateNSGInfo creates a new child NSGInfo under the NSGateway
-func (o *NSGateway) CreateNSGInfo(child *NSGInfo) *bambou.Error {
-
-	return bambou.CurrentSession().CreateChild(o, child)
 }
 
 // NSPorts retrieves the list of child NSPorts of the NSGateway
@@ -353,22 +423,10 @@ func (o *NSGateway) Subnets(info *bambou.FetchingInfo) (SubnetsList, *bambou.Err
 	return list, err
 }
 
-// CreateSubnet creates a new child Subnet under the NSGateway
-func (o *NSGateway) CreateSubnet(child *Subnet) *bambou.Error {
-
-	return bambou.CurrentSession().CreateChild(o, child)
-}
-
 // EventLogs retrieves the list of child EventLogs of the NSGateway
 func (o *NSGateway) EventLogs(info *bambou.FetchingInfo) (EventLogsList, *bambou.Error) {
 
 	var list EventLogsList
 	err := bambou.CurrentSession().FetchChildren(o, EventLogIdentity, &list, info)
 	return list, err
-}
-
-// CreateEventLog creates a new child EventLog under the NSGateway
-func (o *NSGateway) CreateEventLog(child *EventLog) *bambou.Error {
-
-	return bambou.CurrentSession().CreateChild(o, child)
 }

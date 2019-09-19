@@ -1,10 +1,11 @@
 package ovsdb
 
 import (
-	"github.com/nuagenetworks/libvrsdk/api/entity"
-	"github.com/socketplane/libovsdb"
 	"reflect"
 	"strings"
+
+	"github.com/nuagenetworks/libvrsdk/api/entity"
+	"github.com/socketplane/libovsdb"
 )
 
 // These constants describe the Nuage_VM_Table

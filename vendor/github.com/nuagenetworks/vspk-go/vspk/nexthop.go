@@ -38,23 +38,35 @@ var NextHopIdentity = bambou.Identity{
 // NextHopsList represents a list of NextHops
 type NextHopsList []*NextHop
 
-// NextHopsAncestor is the interface of an ancestor of a NextHop must implement.
+// NextHopsAncestor is the interface that an ancestor of a NextHop must implement.
+// An Ancestor is defined as an entity that has NextHop as a descendant.
+// An Ancestor can get a list of its child NextHops, but not necessarily create one.
 type NextHopsAncestor interface {
 	NextHops(*bambou.FetchingInfo) (NextHopsList, *bambou.Error)
-	CreateNextHops(*NextHop) *bambou.Error
+}
+
+// NextHopsParent is the interface that a parent of a NextHop must implement.
+// A Parent is defined as an entity that has NextHop as a child.
+// A Parent is an Ancestor which can create a NextHop.
+type NextHopsParent interface {
+	NextHopsAncestor
+	CreateNextHop(*NextHop) *bambou.Error
 }
 
 // NextHop represents the model of a nexthop
 type NextHop struct {
-	ID                 string `json:"ID,omitempty"`
-	ParentID           string `json:"parentID,omitempty"`
-	ParentType         string `json:"parentType,omitempty"`
-	Owner              string `json:"owner,omitempty"`
-	LastUpdatedBy      string `json:"lastUpdatedBy,omitempty"`
-	EntityScope        string `json:"entityScope,omitempty"`
-	RouteDistinguisher string `json:"routeDistinguisher,omitempty"`
-	Ip                 string `json:"ip,omitempty"`
-	ExternalID         string `json:"externalID,omitempty"`
+	ID                 string        `json:"ID,omitempty"`
+	ParentID           string        `json:"parentID,omitempty"`
+	ParentType         string        `json:"parentType,omitempty"`
+	Owner              string        `json:"owner,omitempty"`
+	IPType             string        `json:"IPType,omitempty"`
+	LastUpdatedBy      string        `json:"lastUpdatedBy,omitempty"`
+	EmbeddedMetadata   []interface{} `json:"embeddedMetadata,omitempty"`
+	EntityScope        string        `json:"entityScope,omitempty"`
+	RouteDistinguisher string        `json:"routeDistinguisher,omitempty"`
+	Ip                 string        `json:"ip,omitempty"`
+	ExternalID         string        `json:"externalID,omitempty"`
+	Type               string        `json:"type,omitempty"`
 }
 
 // NewNextHop returns a new *NextHop

@@ -2,10 +2,11 @@ package api
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/nuagenetworks/libvrsdk/api/entity"
 	"github.com/nuagenetworks/libvrsdk/ovsdb"
 	"github.com/socketplane/libovsdb"
-	"strings"
 )
 
 // EntityInfo represents the information about an entity that needs to provided by the user to VRS
@@ -51,6 +52,10 @@ func (vrsConnection *VRSConnection) CreateEntity(info EntityInfo) error {
 		NuageEnterprise: info.Metadata[entity.MetadataKeyEnterprise],
 		Metadata:        metadata,
 		Ports:           info.Ports,
+		Event:           int(entity.EventCategoryDefined),
+		EventType:       int(entity.EventDefinedAdded),
+		State:           int(entity.Running),
+		Reason:          int(entity.RunningUnknown),
 	}
 
 	if info.Events != nil {
@@ -58,11 +63,6 @@ func (vrsConnection *VRSConnection) CreateEntity(info EntityInfo) error {
 		nuageVMTableRow.EventType = int(info.Events.EntityEventType)
 		nuageVMTableRow.State = int(info.Events.EntityState)
 		nuageVMTableRow.Reason = int(info.Events.EntityReason)
-	} else {
-		nuageVMTableRow.Event = int(entity.EventCategoryDefined)
-		nuageVMTableRow.EventType = int(entity.EventDefinedAdded)
-		nuageVMTableRow.State = int(entity.Running)
-		nuageVMTableRow.Reason = int(entity.RunningUnknown)
 	}
 
 	if err := vrsConnection.vmTable.InsertRow(vrsConnection.ovsdbClient, &nuageVMTableRow); err != nil {
@@ -76,6 +76,17 @@ func (vrsConnection *VRSConnection) CreateEntity(info EntityInfo) error {
 func (vrsConnection *VRSConnection) DestroyEntity(uuid string) error {
 
 	condition := []string{ovsdb.NuageVMTableColumnVMUUID, "==", uuid}
+	if err := vrsConnection.vmTable.DeleteRow(vrsConnection.ovsdbClient, condition); err != nil {
+		return fmt.Errorf("Unable to delete the entity from VRS %v", err)
+	}
+
+	return nil
+}
+
+// DestroyEntityByName removes an entity from the Nuage VRS
+func (vrsConnection *VRSConnection) DestroyEntityByName(name string) error {
+
+	condition := []string{ovsdb.NuageVMTableColumnVMName, "==", name}
 	if err := vrsConnection.vmTable.DeleteRow(vrsConnection.ovsdbClient, condition); err != nil {
 		return fmt.Errorf("Unable to delete the entity from VRS %v", err)
 	}
@@ -160,20 +171,20 @@ func (vrsConnection *VRSConnection) GetEntityPorts(uuid string) ([]string, error
 	return ovsdb.UnMarshallOVSStringSet(row[ovsdb.NuageVMTableColumnPorts])
 }
 
-// GetEntityName retrieves entity name from OVSDB
-func (vrsConnection *VRSConnection) GetEntityName(uuid string) (string, error) {
+// GetEntityPortsByName retreives the list of all attached ports by given name
+func (vrsConnection *VRSConnection) GetEntityPortsByName(name string) ([]string, error) {
 
 	readRowArgs := ovsdb.ReadRowArgs{
-		Columns:   []string{ovsdb.NuageVMTableColumnVMName},
-		Condition: []string{ovsdb.NuageVMTableColumnVMUUID, "==", uuid},
+		Columns:   []string{ovsdb.NuageVMTableColumnPorts},
+		Condition: []string{ovsdb.NuageVMTableColumnVMName, "==", name},
 	}
 
 	row, err := vrsConnection.vmTable.ReadRow(vrsConnection.ovsdbClient, readRowArgs)
 	if err != nil {
-		return "", fmt.Errorf("Unable to get VM name")
+		return []string{}, fmt.Errorf("Unable to get port information for the VM")
 	}
 
-	return row[ovsdb.NuageVMTableColumnVMName].(string), err
+	return ovsdb.UnMarshallOVSStringSet(row[ovsdb.NuageVMTableColumnPorts])
 }
 
 // SetEntityState sets the entity state
@@ -270,4 +281,43 @@ func (vrsConnection *VRSConnection) CheckEntityExists(id string) (bool, error) {
 	}
 
 	return false, err
+}
+
+// CheckEntityExistsByName verifies if a specified entity exists in VRS
+func (vrsConnection *VRSConnection) CheckEntityExistsByName(name string) (bool, error) {
+	readRowArgs := ovsdb.ReadRowArgs{
+		Condition: []string{ovsdb.NuageVMTableColumnVMName, "==", name},
+		Columns:   []string{ovsdb.NuageVMTableColumnVMName},
+	}
+
+	rows, err := vrsConnection.vmTable.ReadRows(vrsConnection.ovsdbClient, readRowArgs)
+	if err != nil {
+		return false, fmt.Errorf("OVSDB read error %v", err)
+	}
+
+	if len(rows) == 0 {
+		return false, err
+	}
+
+	return true, err
+}
+
+// GetEntityName retrieves entity name from OVSDB
+func (vrsConnection *VRSConnection) GetEntityName(uuid string) (string, error) {
+
+	readRowArgs := ovsdb.ReadRowArgs{
+		Columns:   []string{ovsdb.NuageVMTableColumnVMName},
+		Condition: []string{ovsdb.NuageVMTableColumnVMUUID, "==", uuid},
+	}
+
+	row, err := vrsConnection.vmTable.ReadRow(vrsConnection.ovsdbClient, readRowArgs)
+	if err != nil {
+		return "", fmt.Errorf("Unable to get VM name %v", err)
+	}
+
+	if _, ok := row[ovsdb.NuageVMTableColumnVMName]; !ok {
+		return "", fmt.Errorf("no matching vm with uuid %s found", uuid)
+	}
+
+	return row[ovsdb.NuageVMTableColumnVMName].(string), err
 }

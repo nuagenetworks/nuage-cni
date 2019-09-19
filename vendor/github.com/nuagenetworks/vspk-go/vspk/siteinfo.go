@@ -38,26 +38,36 @@ var SiteInfoIdentity = bambou.Identity{
 // SiteInfosList represents a list of SiteInfos
 type SiteInfosList []*SiteInfo
 
-// SiteInfosAncestor is the interface of an ancestor of a SiteInfo must implement.
+// SiteInfosAncestor is the interface that an ancestor of a SiteInfo must implement.
+// An Ancestor is defined as an entity that has SiteInfo as a descendant.
+// An Ancestor can get a list of its child SiteInfos, but not necessarily create one.
 type SiteInfosAncestor interface {
 	SiteInfos(*bambou.FetchingInfo) (SiteInfosList, *bambou.Error)
-	CreateSiteInfos(*SiteInfo) *bambou.Error
+}
+
+// SiteInfosParent is the interface that a parent of a SiteInfo must implement.
+// A Parent is defined as an entity that has SiteInfo as a child.
+// A Parent is an Ancestor which can create a SiteInfo.
+type SiteInfosParent interface {
+	SiteInfosAncestor
+	CreateSiteInfo(*SiteInfo) *bambou.Error
 }
 
 // SiteInfo represents the model of a site
 type SiteInfo struct {
-	ID             string `json:"ID,omitempty"`
-	ParentID       string `json:"parentID,omitempty"`
-	ParentType     string `json:"parentType,omitempty"`
-	Owner          string `json:"owner,omitempty"`
-	Name           string `json:"name,omitempty"`
-	LastUpdatedBy  string `json:"lastUpdatedBy,omitempty"`
-	Address        string `json:"address,omitempty"`
-	Description    string `json:"description,omitempty"`
-	SiteIdentifier string `json:"siteIdentifier,omitempty"`
-	XmppDomain     string `json:"xmppDomain,omitempty"`
-	EntityScope    string `json:"entityScope,omitempty"`
-	ExternalID     string `json:"externalID,omitempty"`
+	ID               string        `json:"ID,omitempty"`
+	ParentID         string        `json:"parentID,omitempty"`
+	ParentType       string        `json:"parentType,omitempty"`
+	Owner            string        `json:"owner,omitempty"`
+	Name             string        `json:"name,omitempty"`
+	LastUpdatedBy    string        `json:"lastUpdatedBy,omitempty"`
+	Address          string        `json:"address,omitempty"`
+	Description      string        `json:"description,omitempty"`
+	SiteIdentifier   string        `json:"siteIdentifier,omitempty"`
+	EmbeddedMetadata []interface{} `json:"embeddedMetadata,omitempty"`
+	XmppDomain       string        `json:"xmppDomain,omitempty"`
+	EntityScope      string        `json:"entityScope,omitempty"`
+	ExternalID       string        `json:"externalID,omitempty"`
 }
 
 // NewSiteInfo returns a new *SiteInfo

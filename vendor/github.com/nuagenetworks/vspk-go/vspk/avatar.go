@@ -38,22 +38,32 @@ var AvatarIdentity = bambou.Identity{
 // AvatarsList represents a list of Avatars
 type AvatarsList []*Avatar
 
-// AvatarsAncestor is the interface of an ancestor of a Avatar must implement.
+// AvatarsAncestor is the interface that an ancestor of a Avatar must implement.
+// An Ancestor is defined as an entity that has Avatar as a descendant.
+// An Ancestor can get a list of its child Avatars, but not necessarily create one.
 type AvatarsAncestor interface {
 	Avatars(*bambou.FetchingInfo) (AvatarsList, *bambou.Error)
-	CreateAvatars(*Avatar) *bambou.Error
+}
+
+// AvatarsParent is the interface that a parent of a Avatar must implement.
+// A Parent is defined as an entity that has Avatar as a child.
+// A Parent is an Ancestor which can create a Avatar.
+type AvatarsParent interface {
+	AvatarsAncestor
+	CreateAvatar(*Avatar) *bambou.Error
 }
 
 // Avatar represents the model of a avatar
 type Avatar struct {
-	ID            string `json:"ID,omitempty"`
-	ParentID      string `json:"parentID,omitempty"`
-	ParentType    string `json:"parentType,omitempty"`
-	Owner         string `json:"owner,omitempty"`
-	LastUpdatedBy string `json:"lastUpdatedBy,omitempty"`
-	EntityScope   string `json:"entityScope,omitempty"`
-	ExternalID    string `json:"externalID,omitempty"`
-	Type          string `json:"type,omitempty"`
+	ID               string        `json:"ID,omitempty"`
+	ParentID         string        `json:"parentID,omitempty"`
+	ParentType       string        `json:"parentType,omitempty"`
+	Owner            string        `json:"owner,omitempty"`
+	LastUpdatedBy    string        `json:"lastUpdatedBy,omitempty"`
+	EmbeddedMetadata []interface{} `json:"embeddedMetadata,omitempty"`
+	EntityScope      string        `json:"entityScope,omitempty"`
+	ExternalID       string        `json:"externalID,omitempty"`
+	Type             string        `json:"type,omitempty"`
 }
 
 // NewAvatar returns a new *Avatar
