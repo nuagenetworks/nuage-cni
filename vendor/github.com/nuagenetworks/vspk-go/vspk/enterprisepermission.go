@@ -38,27 +38,37 @@ var EnterprisePermissionIdentity = bambou.Identity{
 // EnterprisePermissionsList represents a list of EnterprisePermissions
 type EnterprisePermissionsList []*EnterprisePermission
 
-// EnterprisePermissionsAncestor is the interface of an ancestor of a EnterprisePermission must implement.
+// EnterprisePermissionsAncestor is the interface that an ancestor of a EnterprisePermission must implement.
+// An Ancestor is defined as an entity that has EnterprisePermission as a descendant.
+// An Ancestor can get a list of its child EnterprisePermissions, but not necessarily create one.
 type EnterprisePermissionsAncestor interface {
 	EnterprisePermissions(*bambou.FetchingInfo) (EnterprisePermissionsList, *bambou.Error)
-	CreateEnterprisePermissions(*EnterprisePermission) *bambou.Error
+}
+
+// EnterprisePermissionsParent is the interface that a parent of a EnterprisePermission must implement.
+// A Parent is defined as an entity that has EnterprisePermission as a child.
+// A Parent is an Ancestor which can create a EnterprisePermission.
+type EnterprisePermissionsParent interface {
+	EnterprisePermissionsAncestor
+	CreateEnterprisePermission(*EnterprisePermission) *bambou.Error
 }
 
 // EnterprisePermission represents the model of a enterprisepermission
 type EnterprisePermission struct {
-	ID                         string `json:"ID,omitempty"`
-	ParentID                   string `json:"parentID,omitempty"`
-	ParentType                 string `json:"parentType,omitempty"`
-	Owner                      string `json:"owner,omitempty"`
-	Name                       string `json:"name,omitempty"`
-	LastUpdatedBy              string `json:"lastUpdatedBy,omitempty"`
-	PermittedAction            string `json:"permittedAction,omitempty"`
-	PermittedEntityDescription string `json:"permittedEntityDescription,omitempty"`
-	PermittedEntityID          string `json:"permittedEntityID,omitempty"`
-	PermittedEntityName        string `json:"permittedEntityName,omitempty"`
-	PermittedEntityType        string `json:"permittedEntityType,omitempty"`
-	EntityScope                string `json:"entityScope,omitempty"`
-	ExternalID                 string `json:"externalID,omitempty"`
+	ID                         string        `json:"ID,omitempty"`
+	ParentID                   string        `json:"parentID,omitempty"`
+	ParentType                 string        `json:"parentType,omitempty"`
+	Owner                      string        `json:"owner,omitempty"`
+	Name                       string        `json:"name,omitempty"`
+	LastUpdatedBy              string        `json:"lastUpdatedBy,omitempty"`
+	PermittedAction            string        `json:"permittedAction,omitempty"`
+	PermittedEntityDescription string        `json:"permittedEntityDescription,omitempty"`
+	PermittedEntityID          string        `json:"permittedEntityID,omitempty"`
+	PermittedEntityName        string        `json:"permittedEntityName,omitempty"`
+	PermittedEntityType        string        `json:"permittedEntityType,omitempty"`
+	EmbeddedMetadata           []interface{} `json:"embeddedMetadata,omitempty"`
+	EntityScope                string        `json:"entityScope,omitempty"`
+	ExternalID                 string        `json:"externalID,omitempty"`
 }
 
 // NewEnterprisePermission returns a new *EnterprisePermission

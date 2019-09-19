@@ -38,29 +38,38 @@ var PolicyDecisionIdentity = bambou.Identity{
 // PolicyDecisionsList represents a list of PolicyDecisions
 type PolicyDecisionsList []*PolicyDecision
 
-// PolicyDecisionsAncestor is the interface of an ancestor of a PolicyDecision must implement.
+// PolicyDecisionsAncestor is the interface that an ancestor of a PolicyDecision must implement.
+// An Ancestor is defined as an entity that has PolicyDecision as a descendant.
+// An Ancestor can get a list of its child PolicyDecisions, but not necessarily create one.
 type PolicyDecisionsAncestor interface {
 	PolicyDecisions(*bambou.FetchingInfo) (PolicyDecisionsList, *bambou.Error)
-	CreatePolicyDecisions(*PolicyDecision) *bambou.Error
+}
+
+// PolicyDecisionsParent is the interface that a parent of a PolicyDecision must implement.
+// A Parent is defined as an entity that has PolicyDecision as a child.
+// A Parent is an Ancestor which can create a PolicyDecision.
+type PolicyDecisionsParent interface {
+	PolicyDecisionsAncestor
+	CreatePolicyDecision(*PolicyDecision) *bambou.Error
 }
 
 // PolicyDecision represents the model of a policydecision
 type PolicyDecision struct {
-	ID                         string        `json:"ID,omitempty"`
-	ParentID                   string        `json:"parentID,omitempty"`
-	ParentType                 string        `json:"parentType,omitempty"`
-	Owner                      string        `json:"owner,omitempty"`
-	LastUpdatedBy              string        `json:"lastUpdatedBy,omitempty"`
-	EgressACLs                 []interface{} `json:"egressACLs,omitempty"`
-	EgressQos                  interface{}   `json:"egressQos,omitempty"`
-	FipACLs                    []interface{} `json:"fipACLs,omitempty"`
-	IngressACLs                []interface{} `json:"ingressACLs,omitempty"`
-	IngressAdvFwd              []interface{} `json:"ingressAdvFwd,omitempty"`
-	IngressExternalServiceACLs []interface{} `json:"ingressExternalServiceACLs,omitempty"`
-	EntityScope                string        `json:"entityScope,omitempty"`
-	Qos                        interface{}   `json:"qos,omitempty"`
-	Stats                      interface{}   `json:"stats,omitempty"`
-	ExternalID                 string        `json:"externalID,omitempty"`
+	ID               string        `json:"ID,omitempty"`
+	ParentID         string        `json:"parentID,omitempty"`
+	ParentType       string        `json:"parentType,omitempty"`
+	Owner            string        `json:"owner,omitempty"`
+	LastUpdatedBy    string        `json:"lastUpdatedBy,omitempty"`
+	EgressACLs       []interface{} `json:"egressACLs,omitempty"`
+	EgressQos        interface{}   `json:"egressQos,omitempty"`
+	FipACLs          []interface{} `json:"fipACLs,omitempty"`
+	EmbeddedMetadata []interface{} `json:"embeddedMetadata,omitempty"`
+	IngressACLs      []interface{} `json:"ingressACLs,omitempty"`
+	IngressAdvFwd    []interface{} `json:"ingressAdvFwd,omitempty"`
+	EntityScope      string        `json:"entityScope,omitempty"`
+	Qos              interface{}   `json:"qos,omitempty"`
+	Stats            interface{}   `json:"stats,omitempty"`
+	ExternalID       string        `json:"externalID,omitempty"`
 }
 
 // NewPolicyDecision returns a new *PolicyDecision
@@ -139,10 +148,4 @@ func (o *PolicyDecision) QOSs(info *bambou.FetchingInfo) (QOSsList, *bambou.Erro
 	var list QOSsList
 	err := bambou.CurrentSession().FetchChildren(o, QOSIdentity, &list, info)
 	return list, err
-}
-
-// CreateQOS creates a new child QOS under the PolicyDecision
-func (o *PolicyDecision) CreateQOS(child *QOS) *bambou.Error {
-
-	return bambou.CurrentSession().CreateChild(o, child)
 }

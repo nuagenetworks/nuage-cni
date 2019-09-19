@@ -38,38 +38,53 @@ var IKEGatewayProfileIdentity = bambou.Identity{
 // IKEGatewayProfilesList represents a list of IKEGatewayProfiles
 type IKEGatewayProfilesList []*IKEGatewayProfile
 
-// IKEGatewayProfilesAncestor is the interface of an ancestor of a IKEGatewayProfile must implement.
+// IKEGatewayProfilesAncestor is the interface that an ancestor of a IKEGatewayProfile must implement.
+// An Ancestor is defined as an entity that has IKEGatewayProfile as a descendant.
+// An Ancestor can get a list of its child IKEGatewayProfiles, but not necessarily create one.
 type IKEGatewayProfilesAncestor interface {
 	IKEGatewayProfiles(*bambou.FetchingInfo) (IKEGatewayProfilesList, *bambou.Error)
-	CreateIKEGatewayProfiles(*IKEGatewayProfile) *bambou.Error
+}
+
+// IKEGatewayProfilesParent is the interface that a parent of a IKEGatewayProfile must implement.
+// A Parent is defined as an entity that has IKEGatewayProfile as a child.
+// A Parent is an Ancestor which can create a IKEGatewayProfile.
+type IKEGatewayProfilesParent interface {
+	IKEGatewayProfilesAncestor
+	CreateIKEGatewayProfile(*IKEGatewayProfile) *bambou.Error
 }
 
 // IKEGatewayProfile represents the model of a ikegatewayprofile
 type IKEGatewayProfile struct {
-	ID                               string `json:"ID,omitempty"`
-	ParentID                         string `json:"parentID,omitempty"`
-	ParentType                       string `json:"parentType,omitempty"`
-	Owner                            string `json:"owner,omitempty"`
-	IKEGatewayIdentifier             string `json:"IKEGatewayIdentifier,omitempty"`
-	IKEGatewayIdentifierType         string `json:"IKEGatewayIdentifierType,omitempty"`
-	Name                             string `json:"name,omitempty"`
-	LastUpdatedBy                    string `json:"lastUpdatedBy,omitempty"`
-	ServiceClass                     string `json:"serviceClass,omitempty"`
-	Description                      string `json:"description,omitempty"`
-	AntiReplayCheck                  bool   `json:"antiReplayCheck"`
-	EntityScope                      string `json:"entityScope,omitempty"`
-	AssociatedEnterpriseID           string `json:"associatedEnterpriseID,omitempty"`
-	AssociatedIKEAuthenticationID    string `json:"associatedIKEAuthenticationID,omitempty"`
-	AssociatedIKEAuthenticationType  string `json:"associatedIKEAuthenticationType,omitempty"`
-	AssociatedIKEEncryptionProfileID string `json:"associatedIKEEncryptionProfileID,omitempty"`
-	AssociatedIKEGatewayID           string `json:"associatedIKEGatewayID,omitempty"`
-	ExternalID                       string `json:"externalID,omitempty"`
+	ID                               string        `json:"ID,omitempty"`
+	ParentID                         string        `json:"parentID,omitempty"`
+	ParentType                       string        `json:"parentType,omitempty"`
+	Owner                            string        `json:"owner,omitempty"`
+	IKEGatewayIdentifier             string        `json:"IKEGatewayIdentifier,omitempty"`
+	IKEGatewayIdentifierType         string        `json:"IKEGatewayIdentifierType,omitempty"`
+	Name                             string        `json:"name,omitempty"`
+	LastUpdatedBy                    string        `json:"lastUpdatedBy,omitempty"`
+	ServiceClass                     string        `json:"serviceClass,omitempty"`
+	Description                      string        `json:"description,omitempty"`
+	EmbeddedMetadata                 []interface{} `json:"embeddedMetadata,omitempty"`
+	AntiReplayCheck                  bool          `json:"antiReplayCheck"`
+	EntityScope                      string        `json:"entityScope,omitempty"`
+	ConfigurationStatus              string        `json:"configurationStatus,omitempty"`
+	AssociatedCloudID                string        `json:"associatedCloudID,omitempty"`
+	AssociatedCloudType              string        `json:"associatedCloudType,omitempty"`
+	AssociatedEnterpriseID           string        `json:"associatedEnterpriseID,omitempty"`
+	AssociatedIKEAuthenticationID    string        `json:"associatedIKEAuthenticationID,omitempty"`
+	AssociatedIKEAuthenticationType  string        `json:"associatedIKEAuthenticationType,omitempty"`
+	AssociatedIKEEncryptionProfileID string        `json:"associatedIKEEncryptionProfileID,omitempty"`
+	AssociatedIKEGatewayID           string        `json:"associatedIKEGatewayID,omitempty"`
+	ExternalID                       string        `json:"externalID,omitempty"`
 }
 
 // NewIKEGatewayProfile returns a new *IKEGatewayProfile
 func NewIKEGatewayProfile() *IKEGatewayProfile {
 
-	return &IKEGatewayProfile{}
+	return &IKEGatewayProfile{
+		IKEGatewayIdentifierType: "ID_IPV4_ADDR",
+	}
 }
 
 // Identity returns the Identity of the object.

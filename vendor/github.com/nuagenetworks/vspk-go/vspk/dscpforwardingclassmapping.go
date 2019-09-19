@@ -38,23 +38,33 @@ var DSCPForwardingClassMappingIdentity = bambou.Identity{
 // DSCPForwardingClassMappingsList represents a list of DSCPForwardingClassMappings
 type DSCPForwardingClassMappingsList []*DSCPForwardingClassMapping
 
-// DSCPForwardingClassMappingsAncestor is the interface of an ancestor of a DSCPForwardingClassMapping must implement.
+// DSCPForwardingClassMappingsAncestor is the interface that an ancestor of a DSCPForwardingClassMapping must implement.
+// An Ancestor is defined as an entity that has DSCPForwardingClassMapping as a descendant.
+// An Ancestor can get a list of its child DSCPForwardingClassMappings, but not necessarily create one.
 type DSCPForwardingClassMappingsAncestor interface {
 	DSCPForwardingClassMappings(*bambou.FetchingInfo) (DSCPForwardingClassMappingsList, *bambou.Error)
-	CreateDSCPForwardingClassMappings(*DSCPForwardingClassMapping) *bambou.Error
+}
+
+// DSCPForwardingClassMappingsParent is the interface that a parent of a DSCPForwardingClassMapping must implement.
+// A Parent is defined as an entity that has DSCPForwardingClassMapping as a child.
+// A Parent is an Ancestor which can create a DSCPForwardingClassMapping.
+type DSCPForwardingClassMappingsParent interface {
+	DSCPForwardingClassMappingsAncestor
+	CreateDSCPForwardingClassMapping(*DSCPForwardingClassMapping) *bambou.Error
 }
 
 // DSCPForwardingClassMapping represents the model of a dscpforwardingclassmapping
 type DSCPForwardingClassMapping struct {
-	ID              string `json:"ID,omitempty"`
-	ParentID        string `json:"parentID,omitempty"`
-	ParentType      string `json:"parentType,omitempty"`
-	Owner           string `json:"owner,omitempty"`
-	DSCP            string `json:"DSCP,omitempty"`
-	LastUpdatedBy   string `json:"lastUpdatedBy,omitempty"`
-	EntityScope     string `json:"entityScope,omitempty"`
-	ForwardingClass string `json:"forwardingClass,omitempty"`
-	ExternalID      string `json:"externalID,omitempty"`
+	ID               string        `json:"ID,omitempty"`
+	ParentID         string        `json:"parentID,omitempty"`
+	ParentType       string        `json:"parentType,omitempty"`
+	Owner            string        `json:"owner,omitempty"`
+	DSCP             string        `json:"DSCP,omitempty"`
+	LastUpdatedBy    string        `json:"lastUpdatedBy,omitempty"`
+	EmbeddedMetadata []interface{} `json:"embeddedMetadata,omitempty"`
+	EntityScope      string        `json:"entityScope,omitempty"`
+	ForwardingClass  string        `json:"forwardingClass,omitempty"`
+	ExternalID       string        `json:"externalID,omitempty"`
 }
 
 // NewDSCPForwardingClassMapping returns a new *DSCPForwardingClassMapping

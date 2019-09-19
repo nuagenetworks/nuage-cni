@@ -38,22 +38,32 @@ var CloudMgmtSystemIdentity = bambou.Identity{
 // CloudMgmtSystemsList represents a list of CloudMgmtSystems
 type CloudMgmtSystemsList []*CloudMgmtSystem
 
-// CloudMgmtSystemsAncestor is the interface of an ancestor of a CloudMgmtSystem must implement.
+// CloudMgmtSystemsAncestor is the interface that an ancestor of a CloudMgmtSystem must implement.
+// An Ancestor is defined as an entity that has CloudMgmtSystem as a descendant.
+// An Ancestor can get a list of its child CloudMgmtSystems, but not necessarily create one.
 type CloudMgmtSystemsAncestor interface {
 	CloudMgmtSystems(*bambou.FetchingInfo) (CloudMgmtSystemsList, *bambou.Error)
-	CreateCloudMgmtSystems(*CloudMgmtSystem) *bambou.Error
+}
+
+// CloudMgmtSystemsParent is the interface that a parent of a CloudMgmtSystem must implement.
+// A Parent is defined as an entity that has CloudMgmtSystem as a child.
+// A Parent is an Ancestor which can create a CloudMgmtSystem.
+type CloudMgmtSystemsParent interface {
+	CloudMgmtSystemsAncestor
+	CreateCloudMgmtSystem(*CloudMgmtSystem) *bambou.Error
 }
 
 // CloudMgmtSystem represents the model of a cms
 type CloudMgmtSystem struct {
-	ID            string `json:"ID,omitempty"`
-	ParentID      string `json:"parentID,omitempty"`
-	ParentType    string `json:"parentType,omitempty"`
-	Owner         string `json:"owner,omitempty"`
-	Name          string `json:"name,omitempty"`
-	LastUpdatedBy string `json:"lastUpdatedBy,omitempty"`
-	EntityScope   string `json:"entityScope,omitempty"`
-	ExternalID    string `json:"externalID,omitempty"`
+	ID               string        `json:"ID,omitempty"`
+	ParentID         string        `json:"parentID,omitempty"`
+	ParentType       string        `json:"parentType,omitempty"`
+	Owner            string        `json:"owner,omitempty"`
+	Name             string        `json:"name,omitempty"`
+	LastUpdatedBy    string        `json:"lastUpdatedBy,omitempty"`
+	EmbeddedMetadata []interface{} `json:"embeddedMetadata,omitempty"`
+	EntityScope      string        `json:"entityScope,omitempty"`
+	ExternalID       string        `json:"externalID,omitempty"`
 }
 
 // NewCloudMgmtSystem returns a new *CloudMgmtSystem

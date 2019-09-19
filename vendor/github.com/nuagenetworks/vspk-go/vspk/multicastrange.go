@@ -38,23 +38,34 @@ var MultiCastRangeIdentity = bambou.Identity{
 // MultiCastRangesList represents a list of MultiCastRanges
 type MultiCastRangesList []*MultiCastRange
 
-// MultiCastRangesAncestor is the interface of an ancestor of a MultiCastRange must implement.
+// MultiCastRangesAncestor is the interface that an ancestor of a MultiCastRange must implement.
+// An Ancestor is defined as an entity that has MultiCastRange as a descendant.
+// An Ancestor can get a list of its child MultiCastRanges, but not necessarily create one.
 type MultiCastRangesAncestor interface {
 	MultiCastRanges(*bambou.FetchingInfo) (MultiCastRangesList, *bambou.Error)
-	CreateMultiCastRanges(*MultiCastRange) *bambou.Error
+}
+
+// MultiCastRangesParent is the interface that a parent of a MultiCastRange must implement.
+// A Parent is defined as an entity that has MultiCastRange as a child.
+// A Parent is an Ancestor which can create a MultiCastRange.
+type MultiCastRangesParent interface {
+	MultiCastRangesAncestor
+	CreateMultiCastRange(*MultiCastRange) *bambou.Error
 }
 
 // MultiCastRange represents the model of a multicastrange
 type MultiCastRange struct {
-	ID            string `json:"ID,omitempty"`
-	ParentID      string `json:"parentID,omitempty"`
-	ParentType    string `json:"parentType,omitempty"`
-	Owner         string `json:"owner,omitempty"`
-	LastUpdatedBy string `json:"lastUpdatedBy,omitempty"`
-	MaxAddress    string `json:"maxAddress,omitempty"`
-	MinAddress    string `json:"minAddress,omitempty"`
-	EntityScope   string `json:"entityScope,omitempty"`
-	ExternalID    string `json:"externalID,omitempty"`
+	ID               string        `json:"ID,omitempty"`
+	ParentID         string        `json:"parentID,omitempty"`
+	ParentType       string        `json:"parentType,omitempty"`
+	Owner            string        `json:"owner,omitempty"`
+	IPType           string        `json:"IPType,omitempty"`
+	LastUpdatedBy    string        `json:"lastUpdatedBy,omitempty"`
+	MaxAddress       string        `json:"maxAddress,omitempty"`
+	MinAddress       string        `json:"minAddress,omitempty"`
+	EmbeddedMetadata []interface{} `json:"embeddedMetadata,omitempty"`
+	EntityScope      string        `json:"entityScope,omitempty"`
+	ExternalID       string        `json:"externalID,omitempty"`
 }
 
 // NewMultiCastRange returns a new *MultiCastRange
@@ -133,10 +144,4 @@ func (o *MultiCastRange) EventLogs(info *bambou.FetchingInfo) (EventLogsList, *b
 	var list EventLogsList
 	err := bambou.CurrentSession().FetchChildren(o, EventLogIdentity, &list, info)
 	return list, err
-}
-
-// CreateEventLog creates a new child EventLog under the MultiCastRange
-func (o *MultiCastRange) CreateEventLog(child *EventLog) *bambou.Error {
-
-	return bambou.CurrentSession().CreateChild(o, child)
 }

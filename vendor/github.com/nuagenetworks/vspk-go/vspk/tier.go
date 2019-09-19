@@ -38,40 +38,47 @@ var TierIdentity = bambou.Identity{
 // TiersList represents a list of Tiers
 type TiersList []*Tier
 
-// TiersAncestor is the interface of an ancestor of a Tier must implement.
+// TiersAncestor is the interface that an ancestor of a Tier must implement.
+// An Ancestor is defined as an entity that has Tier as a descendant.
+// An Ancestor can get a list of its child Tiers, but not necessarily create one.
 type TiersAncestor interface {
 	Tiers(*bambou.FetchingInfo) (TiersList, *bambou.Error)
-	CreateTiers(*Tier) *bambou.Error
+}
+
+// TiersParent is the interface that a parent of a Tier must implement.
+// A Parent is defined as an entity that has Tier as a child.
+// A Parent is an Ancestor which can create a Tier.
+type TiersParent interface {
+	TiersAncestor
+	CreateTier(*Tier) *bambou.Error
 }
 
 // Tier represents the model of a tier
 type Tier struct {
-	ID                          string `json:"ID,omitempty"`
-	ParentID                    string `json:"parentID,omitempty"`
-	ParentType                  string `json:"parentType,omitempty"`
-	Owner                       string `json:"owner,omitempty"`
-	Name                        string `json:"name,omitempty"`
-	LastUpdatedBy               string `json:"lastUpdatedBy,omitempty"`
-	Gateway                     string `json:"gateway,omitempty"`
-	Address                     string `json:"address,omitempty"`
-	Description                 string `json:"description,omitempty"`
-	Metadata                    string `json:"metadata,omitempty"`
-	Netmask                     string `json:"netmask,omitempty"`
-	EntityScope                 string `json:"entityScope,omitempty"`
-	AssociatedApplicationID     string `json:"associatedApplicationID,omitempty"`
-	AssociatedFloatingIPPoolID  string `json:"associatedFloatingIPPoolID,omitempty"`
-	AssociatedNetworkMacroID    string `json:"associatedNetworkMacroID,omitempty"`
-	AssociatedNetworkObjectID   string `json:"associatedNetworkObjectID,omitempty"`
-	AssociatedNetworkObjectType string `json:"associatedNetworkObjectType,omitempty"`
-	ExternalID                  string `json:"externalID,omitempty"`
-	Type                        string `json:"type,omitempty"`
+	ID                 string        `json:"ID,omitempty"`
+	ParentID           string        `json:"parentID,omitempty"`
+	ParentType         string        `json:"parentType,omitempty"`
+	Owner              string        `json:"owner,omitempty"`
+	PacketCount        int           `json:"packetCount,omitempty"`
+	LastUpdatedBy      string        `json:"lastUpdatedBy,omitempty"`
+	Description        string        `json:"description,omitempty"`
+	TierType           string        `json:"tierType,omitempty"`
+	Timeout            int           `json:"timeout,omitempty"`
+	EmbeddedMetadata   []interface{} `json:"embeddedMetadata,omitempty"`
+	EntityScope        string        `json:"entityScope,omitempty"`
+	DownThresholdCount int           `json:"downThresholdCount,omitempty"`
+	ProbeInterval      int           `json:"probeInterval,omitempty"`
+	ExternalID         string        `json:"externalID,omitempty"`
 }
 
 // NewTier returns a new *Tier
 func NewTier() *Tier {
 
 	return &Tier{
-		Type: "STANDARD",
+		PacketCount:        1,
+		Timeout:            3000,
+		DownThresholdCount: 5,
+		ProbeInterval:      10,
 	}
 }
 
@@ -111,16 +118,16 @@ func (o *Tier) Delete() *bambou.Error {
 	return bambou.CurrentSession().DeleteEntity(o)
 }
 
-// TCAs retrieves the list of child TCAs of the Tier
-func (o *Tier) TCAs(info *bambou.FetchingInfo) (TCAsList, *bambou.Error) {
+// Destinationurls retrieves the list of child Destinationurls of the Tier
+func (o *Tier) Destinationurls(info *bambou.FetchingInfo) (DestinationurlsList, *bambou.Error) {
 
-	var list TCAsList
-	err := bambou.CurrentSession().FetchChildren(o, TCAIdentity, &list, info)
+	var list DestinationurlsList
+	err := bambou.CurrentSession().FetchChildren(o, DestinationurlIdentity, &list, info)
 	return list, err
 }
 
-// CreateTCA creates a new child TCA under the Tier
-func (o *Tier) CreateTCA(child *TCA) *bambou.Error {
+// CreateDestinationurl creates a new child Destinationurl under the Tier
+func (o *Tier) CreateDestinationurl(child *Destinationurl) *bambou.Error {
 
 	return bambou.CurrentSession().CreateChild(o, child)
 }
@@ -149,90 +156,6 @@ func (o *Tier) GlobalMetadatas(info *bambou.FetchingInfo) (GlobalMetadatasList, 
 
 // CreateGlobalMetadata creates a new child GlobalMetadata under the Tier
 func (o *Tier) CreateGlobalMetadata(child *GlobalMetadata) *bambou.Error {
-
-	return bambou.CurrentSession().CreateChild(o, child)
-}
-
-// VMs retrieves the list of child VMs of the Tier
-func (o *Tier) VMs(info *bambou.FetchingInfo) (VMsList, *bambou.Error) {
-
-	var list VMsList
-	err := bambou.CurrentSession().FetchChildren(o, VMIdentity, &list, info)
-	return list, err
-}
-
-// CreateVM creates a new child VM under the Tier
-func (o *Tier) CreateVM(child *VM) *bambou.Error {
-
-	return bambou.CurrentSession().CreateChild(o, child)
-}
-
-// Containers retrieves the list of child Containers of the Tier
-func (o *Tier) Containers(info *bambou.FetchingInfo) (ContainersList, *bambou.Error) {
-
-	var list ContainersList
-	err := bambou.CurrentSession().FetchChildren(o, ContainerIdentity, &list, info)
-	return list, err
-}
-
-// CreateContainer creates a new child Container under the Tier
-func (o *Tier) CreateContainer(child *Container) *bambou.Error {
-
-	return bambou.CurrentSession().CreateChild(o, child)
-}
-
-// VPorts retrieves the list of child VPorts of the Tier
-func (o *Tier) VPorts(info *bambou.FetchingInfo) (VPortsList, *bambou.Error) {
-
-	var list VPortsList
-	err := bambou.CurrentSession().FetchChildren(o, VPortIdentity, &list, info)
-	return list, err
-}
-
-// CreateVPort creates a new child VPort under the Tier
-func (o *Tier) CreateVPort(child *VPort) *bambou.Error {
-
-	return bambou.CurrentSession().CreateChild(o, child)
-}
-
-// Statistics retrieves the list of child Statistics of the Tier
-func (o *Tier) Statistics(info *bambou.FetchingInfo) (StatisticsList, *bambou.Error) {
-
-	var list StatisticsList
-	err := bambou.CurrentSession().FetchChildren(o, StatisticsIdentity, &list, info)
-	return list, err
-}
-
-// CreateStatistics creates a new child Statistics under the Tier
-func (o *Tier) CreateStatistics(child *Statistics) *bambou.Error {
-
-	return bambou.CurrentSession().CreateChild(o, child)
-}
-
-// StatisticsPolicies retrieves the list of child StatisticsPolicies of the Tier
-func (o *Tier) StatisticsPolicies(info *bambou.FetchingInfo) (StatisticsPoliciesList, *bambou.Error) {
-
-	var list StatisticsPoliciesList
-	err := bambou.CurrentSession().FetchChildren(o, StatisticsPolicyIdentity, &list, info)
-	return list, err
-}
-
-// CreateStatisticsPolicy creates a new child StatisticsPolicy under the Tier
-func (o *Tier) CreateStatisticsPolicy(child *StatisticsPolicy) *bambou.Error {
-
-	return bambou.CurrentSession().CreateChild(o, child)
-}
-
-// EventLogs retrieves the list of child EventLogs of the Tier
-func (o *Tier) EventLogs(info *bambou.FetchingInfo) (EventLogsList, *bambou.Error) {
-
-	var list EventLogsList
-	err := bambou.CurrentSession().FetchChildren(o, EventLogIdentity, &list, info)
-	return list, err
-}
-
-// CreateEventLog creates a new child EventLog under the Tier
-func (o *Tier) CreateEventLog(child *EventLog) *bambou.Error {
 
 	return bambou.CurrentSession().CreateChild(o, child)
 }

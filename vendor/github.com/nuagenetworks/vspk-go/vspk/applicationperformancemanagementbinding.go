@@ -38,27 +38,42 @@ var ApplicationperformancemanagementbindingIdentity = bambou.Identity{
 // ApplicationperformancemanagementbindingsList represents a list of Applicationperformancemanagementbindings
 type ApplicationperformancemanagementbindingsList []*Applicationperformancemanagementbinding
 
-// ApplicationperformancemanagementbindingsAncestor is the interface of an ancestor of a Applicationperformancemanagementbinding must implement.
+// ApplicationperformancemanagementbindingsAncestor is the interface that an ancestor of a Applicationperformancemanagementbinding must implement.
+// An Ancestor is defined as an entity that has Applicationperformancemanagementbinding as a descendant.
+// An Ancestor can get a list of its child Applicationperformancemanagementbindings, but not necessarily create one.
 type ApplicationperformancemanagementbindingsAncestor interface {
 	Applicationperformancemanagementbindings(*bambou.FetchingInfo) (ApplicationperformancemanagementbindingsList, *bambou.Error)
-	CreateApplicationperformancemanagementbindings(*Applicationperformancemanagementbinding) *bambou.Error
+}
+
+// ApplicationperformancemanagementbindingsParent is the interface that a parent of a Applicationperformancemanagementbinding must implement.
+// A Parent is defined as an entity that has Applicationperformancemanagementbinding as a child.
+// A Parent is an Ancestor which can create a Applicationperformancemanagementbinding.
+type ApplicationperformancemanagementbindingsParent interface {
+	ApplicationperformancemanagementbindingsAncestor
+	CreateApplicationperformancemanagementbinding(*Applicationperformancemanagementbinding) *bambou.Error
 }
 
 // Applicationperformancemanagementbinding represents the model of a applicationperformancemanagementbinding
 type Applicationperformancemanagementbinding struct {
-	ID                                           string `json:"ID,omitempty"`
-	ParentID                                     string `json:"parentID,omitempty"`
-	ParentType                                   string `json:"parentType,omitempty"`
-	Owner                                        string `json:"owner,omitempty"`
-	ReadOnly                                     bool   `json:"readOnly"`
-	Priority                                     int    `json:"priority,omitempty"`
-	AssociatedApplicationPerformanceManagementID string `json:"associatedApplicationPerformanceManagementID,omitempty"`
+	ID                                           string        `json:"ID,omitempty"`
+	ParentID                                     string        `json:"parentID,omitempty"`
+	ParentType                                   string        `json:"parentType,omitempty"`
+	Owner                                        string        `json:"owner,omitempty"`
+	LastUpdatedBy                                string        `json:"lastUpdatedBy,omitempty"`
+	ReadOnly                                     bool          `json:"readOnly"`
+	EmbeddedMetadata                             []interface{} `json:"embeddedMetadata,omitempty"`
+	EntityScope                                  string        `json:"entityScope,omitempty"`
+	Priority                                     int           `json:"priority,omitempty"`
+	AssociatedApplicationPerformanceManagementID string        `json:"associatedApplicationPerformanceManagementID,omitempty"`
+	ExternalID                                   string        `json:"externalID,omitempty"`
 }
 
 // NewApplicationperformancemanagementbinding returns a new *Applicationperformancemanagementbinding
 func NewApplicationperformancemanagementbinding() *Applicationperformancemanagementbinding {
 
-	return &Applicationperformancemanagementbinding{}
+	return &Applicationperformancemanagementbinding{
+		ReadOnly: false,
+	}
 }
 
 // Identity returns the Identity of the object.
@@ -95,4 +110,32 @@ func (o *Applicationperformancemanagementbinding) Save() *bambou.Error {
 func (o *Applicationperformancemanagementbinding) Delete() *bambou.Error {
 
 	return bambou.CurrentSession().DeleteEntity(o)
+}
+
+// Metadatas retrieves the list of child Metadatas of the Applicationperformancemanagementbinding
+func (o *Applicationperformancemanagementbinding) Metadatas(info *bambou.FetchingInfo) (MetadatasList, *bambou.Error) {
+
+	var list MetadatasList
+	err := bambou.CurrentSession().FetchChildren(o, MetadataIdentity, &list, info)
+	return list, err
+}
+
+// CreateMetadata creates a new child Metadata under the Applicationperformancemanagementbinding
+func (o *Applicationperformancemanagementbinding) CreateMetadata(child *Metadata) *bambou.Error {
+
+	return bambou.CurrentSession().CreateChild(o, child)
+}
+
+// GlobalMetadatas retrieves the list of child GlobalMetadatas of the Applicationperformancemanagementbinding
+func (o *Applicationperformancemanagementbinding) GlobalMetadatas(info *bambou.FetchingInfo) (GlobalMetadatasList, *bambou.Error) {
+
+	var list GlobalMetadatasList
+	err := bambou.CurrentSession().FetchChildren(o, GlobalMetadataIdentity, &list, info)
+	return list, err
+}
+
+// CreateGlobalMetadata creates a new child GlobalMetadata under the Applicationperformancemanagementbinding
+func (o *Applicationperformancemanagementbinding) CreateGlobalMetadata(child *GlobalMetadata) *bambou.Error {
+
+	return bambou.CurrentSession().CreateChild(o, child)
 }

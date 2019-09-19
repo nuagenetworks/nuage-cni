@@ -38,36 +38,47 @@ var BridgeInterfaceIdentity = bambou.Identity{
 // BridgeInterfacesList represents a list of BridgeInterfaces
 type BridgeInterfacesList []*BridgeInterface
 
-// BridgeInterfacesAncestor is the interface of an ancestor of a BridgeInterface must implement.
+// BridgeInterfacesAncestor is the interface that an ancestor of a BridgeInterface must implement.
+// An Ancestor is defined as an entity that has BridgeInterface as a descendant.
+// An Ancestor can get a list of its child BridgeInterfaces, but not necessarily create one.
 type BridgeInterfacesAncestor interface {
 	BridgeInterfaces(*bambou.FetchingInfo) (BridgeInterfacesList, *bambou.Error)
-	CreateBridgeInterfaces(*BridgeInterface) *bambou.Error
+}
+
+// BridgeInterfacesParent is the interface that a parent of a BridgeInterface must implement.
+// A Parent is defined as an entity that has BridgeInterface as a child.
+// A Parent is an Ancestor which can create a BridgeInterface.
+type BridgeInterfacesParent interface {
+	BridgeInterfacesAncestor
+	CreateBridgeInterface(*BridgeInterface) *bambou.Error
 }
 
 // BridgeInterface represents the model of a bridgeinterface
 type BridgeInterface struct {
-	ID                          string `json:"ID,omitempty"`
-	ParentID                    string `json:"parentID,omitempty"`
-	ParentType                  string `json:"parentType,omitempty"`
-	Owner                       string `json:"owner,omitempty"`
-	VPortID                     string `json:"VPortID,omitempty"`
-	VPortName                   string `json:"VPortName,omitempty"`
-	Name                        string `json:"name,omitempty"`
-	LastUpdatedBy               string `json:"lastUpdatedBy,omitempty"`
-	Gateway                     string `json:"gateway,omitempty"`
-	Netmask                     string `json:"netmask,omitempty"`
-	NetworkName                 string `json:"networkName,omitempty"`
-	TierID                      string `json:"tierID,omitempty"`
-	EntityScope                 string `json:"entityScope,omitempty"`
-	PolicyDecisionID            string `json:"policyDecisionID,omitempty"`
-	DomainID                    string `json:"domainID,omitempty"`
-	DomainName                  string `json:"domainName,omitempty"`
-	ZoneID                      string `json:"zoneID,omitempty"`
-	ZoneName                    string `json:"zoneName,omitempty"`
-	AssociatedFloatingIPAddress string `json:"associatedFloatingIPAddress,omitempty"`
-	AttachedNetworkID           string `json:"attachedNetworkID,omitempty"`
-	AttachedNetworkType         string `json:"attachedNetworkType,omitempty"`
-	ExternalID                  string `json:"externalID,omitempty"`
+	ID                          string        `json:"ID,omitempty"`
+	ParentID                    string        `json:"parentID,omitempty"`
+	ParentType                  string        `json:"parentType,omitempty"`
+	Owner                       string        `json:"owner,omitempty"`
+	VPortID                     string        `json:"VPortID,omitempty"`
+	VPortName                   string        `json:"VPortName,omitempty"`
+	IPv6Gateway                 string        `json:"IPv6Gateway,omitempty"`
+	Name                        string        `json:"name,omitempty"`
+	LastUpdatedBy               string        `json:"lastUpdatedBy,omitempty"`
+	Gateway                     string        `json:"gateway,omitempty"`
+	Netmask                     string        `json:"netmask,omitempty"`
+	NetworkName                 string        `json:"networkName,omitempty"`
+	TierID                      string        `json:"tierID,omitempty"`
+	EmbeddedMetadata            []interface{} `json:"embeddedMetadata,omitempty"`
+	EntityScope                 string        `json:"entityScope,omitempty"`
+	PolicyDecisionID            string        `json:"policyDecisionID,omitempty"`
+	DomainID                    string        `json:"domainID,omitempty"`
+	DomainName                  string        `json:"domainName,omitempty"`
+	ZoneID                      string        `json:"zoneID,omitempty"`
+	ZoneName                    string        `json:"zoneName,omitempty"`
+	AssociatedFloatingIPAddress string        `json:"associatedFloatingIPAddress,omitempty"`
+	AttachedNetworkID           string        `json:"attachedNetworkID,omitempty"`
+	AttachedNetworkType         string        `json:"attachedNetworkType,omitempty"`
+	ExternalID                  string        `json:"externalID,omitempty"`
 }
 
 // NewBridgeInterface returns a new *BridgeInterface
@@ -120,12 +131,6 @@ func (o *BridgeInterface) TCAs(info *bambou.FetchingInfo) (TCAsList, *bambou.Err
 	return list, err
 }
 
-// CreateTCA creates a new child TCA under the BridgeInterface
-func (o *BridgeInterface) CreateTCA(child *TCA) *bambou.Error {
-
-	return bambou.CurrentSession().CreateChild(o, child)
-}
-
 // RedirectionTargets retrieves the list of child RedirectionTargets of the BridgeInterface
 func (o *BridgeInterface) RedirectionTargets(info *bambou.FetchingInfo) (RedirectionTargetsList, *bambou.Error) {
 
@@ -134,8 +139,16 @@ func (o *BridgeInterface) RedirectionTargets(info *bambou.FetchingInfo) (Redirec
 	return list, err
 }
 
-// CreateRedirectionTarget creates a new child RedirectionTarget under the BridgeInterface
-func (o *BridgeInterface) CreateRedirectionTarget(child *RedirectionTarget) *bambou.Error {
+// DeploymentFailures retrieves the list of child DeploymentFailures of the BridgeInterface
+func (o *BridgeInterface) DeploymentFailures(info *bambou.FetchingInfo) (DeploymentFailuresList, *bambou.Error) {
+
+	var list DeploymentFailuresList
+	err := bambou.CurrentSession().FetchChildren(o, DeploymentFailureIdentity, &list, info)
+	return list, err
+}
+
+// CreateDeploymentFailure creates a new child DeploymentFailure under the BridgeInterface
+func (o *BridgeInterface) CreateDeploymentFailure(child *DeploymentFailure) *bambou.Error {
 
 	return bambou.CurrentSession().CreateChild(o, child)
 }
@@ -162,10 +175,12 @@ func (o *BridgeInterface) DHCPOptions(info *bambou.FetchingInfo) (DHCPOptionsLis
 	return list, err
 }
 
-// CreateDHCPOption creates a new child DHCPOption under the BridgeInterface
-func (o *BridgeInterface) CreateDHCPOption(child *DHCPOption) *bambou.Error {
+// DHCPv6Options retrieves the list of child DHCPv6Options of the BridgeInterface
+func (o *BridgeInterface) DHCPv6Options(info *bambou.FetchingInfo) (DHCPv6OptionsList, *bambou.Error) {
 
-	return bambou.CurrentSession().CreateChild(o, child)
+	var list DHCPv6OptionsList
+	err := bambou.CurrentSession().FetchChildren(o, DHCPv6OptionIdentity, &list, info)
+	return list, err
 }
 
 // GlobalMetadatas retrieves the list of child GlobalMetadatas of the BridgeInterface
@@ -190,24 +205,12 @@ func (o *BridgeInterface) PolicyDecisions(info *bambou.FetchingInfo) (PolicyDeci
 	return list, err
 }
 
-// CreatePolicyDecision creates a new child PolicyDecision under the BridgeInterface
-func (o *BridgeInterface) CreatePolicyDecision(child *PolicyDecision) *bambou.Error {
-
-	return bambou.CurrentSession().CreateChild(o, child)
-}
-
 // PolicyGroups retrieves the list of child PolicyGroups of the BridgeInterface
 func (o *BridgeInterface) PolicyGroups(info *bambou.FetchingInfo) (PolicyGroupsList, *bambou.Error) {
 
 	var list PolicyGroupsList
 	err := bambou.CurrentSession().FetchChildren(o, PolicyGroupIdentity, &list, info)
 	return list, err
-}
-
-// CreatePolicyGroup creates a new child PolicyGroup under the BridgeInterface
-func (o *BridgeInterface) CreatePolicyGroup(child *PolicyGroup) *bambou.Error {
-
-	return bambou.CurrentSession().CreateChild(o, child)
 }
 
 // QOSs retrieves the list of child QOSs of the BridgeInterface
@@ -232,22 +235,10 @@ func (o *BridgeInterface) Statistics(info *bambou.FetchingInfo) (StatisticsList,
 	return list, err
 }
 
-// CreateStatistics creates a new child Statistics under the BridgeInterface
-func (o *BridgeInterface) CreateStatistics(child *Statistics) *bambou.Error {
-
-	return bambou.CurrentSession().CreateChild(o, child)
-}
-
 // EventLogs retrieves the list of child EventLogs of the BridgeInterface
 func (o *BridgeInterface) EventLogs(info *bambou.FetchingInfo) (EventLogsList, *bambou.Error) {
 
 	var list EventLogsList
 	err := bambou.CurrentSession().FetchChildren(o, EventLogIdentity, &list, info)
 	return list, err
-}
-
-// CreateEventLog creates a new child EventLog under the BridgeInterface
-func (o *BridgeInterface) CreateEventLog(child *EventLog) *bambou.Error {
-
-	return bambou.CurrentSession().CreateChild(o, child)
 }

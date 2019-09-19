@@ -38,30 +38,45 @@ var RoutingPolicyIdentity = bambou.Identity{
 // RoutingPoliciesList represents a list of RoutingPolicies
 type RoutingPoliciesList []*RoutingPolicy
 
-// RoutingPoliciesAncestor is the interface of an ancestor of a RoutingPolicy must implement.
+// RoutingPoliciesAncestor is the interface that an ancestor of a RoutingPolicy must implement.
+// An Ancestor is defined as an entity that has RoutingPolicy as a descendant.
+// An Ancestor can get a list of its child RoutingPolicies, but not necessarily create one.
 type RoutingPoliciesAncestor interface {
 	RoutingPolicies(*bambou.FetchingInfo) (RoutingPoliciesList, *bambou.Error)
-	CreateRoutingPolicies(*RoutingPolicy) *bambou.Error
+}
+
+// RoutingPoliciesParent is the interface that a parent of a RoutingPolicy must implement.
+// A Parent is defined as an entity that has RoutingPolicy as a child.
+// A Parent is an Ancestor which can create a RoutingPolicy.
+type RoutingPoliciesParent interface {
+	RoutingPoliciesAncestor
+	CreateRoutingPolicy(*RoutingPolicy) *bambou.Error
 }
 
 // RoutingPolicy represents the model of a routingpolicy
 type RoutingPolicy struct {
-	ID               string `json:"ID,omitempty"`
-	ParentID         string `json:"parentID,omitempty"`
-	ParentType       string `json:"parentType,omitempty"`
-	Owner            string `json:"owner,omitempty"`
-	Name             string `json:"name,omitempty"`
-	DefaultAction    string `json:"defaultAction,omitempty"`
-	Description      string `json:"description,omitempty"`
-	EntityScope      string `json:"entityScope,omitempty"`
-	PolicyDefinition string `json:"policyDefinition,omitempty"`
-	ExternalID       string `json:"externalID,omitempty"`
+	ID               string        `json:"ID,omitempty"`
+	ParentID         string        `json:"parentID,omitempty"`
+	ParentType       string        `json:"parentType,omitempty"`
+	Owner            string        `json:"owner,omitempty"`
+	Name             string        `json:"name,omitempty"`
+	DefaultAction    string        `json:"defaultAction,omitempty"`
+	Description      string        `json:"description,omitempty"`
+	EmbeddedMetadata []interface{} `json:"embeddedMetadata,omitempty"`
+	EntityScope      string        `json:"entityScope,omitempty"`
+	PolicyDefinition string        `json:"policyDefinition,omitempty"`
+	ContentType      string        `json:"contentType,omitempty"`
+	RoutingProtocol  string        `json:"routingProtocol,omitempty"`
+	ExternalID       string        `json:"externalID,omitempty"`
 }
 
 // NewRoutingPolicy returns a new *RoutingPolicy
 func NewRoutingPolicy() *RoutingPolicy {
 
-	return &RoutingPolicy{}
+	return &RoutingPolicy{
+		ContentType:     "DEFAULT",
+		RoutingProtocol: "ROUTING",
+	}
 }
 
 // Identity returns the Identity of the object.

@@ -38,34 +38,51 @@ var StaticRouteIdentity = bambou.Identity{
 // StaticRoutesList represents a list of StaticRoutes
 type StaticRoutesList []*StaticRoute
 
-// StaticRoutesAncestor is the interface of an ancestor of a StaticRoute must implement.
+// StaticRoutesAncestor is the interface that an ancestor of a StaticRoute must implement.
+// An Ancestor is defined as an entity that has StaticRoute as a descendant.
+// An Ancestor can get a list of its child StaticRoutes, but not necessarily create one.
 type StaticRoutesAncestor interface {
 	StaticRoutes(*bambou.FetchingInfo) (StaticRoutesList, *bambou.Error)
-	CreateStaticRoutes(*StaticRoute) *bambou.Error
+}
+
+// StaticRoutesParent is the interface that a parent of a StaticRoute must implement.
+// A Parent is defined as an entity that has StaticRoute as a child.
+// A Parent is an Ancestor which can create a StaticRoute.
+type StaticRoutesParent interface {
+	StaticRoutesAncestor
+	CreateStaticRoute(*StaticRoute) *bambou.Error
 }
 
 // StaticRoute represents the model of a staticroute
 type StaticRoute struct {
-	ID                 string `json:"ID,omitempty"`
-	ParentID           string `json:"parentID,omitempty"`
-	ParentType         string `json:"parentType,omitempty"`
-	Owner              string `json:"owner,omitempty"`
-	IPType             string `json:"IPType,omitempty"`
-	IPv6Address        string `json:"IPv6Address,omitempty"`
-	LastUpdatedBy      string `json:"lastUpdatedBy,omitempty"`
-	Address            string `json:"address,omitempty"`
-	Netmask            string `json:"netmask,omitempty"`
-	NextHopIp          string `json:"nextHopIp,omitempty"`
-	EntityScope        string `json:"entityScope,omitempty"`
-	RouteDistinguisher string `json:"routeDistinguisher,omitempty"`
-	ExternalID         string `json:"externalID,omitempty"`
-	Type               string `json:"type,omitempty"`
+	ID                   string        `json:"ID,omitempty"`
+	ParentID             string        `json:"parentID,omitempty"`
+	ParentType           string        `json:"parentType,omitempty"`
+	Owner                string        `json:"owner,omitempty"`
+	BFDEnabled           bool          `json:"BFDEnabled"`
+	IPType               string        `json:"IPType,omitempty"`
+	IPv6Address          string        `json:"IPv6Address,omitempty"`
+	LastUpdatedBy        string        `json:"lastUpdatedBy,omitempty"`
+	Address              string        `json:"address,omitempty"`
+	Netmask              string        `json:"netmask,omitempty"`
+	NextHopIp            string        `json:"nextHopIp,omitempty"`
+	BlackHoleEnabled     bool          `json:"blackHoleEnabled"`
+	EmbeddedMetadata     []interface{} `json:"embeddedMetadata,omitempty"`
+	EntityScope          string        `json:"entityScope,omitempty"`
+	RouteDistinguisher   string        `json:"routeDistinguisher,omitempty"`
+	AssociatedGatewayIDs []interface{} `json:"associatedGatewayIDs,omitempty"`
+	AssociatedSubnetID   string        `json:"associatedSubnetID,omitempty"`
+	ExternalID           string        `json:"externalID,omitempty"`
+	Type                 string        `json:"type,omitempty"`
 }
 
 // NewStaticRoute returns a new *StaticRoute
 func NewStaticRoute() *StaticRoute {
 
-	return &StaticRoute{}
+	return &StaticRoute{
+		BFDEnabled:       false,
+		BlackHoleEnabled: false,
+	}
 }
 
 // Identity returns the Identity of the object.
@@ -104,6 +121,20 @@ func (o *StaticRoute) Delete() *bambou.Error {
 	return bambou.CurrentSession().DeleteEntity(o)
 }
 
+// DeploymentFailures retrieves the list of child DeploymentFailures of the StaticRoute
+func (o *StaticRoute) DeploymentFailures(info *bambou.FetchingInfo) (DeploymentFailuresList, *bambou.Error) {
+
+	var list DeploymentFailuresList
+	err := bambou.CurrentSession().FetchChildren(o, DeploymentFailureIdentity, &list, info)
+	return list, err
+}
+
+// CreateDeploymentFailure creates a new child DeploymentFailure under the StaticRoute
+func (o *StaticRoute) CreateDeploymentFailure(child *DeploymentFailure) *bambou.Error {
+
+	return bambou.CurrentSession().CreateChild(o, child)
+}
+
 // Metadatas retrieves the list of child Metadatas of the StaticRoute
 func (o *StaticRoute) Metadatas(info *bambou.FetchingInfo) (MetadatasList, *bambou.Error) {
 
@@ -138,10 +169,4 @@ func (o *StaticRoute) EventLogs(info *bambou.FetchingInfo) (EventLogsList, *bamb
 	var list EventLogsList
 	err := bambou.CurrentSession().FetchChildren(o, EventLogIdentity, &list, info)
 	return list, err
-}
-
-// CreateEventLog creates a new child EventLog under the StaticRoute
-func (o *StaticRoute) CreateEventLog(child *EventLog) *bambou.Error {
-
-	return bambou.CurrentSession().CreateChild(o, child)
 }

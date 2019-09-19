@@ -38,34 +38,52 @@ var BGPNeighborIdentity = bambou.Identity{
 // BGPNeighborsList represents a list of BGPNeighbors
 type BGPNeighborsList []*BGPNeighbor
 
-// BGPNeighborsAncestor is the interface of an ancestor of a BGPNeighbor must implement.
+// BGPNeighborsAncestor is the interface that an ancestor of a BGPNeighbor must implement.
+// An Ancestor is defined as an entity that has BGPNeighbor as a descendant.
+// An Ancestor can get a list of its child BGPNeighbors, but not necessarily create one.
 type BGPNeighborsAncestor interface {
 	BGPNeighbors(*bambou.FetchingInfo) (BGPNeighborsList, *bambou.Error)
-	CreateBGPNeighbors(*BGPNeighbor) *bambou.Error
+}
+
+// BGPNeighborsParent is the interface that a parent of a BGPNeighbor must implement.
+// A Parent is defined as an entity that has BGPNeighbor as a child.
+// A Parent is an Ancestor which can create a BGPNeighbor.
+type BGPNeighborsParent interface {
+	BGPNeighborsAncestor
+	CreateBGPNeighbor(*BGPNeighbor) *bambou.Error
 }
 
 // BGPNeighbor represents the model of a bgpneighbor
 type BGPNeighbor struct {
-	ID                              string `json:"ID,omitempty"`
-	ParentID                        string `json:"parentID,omitempty"`
-	ParentType                      string `json:"parentType,omitempty"`
-	Owner                           string `json:"owner,omitempty"`
-	Name                            string `json:"name,omitempty"`
-	DampeningEnabled                bool   `json:"dampeningEnabled"`
-	PeerAS                          int    `json:"peerAS,omitempty"`
-	PeerIP                          string `json:"peerIP,omitempty"`
-	Description                     string `json:"description,omitempty"`
-	Session                         string `json:"session,omitempty"`
-	EntityScope                     string `json:"entityScope,omitempty"`
-	AssociatedExportRoutingPolicyID string `json:"associatedExportRoutingPolicyID,omitempty"`
-	AssociatedImportRoutingPolicyID string `json:"associatedImportRoutingPolicyID,omitempty"`
-	ExternalID                      string `json:"externalID,omitempty"`
+	ID                              string        `json:"ID,omitempty"`
+	ParentID                        string        `json:"parentID,omitempty"`
+	ParentType                      string        `json:"parentType,omitempty"`
+	Owner                           string        `json:"owner,omitempty"`
+	BFDEnabled                      bool          `json:"BFDEnabled"`
+	IPType                          string        `json:"IPType,omitempty"`
+	IPv6Address                     string        `json:"IPv6Address,omitempty"`
+	Name                            string        `json:"name,omitempty"`
+	DampeningEnabled                bool          `json:"dampeningEnabled"`
+	PeerAS                          int           `json:"peerAS,omitempty"`
+	PeerConfiguration               string        `json:"peerConfiguration,omitempty"`
+	PeerIP                          string        `json:"peerIP,omitempty"`
+	Description                     string        `json:"description,omitempty"`
+	Session                         string        `json:"session,omitempty"`
+	EmbeddedMetadata                []interface{} `json:"embeddedMetadata,omitempty"`
+	EntityScope                     string        `json:"entityScope,omitempty"`
+	DomainServiceLabel              string        `json:"domainServiceLabel,omitempty"`
+	AssociatedExportRoutingPolicyID string        `json:"associatedExportRoutingPolicyID,omitempty"`
+	AssociatedImportRoutingPolicyID string        `json:"associatedImportRoutingPolicyID,omitempty"`
+	ExternalID                      string        `json:"externalID,omitempty"`
 }
 
 // NewBGPNeighbor returns a new *BGPNeighbor
 func NewBGPNeighbor() *BGPNeighbor {
 
-	return &BGPNeighbor{}
+	return &BGPNeighbor{
+		BFDEnabled: false,
+		IPType:     "IPV4",
+	}
 }
 
 // Identity returns the Identity of the object.
@@ -102,6 +120,20 @@ func (o *BGPNeighbor) Save() *bambou.Error {
 func (o *BGPNeighbor) Delete() *bambou.Error {
 
 	return bambou.CurrentSession().DeleteEntity(o)
+}
+
+// DeploymentFailures retrieves the list of child DeploymentFailures of the BGPNeighbor
+func (o *BGPNeighbor) DeploymentFailures(info *bambou.FetchingInfo) (DeploymentFailuresList, *bambou.Error) {
+
+	var list DeploymentFailuresList
+	err := bambou.CurrentSession().FetchChildren(o, DeploymentFailureIdentity, &list, info)
+	return list, err
+}
+
+// CreateDeploymentFailure creates a new child DeploymentFailure under the BGPNeighbor
+func (o *BGPNeighbor) CreateDeploymentFailure(child *DeploymentFailure) *bambou.Error {
+
+	return bambou.CurrentSession().CreateChild(o, child)
 }
 
 // Metadatas retrieves the list of child Metadatas of the BGPNeighbor

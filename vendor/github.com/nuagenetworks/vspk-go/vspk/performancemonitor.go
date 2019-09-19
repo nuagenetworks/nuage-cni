@@ -38,10 +38,19 @@ var PerformanceMonitorIdentity = bambou.Identity{
 // PerformanceMonitorsList represents a list of PerformanceMonitors
 type PerformanceMonitorsList []*PerformanceMonitor
 
-// PerformanceMonitorsAncestor is the interface of an ancestor of a PerformanceMonitor must implement.
+// PerformanceMonitorsAncestor is the interface that an ancestor of a PerformanceMonitor must implement.
+// An Ancestor is defined as an entity that has PerformanceMonitor as a descendant.
+// An Ancestor can get a list of its child PerformanceMonitors, but not necessarily create one.
 type PerformanceMonitorsAncestor interface {
 	PerformanceMonitors(*bambou.FetchingInfo) (PerformanceMonitorsList, *bambou.Error)
-	CreatePerformanceMonitors(*PerformanceMonitor) *bambou.Error
+}
+
+// PerformanceMonitorsParent is the interface that a parent of a PerformanceMonitor must implement.
+// A Parent is defined as an entity that has PerformanceMonitor as a child.
+// A Parent is an Ancestor which can create a PerformanceMonitor.
+type PerformanceMonitorsParent interface {
+	PerformanceMonitorsAncestor
+	CreatePerformanceMonitor(*PerformanceMonitor) *bambou.Error
 }
 
 // PerformanceMonitor represents the model of a performancemonitor
@@ -51,18 +60,31 @@ type PerformanceMonitor struct {
 	ParentType      string `json:"parentType,omitempty"`
 	Owner           string `json:"owner,omitempty"`
 	Name            string `json:"name,omitempty"`
+	LastUpdatedBy   string `json:"lastUpdatedBy,omitempty"`
 	PayloadSize     int    `json:"payloadSize,omitempty"`
 	ReadOnly        bool   `json:"readOnly"`
 	ServiceClass    string `json:"serviceClass,omitempty"`
 	Description     string `json:"description,omitempty"`
 	Interval        int    `json:"interval,omitempty"`
+	EntityScope     string `json:"entityScope,omitempty"`
+	HoldDownTimer   int    `json:"holdDownTimer,omitempty"`
+	ProbeType       string `json:"probeType,omitempty"`
 	NumberOfPackets int    `json:"numberOfPackets,omitempty"`
+	ExternalID      string `json:"externalID,omitempty"`
 }
 
 // NewPerformanceMonitor returns a new *PerformanceMonitor
 func NewPerformanceMonitor() *PerformanceMonitor {
 
-	return &PerformanceMonitor{}
+	return &PerformanceMonitor{
+		PayloadSize:     137,
+		ReadOnly:        false,
+		ServiceClass:    "H",
+		Interval:        180,
+		HoldDownTimer:   1000,
+		ProbeType:       "ONEWAY",
+		NumberOfPackets: 1,
+	}
 }
 
 // Identity returns the Identity of the object.
@@ -101,21 +123,18 @@ func (o *PerformanceMonitor) Delete() *bambou.Error {
 	return bambou.CurrentSession().DeleteEntity(o)
 }
 
+// Tiers retrieves the list of child Tiers of the PerformanceMonitor
+func (o *PerformanceMonitor) Tiers(info *bambou.FetchingInfo) (TiersList, *bambou.Error) {
+
+	var list TiersList
+	err := bambou.CurrentSession().FetchChildren(o, TierIdentity, &list, info)
+	return list, err
+}
+
 // Applicationperformancemanagements retrieves the list of child Applicationperformancemanagements of the PerformanceMonitor
 func (o *PerformanceMonitor) Applicationperformancemanagements(info *bambou.FetchingInfo) (ApplicationperformancemanagementsList, *bambou.Error) {
 
 	var list ApplicationperformancemanagementsList
 	err := bambou.CurrentSession().FetchChildren(o, ApplicationperformancemanagementIdentity, &list, info)
 	return list, err
-}
-
-// AssignApplicationperformancemanagements assigns the list of Applicationperformancemanagements to the PerformanceMonitor
-func (o *PerformanceMonitor) AssignApplicationperformancemanagements(children ApplicationperformancemanagementsList) *bambou.Error {
-
-	list := []bambou.Identifiable{}
-	for _, c := range children {
-		list = append(list, c)
-	}
-
-	return bambou.CurrentSession().AssignChildren(o, list, ApplicationperformancemanagementIdentity)
 }
