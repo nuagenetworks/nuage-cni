@@ -1,6 +1,7 @@
 package daemon
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -22,6 +23,8 @@ import (
 	"github.com/nuagenetworks/nuage-cni/k8s"
 	log "github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
+	api "k8s.io/kubernetes/pkg/apis/core"
 )
 
 var interruptChannel chan bool
@@ -30,6 +33,7 @@ var staleEntityMap map[string]int64
 var stalePortMap map[string]int64
 var staleEntryTimeout int64
 var isAtomic bool
+var hostname string
 var orchestratorType string
 
 type containerInfo struct {
@@ -421,6 +425,12 @@ func MonitorAgent(config *config.Config, orchestrator string) error {
 	staleEntryTimeout = config.StaleEntryTimeout
 	orchestratorType = orchestrator
 
+	hostname, err = findHostFQDN()
+	if err != nil {
+		log.Errorf("finding hostname failed with error: %v", err)
+		return err
+	}
+
 	for {
 		vrsConnection, err = client.ConnectToVRSOVSDB(config)
 		if err != nil {
@@ -498,8 +508,9 @@ func getActiveK8SPods(orchestrator string) ([]string, error) {
 		return []string{}, err
 	}
 
-	var listOpts = metav1.ListOptions{}
-	pods, err := clientset.CoreV1().Pods("").List(listOpts)
+	selector := fields.OneTermEqualSelector(api.PodHostField, hostname).String()
+	options := metav1.ListOptions{FieldSelector: selector}
+	pods, err := clientset.CoreV1().Pods("").List(options)
 	if err != nil {
 		log.Errorf("Error occured while fetching pods from k8s api server")
 		return []string{}, err
@@ -511,4 +522,20 @@ func getActiveK8SPods(orchestrator string) ([]string, error) {
 	}
 
 	return ids, err
+}
+
+func findHostFQDN() (string, error) {
+	var out bytes.Buffer
+	cmd := exec.Command("/bin/hostname", "-f")
+	cmd.Stdout = &out
+
+	err := cmd.Run()
+	if err != nil {
+		log.Errorf("fetching fqdn failed with error: %v", err)
+		return "", err
+	}
+
+	fqdn := out.String()
+	fqdn = fqdn[:len(fqdn)-1]
+	return fqdn, nil
 }

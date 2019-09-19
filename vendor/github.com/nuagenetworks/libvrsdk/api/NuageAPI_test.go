@@ -1,16 +1,8 @@
 package api
 
 import (
-	"bufio"
 	"bytes"
 	"fmt"
-	"log"
-	"math/rand"
-	"os"
-	"strings"
-	"testing"
-	"time"
-
 	"github.com/docker/distribution/uuid"
 	"github.com/nuagenetworks/go-bambou/bambou"
 	"github.com/nuagenetworks/libvrsdk/api/entity"
@@ -18,28 +10,34 @@ import (
 	"github.com/nuagenetworks/libvrsdk/test/util"
 	"github.com/nuagenetworks/vspk-go/vspk"
 	"golang.org/x/crypto/ssh"
+	"log"
+	"math/rand"
+	"os"
+	"strings"
+	"testing"
+	"time"
 )
 
 const (
 	VRS1            = "127.0.0.1"
 	VRS2            = "127.0.0.1"
 	VRSPort         = 6640
-	User            = "atomic-admin"
-	Enterprise      = "atomic"
-	Domain          = "atomic"
-	Zone            = "default"
-	Network1        = "default-0"
+	User            = "sdkuser"
+	Enterprise      = "vrsdk"
+	Domain          = "vrsdk-domain"
+	Zone            = "vrsdk-zone"
+	Network1        = "vrsdk-subnet-1"
 	Network2        = "vrsdk-subnet-2"
 	ReconfNWPrefix  = "192.168.178"
 	Bridge          = "alubr0"
-	VSDIP           = "10.31.45.137"
+	VSDIP           = "10.10.10.10"
 	VSDPort         = "8443"
 	VSDURL          = "https://" + VSDIP + ":" + VSDPort
-	VSDUsername     = "csproot"
-	VSDPassword     = "csproot"
-	VSDOrganization = "csp"
+	VSDUsername     = "*******"
+	VSDPassword     = "*******"
+	VSDOrganization = "***"
 	VRSUser         = "root"
-	VRSPassword     = "tigris"
+	VRSPassword     = "******"
 	UnixSocketFile  = "/var/run/openvswitch/db.sock"
 )
 
@@ -397,11 +395,6 @@ func TestContainerCreateDelete(t *testing.T) {
 	} else {
 		t.Fatalf("VM %s with UUID %s does not exist in OVSDB", vmInfo["name"], vmInfo["vmuuid"])
 	}
-
-	reader := bufio.NewReader(os.Stdin)
-	fmt.Print("Enter text: ")
-	text, _ := reader.ReadString('\n')
-	fmt.Println(text)
 
 	// Performing cleanup of port/entity on VRS
 	err = cleanup(vrsConnection, vmInfo)
