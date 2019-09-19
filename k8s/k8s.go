@@ -10,13 +10,13 @@ import (
 	"net/http"
 	"os"
 
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
-
 	"github.com/nuagenetworks/nuage-cni/client"
 	"github.com/nuagenetworks/nuage-cni/config"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 )
 
 var vspK8SConfig = &config.NuageVSPK8SConfig{}
@@ -24,6 +24,7 @@ var podNetwork string
 var podZone string
 var podPG string
 var adminUser string
+var podUID string
 
 var vspK8sConfigFile string
 var kubeconfFile string
@@ -64,12 +65,13 @@ func getK8SLabelsPodUIDFromAPIServer(podNs string, podname string) error {
 		panic(err.Error())
 	}
 
-	pod, err := clientset.Pods(podNs).Get(podname)
+	pod, err := clientset.CoreV1().Pods(podNs).Get(podname, metav1.GetOptions{})
 	if err != nil {
 		log.Errorf("Error occured while querying pod %s under pod namespace %s: %v", podname, podNs, err)
 		return err
 	}
 
+	podUID = string(pod.UID)
 	if _, ok := pod.Labels["nuage.io/subnet"]; !ok {
 		podNetwork = ""
 	} else {
@@ -280,6 +282,7 @@ func GetPodNuageMetadata(nuageMetadata *client.NuageMetadata, name string, ns st
 	nuageMetadata.Network = podNetwork
 	nuageMetadata.User = adminUser
 	nuageMetadata.PolicyGroup = podPG
+	nuageMetadata.PodUID = podUID
 
 	return err
 }

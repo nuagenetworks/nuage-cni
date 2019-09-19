@@ -7,9 +7,12 @@ type StateKey string
 
 // Keys to query the state of the port
 const (
-	StateKeyIPAddress  StateKey = ovsdb.NuagePortTableColumnIPAddress
-	StateKeySubnetMask StateKey = ovsdb.NuagePortTableColumnSubnetMask
-	StateKeyGateway    StateKey = ovsdb.NuagePortTableColumnGateway
-	StateKeyVrfID      StateKey = ovsdb.NuagePortTableColumnVRFId
-	StateKeyEvpnID     StateKey = ovsdb.NuagePortTableColumnEVPNID
+	StateKeyIPAddress    StateKey = ovsdb.NuagePortTableColumnIPAddress
+	StateKeySubnetMask   StateKey = ovsdb.NuagePortTableColumnSubnetMask
+	StateKeyGateway      StateKey = ovsdb.NuagePortTableColumnGateway
+	StateKeyVrfID        StateKey = ovsdb.NuagePortTableColumnVRFId
+	StateKeyEvpnID       StateKey = ovsdb.NuagePortTableColumnEVPNID
+	StateKeyNuageDomain  StateKey = ovsdb.NuagePortTableColumnNuageDomain
+	StateKeyNuageZone    StateKey = ovsdb.NuagePortTableColumnNuageZone
+	StateKeyNuageNetwork StateKey = ovsdb.NuagePortTableColumnNuageNetwork
 )

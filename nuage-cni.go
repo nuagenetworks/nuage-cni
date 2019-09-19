@@ -19,6 +19,7 @@ import (
 
 	"github.com/containernetworking/cni/pkg/skel"
 	"github.com/containernetworking/cni/pkg/types"
+	"github.com/containernetworking/cni/pkg/types/current"
 	"github.com/containernetworking/cni/pkg/version"
 	vrsSdk "github.com/nuagenetworks/libvrsdk/api"
 	"github.com/nuagenetworks/libvrsdk/api/entity"
@@ -171,7 +172,7 @@ func networkConnect(args *skel.CmdArgs) error {
 	log.Infof("Nuage CNI plugin invoked to add an entity to Nuage defined VSD network")
 	var err error
 	var vrsConnection vrsSdk.VRSConnection
-	var result *types.Result
+	var result *current.Result
 	entityInfo := make(map[string]string)
 
 	for {
@@ -223,7 +224,7 @@ func networkConnect(args *skel.CmdArgs) error {
 			log.Errorf("Error obtaining Nuage metadata")
 			return fmt.Errorf("Error obtaining Nuage metadata: %s", err)
 		}
-		entityInfo["uuid"] = string(k8sArgs.K8S_POD_INFRA_CONTAINER_ID)
+		entityInfo["uuid"] = nuageMetadataObj.PodUID
 		log.Infof("Nuage metadata obtained for pod %s is Enterprise: %s, Domain: %s, Zone: %s, Network: %s and User:%s", string(k8sArgs.K8S_POD_NAME), nuageMetadataObj.Enterprise, nuageMetadataObj.Domain, nuageMetadataObj.Zone, nuageMetadataObj.Network, nuageMetadataObj.User)
 	} else {
 		log.Debugf("Orchestrator ID is %s", orchestrator)
@@ -453,7 +454,7 @@ func networkDisconnect(args *skel.CmdArgs) error {
 	log.Debugf("Successfully established a connection to Nuage VRS")
 
 	// Obtaining all ports associated with this entity
-	portList, _ := vrsConnection.GetEntityPorts(entityInfo["uuid"])
+	portList, _ := vrsConnection.GetEntityPortsByName(entityInfo["name"])
 
 	// Delete VRS OVSDB entries only if the ports for the entity
 	// exist in VRS tables
@@ -465,7 +466,7 @@ func networkDisconnect(args *skel.CmdArgs) error {
 			return err
 		}
 
-		err = vrsConnection.DestroyEntity(entityInfo["uuid"])
+		err = vrsConnection.DestroyEntityByName(entityInfo["name"])
 		if err != nil {
 			log.Errorf("Failed to remove entity from Nuage entity Table for entity %s: %v", entityInfo["name"], err)
 		}
