@@ -2,6 +2,7 @@
 
 set -x
 
+export DOCKER_API_VERSION=1.22
 USER_ID=$(id -u)
 GROUP_ID=$(id -g)
 DOCKERFILE="Dockerfile.build"
