@@ -12,6 +12,7 @@ if [ -z ${version} ]; then
     exit 1
 fi
 
+export DOCKER_API_VERSION=1.22
 NUAGE_BUILD_NUMBER=${NUAGE_BUILD_NUMBER:-0}
 version=$version-$NUAGE_BUILD_NUMBER
 cd $GOPATH/src/github.com/nuagenetworks/nuage-cni
