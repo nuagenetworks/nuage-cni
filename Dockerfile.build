@@ -1,0 +1,7 @@
+FROM registry.mv.nuagenetworks.net:5000/build/golang:1.12
+
+RUN yum -y install epel-release &&\
+    yum -y install golang &&\
+    mkdir -p /BUILD/go/src/github.com/nuagenetworks/nuage-cni
+
+WORKDIR /BUILD/go/src/github.com/nuagenetworks/nuage-cni
