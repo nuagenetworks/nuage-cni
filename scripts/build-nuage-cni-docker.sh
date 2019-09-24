@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -e
+set -xe
 
 if [ -z ${GOPATH} ]; then
     echo "\"GOPATH\" environmental variable is not set";
