@@ -38,23 +38,34 @@ var VRSAddressRangeIdentity = bambou.Identity{
 // VRSAddressRangesList represents a list of VRSAddressRanges
 type VRSAddressRangesList []*VRSAddressRange
 
-// VRSAddressRangesAncestor is the interface of an ancestor of a VRSAddressRange must implement.
+// VRSAddressRangesAncestor is the interface that an ancestor of a VRSAddressRange must implement.
+// An Ancestor is defined as an entity that has VRSAddressRange as a descendant.
+// An Ancestor can get a list of its child VRSAddressRanges, but not necessarily create one.
 type VRSAddressRangesAncestor interface {
 	VRSAddressRanges(*bambou.FetchingInfo) (VRSAddressRangesList, *bambou.Error)
-	CreateVRSAddressRanges(*VRSAddressRange) *bambou.Error
+}
+
+// VRSAddressRangesParent is the interface that a parent of a VRSAddressRange must implement.
+// A Parent is defined as an entity that has VRSAddressRange as a child.
+// A Parent is an Ancestor which can create a VRSAddressRange.
+type VRSAddressRangesParent interface {
+	VRSAddressRangesAncestor
+	CreateVRSAddressRange(*VRSAddressRange) *bambou.Error
 }
 
 // VRSAddressRange represents the model of a vrsaddressrange
 type VRSAddressRange struct {
-	ID            string `json:"ID,omitempty"`
-	ParentID      string `json:"parentID,omitempty"`
-	ParentType    string `json:"parentType,omitempty"`
-	Owner         string `json:"owner,omitempty"`
-	LastUpdatedBy string `json:"lastUpdatedBy,omitempty"`
-	MaxAddress    string `json:"maxAddress,omitempty"`
-	MinAddress    string `json:"minAddress,omitempty"`
-	EntityScope   string `json:"entityScope,omitempty"`
-	ExternalID    string `json:"externalID,omitempty"`
+	ID               string        `json:"ID,omitempty"`
+	ParentID         string        `json:"parentID,omitempty"`
+	ParentType       string        `json:"parentType,omitempty"`
+	Owner            string        `json:"owner,omitempty"`
+	IPType           string        `json:"IPType,omitempty"`
+	LastUpdatedBy    string        `json:"lastUpdatedBy,omitempty"`
+	MaxAddress       string        `json:"maxAddress,omitempty"`
+	MinAddress       string        `json:"minAddress,omitempty"`
+	EmbeddedMetadata []interface{} `json:"embeddedMetadata,omitempty"`
+	EntityScope      string        `json:"entityScope,omitempty"`
+	ExternalID       string        `json:"externalID,omitempty"`
 }
 
 // NewVRSAddressRange returns a new *VRSAddressRange

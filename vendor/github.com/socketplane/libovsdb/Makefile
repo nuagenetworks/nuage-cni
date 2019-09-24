@@ -4,7 +4,7 @@ all: test
 
 test-local: install-deps fmt lint vet
 	@echo "+ $@"
-	@go test -v ./...
+	@go test -race -v ./...
 
 test:
 	@docker-compose run --rm test

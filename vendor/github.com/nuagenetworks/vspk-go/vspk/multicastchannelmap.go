@@ -38,23 +38,33 @@ var MultiCastChannelMapIdentity = bambou.Identity{
 // MultiCastChannelMapsList represents a list of MultiCastChannelMaps
 type MultiCastChannelMapsList []*MultiCastChannelMap
 
-// MultiCastChannelMapsAncestor is the interface of an ancestor of a MultiCastChannelMap must implement.
+// MultiCastChannelMapsAncestor is the interface that an ancestor of a MultiCastChannelMap must implement.
+// An Ancestor is defined as an entity that has MultiCastChannelMap as a descendant.
+// An Ancestor can get a list of its child MultiCastChannelMaps, but not necessarily create one.
 type MultiCastChannelMapsAncestor interface {
 	MultiCastChannelMaps(*bambou.FetchingInfo) (MultiCastChannelMapsList, *bambou.Error)
-	CreateMultiCastChannelMaps(*MultiCastChannelMap) *bambou.Error
+}
+
+// MultiCastChannelMapsParent is the interface that a parent of a MultiCastChannelMap must implement.
+// A Parent is defined as an entity that has MultiCastChannelMap as a child.
+// A Parent is an Ancestor which can create a MultiCastChannelMap.
+type MultiCastChannelMapsParent interface {
+	MultiCastChannelMapsAncestor
+	CreateMultiCastChannelMap(*MultiCastChannelMap) *bambou.Error
 }
 
 // MultiCastChannelMap represents the model of a multicastchannelmap
 type MultiCastChannelMap struct {
-	ID            string `json:"ID,omitempty"`
-	ParentID      string `json:"parentID,omitempty"`
-	ParentType    string `json:"parentType,omitempty"`
-	Owner         string `json:"owner,omitempty"`
-	Name          string `json:"name,omitempty"`
-	LastUpdatedBy string `json:"lastUpdatedBy,omitempty"`
-	Description   string `json:"description,omitempty"`
-	EntityScope   string `json:"entityScope,omitempty"`
-	ExternalID    string `json:"externalID,omitempty"`
+	ID               string        `json:"ID,omitempty"`
+	ParentID         string        `json:"parentID,omitempty"`
+	ParentType       string        `json:"parentType,omitempty"`
+	Owner            string        `json:"owner,omitempty"`
+	Name             string        `json:"name,omitempty"`
+	LastUpdatedBy    string        `json:"lastUpdatedBy,omitempty"`
+	Description      string        `json:"description,omitempty"`
+	EmbeddedMetadata []interface{} `json:"embeddedMetadata,omitempty"`
+	EntityScope      string        `json:"entityScope,omitempty"`
+	ExternalID       string        `json:"externalID,omitempty"`
 }
 
 // NewMultiCastChannelMap returns a new *MultiCastChannelMap
@@ -147,10 +157,4 @@ func (o *MultiCastChannelMap) EventLogs(info *bambou.FetchingInfo) (EventLogsLis
 	var list EventLogsList
 	err := bambou.CurrentSession().FetchChildren(o, EventLogIdentity, &list, info)
 	return list, err
-}
-
-// CreateEventLog creates a new child EventLog under the MultiCastChannelMap
-func (o *MultiCastChannelMap) CreateEventLog(child *EventLog) *bambou.Error {
-
-	return bambou.CurrentSession().CreateChild(o, child)
 }

@@ -38,26 +38,36 @@ var DHCPOptionIdentity = bambou.Identity{
 // DHCPOptionsList represents a list of DHCPOptions
 type DHCPOptionsList []*DHCPOption
 
-// DHCPOptionsAncestor is the interface of an ancestor of a DHCPOption must implement.
+// DHCPOptionsAncestor is the interface that an ancestor of a DHCPOption must implement.
+// An Ancestor is defined as an entity that has DHCPOption as a descendant.
+// An Ancestor can get a list of its child DHCPOptions, but not necessarily create one.
 type DHCPOptionsAncestor interface {
 	DHCPOptions(*bambou.FetchingInfo) (DHCPOptionsList, *bambou.Error)
-	CreateDHCPOptions(*DHCPOption) *bambou.Error
+}
+
+// DHCPOptionsParent is the interface that a parent of a DHCPOption must implement.
+// A Parent is defined as an entity that has DHCPOption as a child.
+// A Parent is an Ancestor which can create a DHCPOption.
+type DHCPOptionsParent interface {
+	DHCPOptionsAncestor
+	CreateDHCPOption(*DHCPOption) *bambou.Error
 }
 
 // DHCPOption represents the model of a dhcpoption
 type DHCPOption struct {
-	ID            string        `json:"ID,omitempty"`
-	ParentID      string        `json:"parentID,omitempty"`
-	ParentType    string        `json:"parentType,omitempty"`
-	Owner         string        `json:"owner,omitempty"`
-	Value         string        `json:"value,omitempty"`
-	LastUpdatedBy string        `json:"lastUpdatedBy,omitempty"`
-	ActualType    int           `json:"actualType,omitempty"`
-	ActualValues  []interface{} `json:"actualValues,omitempty"`
-	Length        string        `json:"length,omitempty"`
-	EntityScope   string        `json:"entityScope,omitempty"`
-	ExternalID    string        `json:"externalID,omitempty"`
-	Type          string        `json:"type,omitempty"`
+	ID               string        `json:"ID,omitempty"`
+	ParentID         string        `json:"parentID,omitempty"`
+	ParentType       string        `json:"parentType,omitempty"`
+	Owner            string        `json:"owner,omitempty"`
+	Value            string        `json:"value,omitempty"`
+	LastUpdatedBy    string        `json:"lastUpdatedBy,omitempty"`
+	ActualType       int           `json:"actualType,omitempty"`
+	ActualValues     []interface{} `json:"actualValues,omitempty"`
+	Length           string        `json:"length,omitempty"`
+	EmbeddedMetadata []interface{} `json:"embeddedMetadata,omitempty"`
+	EntityScope      string        `json:"entityScope,omitempty"`
+	ExternalID       string        `json:"externalID,omitempty"`
+	Type             string        `json:"type,omitempty"`
 }
 
 // NewDHCPOption returns a new *DHCPOption
@@ -136,10 +146,4 @@ func (o *DHCPOption) EventLogs(info *bambou.FetchingInfo) (EventLogsList, *bambo
 	var list EventLogsList
 	err := bambou.CurrentSession().FetchChildren(o, EventLogIdentity, &list, info)
 	return list, err
-}
-
-// CreateEventLog creates a new child EventLog under the DHCPOption
-func (o *DHCPOption) CreateEventLog(child *EventLog) *bambou.Error {
-
-	return bambou.CurrentSession().CreateChild(o, child)
 }

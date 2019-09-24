@@ -38,28 +38,41 @@ var IngressAdvFwdTemplateIdentity = bambou.Identity{
 // IngressAdvFwdTemplatesList represents a list of IngressAdvFwdTemplates
 type IngressAdvFwdTemplatesList []*IngressAdvFwdTemplate
 
-// IngressAdvFwdTemplatesAncestor is the interface of an ancestor of a IngressAdvFwdTemplate must implement.
+// IngressAdvFwdTemplatesAncestor is the interface that an ancestor of a IngressAdvFwdTemplate must implement.
+// An Ancestor is defined as an entity that has IngressAdvFwdTemplate as a descendant.
+// An Ancestor can get a list of its child IngressAdvFwdTemplates, but not necessarily create one.
 type IngressAdvFwdTemplatesAncestor interface {
 	IngressAdvFwdTemplates(*bambou.FetchingInfo) (IngressAdvFwdTemplatesList, *bambou.Error)
-	CreateIngressAdvFwdTemplates(*IngressAdvFwdTemplate) *bambou.Error
+}
+
+// IngressAdvFwdTemplatesParent is the interface that a parent of a IngressAdvFwdTemplate must implement.
+// A Parent is defined as an entity that has IngressAdvFwdTemplate as a child.
+// A Parent is an Ancestor which can create a IngressAdvFwdTemplate.
+type IngressAdvFwdTemplatesParent interface {
+	IngressAdvFwdTemplatesAncestor
+	CreateIngressAdvFwdTemplate(*IngressAdvFwdTemplate) *bambou.Error
 }
 
 // IngressAdvFwdTemplate represents the model of a ingressadvfwdtemplate
 type IngressAdvFwdTemplate struct {
-	ID                     string `json:"ID,omitempty"`
-	ParentID               string `json:"parentID,omitempty"`
-	ParentType             string `json:"parentType,omitempty"`
-	Owner                  string `json:"owner,omitempty"`
-	Name                   string `json:"name,omitempty"`
-	LastUpdatedBy          string `json:"lastUpdatedBy,omitempty"`
-	Active                 bool   `json:"active"`
-	Description            string `json:"description,omitempty"`
-	EntityScope            string `json:"entityScope,omitempty"`
-	PolicyState            string `json:"policyState,omitempty"`
-	Priority               int    `json:"priority,omitempty"`
-	PriorityType           string `json:"priorityType,omitempty"`
-	AssociatedLiveEntityID string `json:"associatedLiveEntityID,omitempty"`
-	ExternalID             string `json:"externalID,omitempty"`
+	ID                     string        `json:"ID,omitempty"`
+	ParentID               string        `json:"parentID,omitempty"`
+	ParentType             string        `json:"parentType,omitempty"`
+	Owner                  string        `json:"owner,omitempty"`
+	Name                   string        `json:"name,omitempty"`
+	LastUpdatedBy          string        `json:"lastUpdatedBy,omitempty"`
+	Active                 bool          `json:"active"`
+	DefaultAllowIP         bool          `json:"defaultAllowIP"`
+	DefaultAllowNonIP      bool          `json:"defaultAllowNonIP"`
+	Description            string        `json:"description,omitempty"`
+	EmbeddedMetadata       []interface{} `json:"embeddedMetadata,omitempty"`
+	EntityScope            string        `json:"entityScope,omitempty"`
+	PolicyState            string        `json:"policyState,omitempty"`
+	Priority               int           `json:"priority,omitempty"`
+	PriorityType           string        `json:"priorityType,omitempty"`
+	AssociatedLiveEntityID string        `json:"associatedLiveEntityID,omitempty"`
+	AutoGeneratePriority   bool          `json:"autoGeneratePriority"`
+	ExternalID             string        `json:"externalID,omitempty"`
 }
 
 // NewIngressAdvFwdTemplate returns a new *IngressAdvFwdTemplate

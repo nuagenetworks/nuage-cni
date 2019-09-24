@@ -38,25 +38,35 @@ var StatsCollectorInfoIdentity = bambou.Identity{
 // StatsCollectorInfosList represents a list of StatsCollectorInfos
 type StatsCollectorInfosList []*StatsCollectorInfo
 
-// StatsCollectorInfosAncestor is the interface of an ancestor of a StatsCollectorInfo must implement.
+// StatsCollectorInfosAncestor is the interface that an ancestor of a StatsCollectorInfo must implement.
+// An Ancestor is defined as an entity that has StatsCollectorInfo as a descendant.
+// An Ancestor can get a list of its child StatsCollectorInfos, but not necessarily create one.
 type StatsCollectorInfosAncestor interface {
 	StatsCollectorInfos(*bambou.FetchingInfo) (StatsCollectorInfosList, *bambou.Error)
-	CreateStatsCollectorInfos(*StatsCollectorInfo) *bambou.Error
+}
+
+// StatsCollectorInfosParent is the interface that a parent of a StatsCollectorInfo must implement.
+// A Parent is defined as an entity that has StatsCollectorInfo as a child.
+// A Parent is an Ancestor which can create a StatsCollectorInfo.
+type StatsCollectorInfosParent interface {
+	StatsCollectorInfosAncestor
+	CreateStatsCollectorInfo(*StatsCollectorInfo) *bambou.Error
 }
 
 // StatsCollectorInfo represents the model of a statisticscollector
 type StatsCollectorInfo struct {
-	ID            string `json:"ID,omitempty"`
-	ParentID      string `json:"parentID,omitempty"`
-	ParentType    string `json:"parentType,omitempty"`
-	Owner         string `json:"owner,omitempty"`
-	LastUpdatedBy string `json:"lastUpdatedBy,omitempty"`
-	AddressType   string `json:"addressType,omitempty"`
-	EntityScope   string `json:"entityScope,omitempty"`
-	Port          string `json:"port,omitempty"`
-	IpAddress     string `json:"ipAddress,omitempty"`
-	ProtoBufPort  string `json:"protoBufPort,omitempty"`
-	ExternalID    string `json:"externalID,omitempty"`
+	ID               string        `json:"ID,omitempty"`
+	ParentID         string        `json:"parentID,omitempty"`
+	ParentType       string        `json:"parentType,omitempty"`
+	Owner            string        `json:"owner,omitempty"`
+	LastUpdatedBy    string        `json:"lastUpdatedBy,omitempty"`
+	AddressType      string        `json:"addressType,omitempty"`
+	EmbeddedMetadata []interface{} `json:"embeddedMetadata,omitempty"`
+	EntityScope      string        `json:"entityScope,omitempty"`
+	Port             string        `json:"port,omitempty"`
+	IpAddress        string        `json:"ipAddress,omitempty"`
+	ProtoBufPort     string        `json:"protoBufPort,omitempty"`
+	ExternalID       string        `json:"externalID,omitempty"`
 }
 
 // NewStatsCollectorInfo returns a new *StatsCollectorInfo

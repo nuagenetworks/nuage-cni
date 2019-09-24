@@ -38,55 +38,68 @@ var SharedNetworkResourceIdentity = bambou.Identity{
 // SharedNetworkResourcesList represents a list of SharedNetworkResources
 type SharedNetworkResourcesList []*SharedNetworkResource
 
-// SharedNetworkResourcesAncestor is the interface of an ancestor of a SharedNetworkResource must implement.
+// SharedNetworkResourcesAncestor is the interface that an ancestor of a SharedNetworkResource must implement.
+// An Ancestor is defined as an entity that has SharedNetworkResource as a descendant.
+// An Ancestor can get a list of its child SharedNetworkResources, but not necessarily create one.
 type SharedNetworkResourcesAncestor interface {
 	SharedNetworkResources(*bambou.FetchingInfo) (SharedNetworkResourcesList, *bambou.Error)
-	CreateSharedNetworkResources(*SharedNetworkResource) *bambou.Error
+}
+
+// SharedNetworkResourcesParent is the interface that a parent of a SharedNetworkResource must implement.
+// A Parent is defined as an entity that has SharedNetworkResource as a child.
+// A Parent is an Ancestor which can create a SharedNetworkResource.
+type SharedNetworkResourcesParent interface {
+	SharedNetworkResourcesAncestor
+	CreateSharedNetworkResource(*SharedNetworkResource) *bambou.Error
 }
 
 // SharedNetworkResource represents the model of a sharednetworkresource
 type SharedNetworkResource struct {
-	ID                          string `json:"ID,omitempty"`
-	ParentID                    string `json:"parentID,omitempty"`
-	ParentType                  string `json:"parentType,omitempty"`
-	Owner                       string `json:"owner,omitempty"`
-	ECMPCount                   int    `json:"ECMPCount,omitempty"`
-	DHCPManaged                 bool   `json:"DHCPManaged"`
-	BackHaulRouteDistinguisher  string `json:"backHaulRouteDistinguisher,omitempty"`
-	BackHaulRouteTarget         string `json:"backHaulRouteTarget,omitempty"`
-	BackHaulVNID                int    `json:"backHaulVNID,omitempty"`
-	Name                        string `json:"name,omitempty"`
-	LastUpdatedBy               string `json:"lastUpdatedBy,omitempty"`
-	Gateway                     string `json:"gateway,omitempty"`
-	GatewayMACAddress           string `json:"gatewayMACAddress,omitempty"`
-	AccessRestrictionEnabled    bool   `json:"accessRestrictionEnabled"`
-	Address                     string `json:"address,omitempty"`
-	PermittedActionType         string `json:"permittedActionType,omitempty"`
-	Description                 string `json:"description,omitempty"`
-	Netmask                     string `json:"netmask,omitempty"`
-	SharedResourceParentID      string `json:"sharedResourceParentID,omitempty"`
-	VnID                        int    `json:"vnID,omitempty"`
-	Underlay                    bool   `json:"underlay"`
-	EntityScope                 string `json:"entityScope,omitempty"`
-	DomainRouteDistinguisher    string `json:"domainRouteDistinguisher,omitempty"`
-	DomainRouteTarget           string `json:"domainRouteTarget,omitempty"`
-	UplinkGWVlanAttachmentID    string `json:"uplinkGWVlanAttachmentID,omitempty"`
-	UplinkInterfaceIP           string `json:"uplinkInterfaceIP,omitempty"`
-	UplinkInterfaceMAC          string `json:"uplinkInterfaceMAC,omitempty"`
-	UplinkVPortName             string `json:"uplinkVPortName,omitempty"`
-	UseGlobalMAC                string `json:"useGlobalMAC,omitempty"`
-	AssociatedPATMapperID       string `json:"associatedPATMapperID,omitempty"`
-	ExternalID                  string `json:"externalID,omitempty"`
-	DynamicPATAllocationEnabled bool   `json:"dynamicPATAllocationEnabled"`
-	Type                        string `json:"type,omitempty"`
+	ID                          string        `json:"ID,omitempty"`
+	ParentID                    string        `json:"parentID,omitempty"`
+	ParentType                  string        `json:"parentType,omitempty"`
+	Owner                       string        `json:"owner,omitempty"`
+	ECMPCount                   int           `json:"ECMPCount,omitempty"`
+	DHCPManaged                 bool          `json:"DHCPManaged"`
+	BackHaulRouteDistinguisher  string        `json:"backHaulRouteDistinguisher,omitempty"`
+	BackHaulRouteTarget         string        `json:"backHaulRouteTarget,omitempty"`
+	BackHaulVNID                int           `json:"backHaulVNID,omitempty"`
+	Name                        string        `json:"name,omitempty"`
+	LastUpdatedBy               string        `json:"lastUpdatedBy,omitempty"`
+	Gateway                     string        `json:"gateway,omitempty"`
+	GatewayMACAddress           string        `json:"gatewayMACAddress,omitempty"`
+	AccessRestrictionEnabled    bool          `json:"accessRestrictionEnabled"`
+	Address                     string        `json:"address,omitempty"`
+	PermittedActionType         string        `json:"permittedActionType,omitempty"`
+	Description                 string        `json:"description,omitempty"`
+	Netmask                     string        `json:"netmask,omitempty"`
+	SharedResourceParentID      string        `json:"sharedResourceParentID,omitempty"`
+	EmbeddedMetadata            []interface{} `json:"embeddedMetadata,omitempty"`
+	VnID                        int           `json:"vnID,omitempty"`
+	Underlay                    bool          `json:"underlay"`
+	EnterpriseID                string        `json:"enterpriseID,omitempty"`
+	EntityScope                 string        `json:"entityScope,omitempty"`
+	DomainRouteDistinguisher    string        `json:"domainRouteDistinguisher,omitempty"`
+	DomainRouteTarget           string        `json:"domainRouteTarget,omitempty"`
+	UplinkGWVlanAttachmentID    string        `json:"uplinkGWVlanAttachmentID,omitempty"`
+	UplinkInterfaceIP           string        `json:"uplinkInterfaceIP,omitempty"`
+	UplinkInterfaceMAC          string        `json:"uplinkInterfaceMAC,omitempty"`
+	UplinkVPortName             string        `json:"uplinkVPortName,omitempty"`
+	UseGlobalMAC                string        `json:"useGlobalMAC,omitempty"`
+	AssociatedPATMapperID       string        `json:"associatedPATMapperID,omitempty"`
+	SubnetRouteDistinguisher    string        `json:"subnetRouteDistinguisher,omitempty"`
+	SubnetRouteTarget           string        `json:"subnetRouteTarget,omitempty"`
+	ExternalID                  string        `json:"externalID,omitempty"`
+	DynamicPATAllocationEnabled bool          `json:"dynamicPATAllocationEnabled"`
+	Type                        string        `json:"type,omitempty"`
 }
 
 // NewSharedNetworkResource returns a new *SharedNetworkResource
 func NewSharedNetworkResource() *SharedNetworkResource {
 
 	return &SharedNetworkResource{
-		Type:        "PUBLIC",
 		DHCPManaged: true,
+		Type:        "PUBLIC",
 	}
 }
 

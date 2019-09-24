@@ -38,22 +38,32 @@ var IKEGatewayConfigIdentity = bambou.Identity{
 // IKEGatewayConfigsList represents a list of IKEGatewayConfigs
 type IKEGatewayConfigsList []*IKEGatewayConfig
 
-// IKEGatewayConfigsAncestor is the interface of an ancestor of a IKEGatewayConfig must implement.
+// IKEGatewayConfigsAncestor is the interface that an ancestor of a IKEGatewayConfig must implement.
+// An Ancestor is defined as an entity that has IKEGatewayConfig as a descendant.
+// An Ancestor can get a list of its child IKEGatewayConfigs, but not necessarily create one.
 type IKEGatewayConfigsAncestor interface {
 	IKEGatewayConfigs(*bambou.FetchingInfo) (IKEGatewayConfigsList, *bambou.Error)
-	CreateIKEGatewayConfigs(*IKEGatewayConfig) *bambou.Error
+}
+
+// IKEGatewayConfigsParent is the interface that a parent of a IKEGatewayConfig must implement.
+// A Parent is defined as an entity that has IKEGatewayConfig as a child.
+// A Parent is an Ancestor which can create a IKEGatewayConfig.
+type IKEGatewayConfigsParent interface {
+	IKEGatewayConfigsAncestor
+	CreateIKEGatewayConfig(*IKEGatewayConfig) *bambou.Error
 }
 
 // IKEGatewayConfig represents the model of a ikegatewayconfig
 type IKEGatewayConfig struct {
-	ID            string      `json:"ID,omitempty"`
-	ParentID      string      `json:"parentID,omitempty"`
-	ParentType    string      `json:"parentType,omitempty"`
-	Owner         string      `json:"owner,omitempty"`
-	LastUpdatedBy string      `json:"lastUpdatedBy,omitempty"`
-	EntityScope   string      `json:"entityScope,omitempty"`
-	Config        interface{} `json:"config,omitempty"`
-	ExternalID    string      `json:"externalID,omitempty"`
+	ID               string        `json:"ID,omitempty"`
+	ParentID         string        `json:"parentID,omitempty"`
+	ParentType       string        `json:"parentType,omitempty"`
+	Owner            string        `json:"owner,omitempty"`
+	LastUpdatedBy    string        `json:"lastUpdatedBy,omitempty"`
+	EmbeddedMetadata []interface{} `json:"embeddedMetadata,omitempty"`
+	EntityScope      string        `json:"entityScope,omitempty"`
+	Config           interface{}   `json:"config,omitempty"`
+	ExternalID       string        `json:"externalID,omitempty"`
 }
 
 // NewIKEGatewayConfig returns a new *IKEGatewayConfig

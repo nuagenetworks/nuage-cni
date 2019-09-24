@@ -38,28 +38,41 @@ var PolicyGroupIdentity = bambou.Identity{
 // PolicyGroupsList represents a list of PolicyGroups
 type PolicyGroupsList []*PolicyGroup
 
-// PolicyGroupsAncestor is the interface of an ancestor of a PolicyGroup must implement.
+// PolicyGroupsAncestor is the interface that an ancestor of a PolicyGroup must implement.
+// An Ancestor is defined as an entity that has PolicyGroup as a descendant.
+// An Ancestor can get a list of its child PolicyGroups, but not necessarily create one.
 type PolicyGroupsAncestor interface {
 	PolicyGroups(*bambou.FetchingInfo) (PolicyGroupsList, *bambou.Error)
-	CreatePolicyGroups(*PolicyGroup) *bambou.Error
+}
+
+// PolicyGroupsParent is the interface that a parent of a PolicyGroup must implement.
+// A Parent is defined as an entity that has PolicyGroup as a child.
+// A Parent is an Ancestor which can create a PolicyGroup.
+type PolicyGroupsParent interface {
+	PolicyGroupsAncestor
+	CreatePolicyGroup(*PolicyGroup) *bambou.Error
 }
 
 // PolicyGroup represents the model of a policygroup
 type PolicyGroup struct {
-	ID               string `json:"ID,omitempty"`
-	ParentID         string `json:"parentID,omitempty"`
-	ParentType       string `json:"parentType,omitempty"`
-	Owner            string `json:"owner,omitempty"`
-	EVPNCommunityTag string `json:"EVPNCommunityTag,omitempty"`
-	Name             string `json:"name,omitempty"`
-	LastUpdatedBy    string `json:"lastUpdatedBy,omitempty"`
-	TemplateID       string `json:"templateID,omitempty"`
-	Description      string `json:"description,omitempty"`
-	EntityScope      string `json:"entityScope,omitempty"`
-	PolicyGroupID    int    `json:"policyGroupID,omitempty"`
-	External         bool   `json:"external"`
-	ExternalID       string `json:"externalID,omitempty"`
-	Type             string `json:"type,omitempty"`
+	ID                           string        `json:"ID,omitempty"`
+	ParentID                     string        `json:"parentID,omitempty"`
+	ParentType                   string        `json:"parentType,omitempty"`
+	Owner                        string        `json:"owner,omitempty"`
+	EVPNCommunityTag             string        `json:"EVPNCommunityTag,omitempty"`
+	Name                         string        `json:"name,omitempty"`
+	LastUpdatedBy                string        `json:"lastUpdatedBy,omitempty"`
+	TemplateID                   string        `json:"templateID,omitempty"`
+	Description                  string        `json:"description,omitempty"`
+	EmbeddedMetadata             []interface{} `json:"embeddedMetadata,omitempty"`
+	EntityScope                  string        `json:"entityScope,omitempty"`
+	EntityState                  string        `json:"entityState,omitempty"`
+	PolicyGroupID                int           `json:"policyGroupID,omitempty"`
+	AssocPolicyGroupCategoryID   string        `json:"assocPolicyGroupCategoryID,omitempty"`
+	AssocPolicyGroupCategoryName string        `json:"assocPolicyGroupCategoryName,omitempty"`
+	External                     bool          `json:"external"`
+	ExternalID                   string        `json:"externalID,omitempty"`
+	Type                         string        `json:"type,omitempty"`
 }
 
 // NewPolicyGroup returns a new *PolicyGroup
@@ -134,18 +147,12 @@ func (o *PolicyGroup) CreateGlobalMetadata(child *GlobalMetadata) *bambou.Error 
 	return bambou.CurrentSession().CreateChild(o, child)
 }
 
-// Jobs retrieves the list of child Jobs of the PolicyGroup
-func (o *PolicyGroup) Jobs(info *bambou.FetchingInfo) (JobsList, *bambou.Error) {
+// PolicyGroupCategories retrieves the list of child PolicyGroupCategories of the PolicyGroup
+func (o *PolicyGroup) PolicyGroupCategories(info *bambou.FetchingInfo) (PolicyGroupCategoriesList, *bambou.Error) {
 
-	var list JobsList
-	err := bambou.CurrentSession().FetchChildren(o, JobIdentity, &list, info)
+	var list PolicyGroupCategoriesList
+	err := bambou.CurrentSession().FetchChildren(o, PolicyGroupCategoryIdentity, &list, info)
 	return list, err
-}
-
-// CreateJob creates a new child Job under the PolicyGroup
-func (o *PolicyGroup) CreateJob(child *Job) *bambou.Error {
-
-	return bambou.CurrentSession().CreateChild(o, child)
 }
 
 // VPorts retrieves the list of child VPorts of the PolicyGroup
@@ -173,10 +180,4 @@ func (o *PolicyGroup) EventLogs(info *bambou.FetchingInfo) (EventLogsList, *bamb
 	var list EventLogsList
 	err := bambou.CurrentSession().FetchChildren(o, EventLogIdentity, &list, info)
 	return list, err
-}
-
-// CreateEventLog creates a new child EventLog under the PolicyGroup
-func (o *PolicyGroup) CreateEventLog(child *EventLog) *bambou.Error {
-
-	return bambou.CurrentSession().CreateChild(o, child)
 }

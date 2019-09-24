@@ -38,31 +38,45 @@ var NATMapEntryIdentity = bambou.Identity{
 // NATMapEntriesList represents a list of NATMapEntries
 type NATMapEntriesList []*NATMapEntry
 
-// NATMapEntriesAncestor is the interface of an ancestor of a NATMapEntry must implement.
+// NATMapEntriesAncestor is the interface that an ancestor of a NATMapEntry must implement.
+// An Ancestor is defined as an entity that has NATMapEntry as a descendant.
+// An Ancestor can get a list of its child NATMapEntries, but not necessarily create one.
 type NATMapEntriesAncestor interface {
 	NATMapEntries(*bambou.FetchingInfo) (NATMapEntriesList, *bambou.Error)
-	CreateNATMapEntries(*NATMapEntry) *bambou.Error
+}
+
+// NATMapEntriesParent is the interface that a parent of a NATMapEntry must implement.
+// A Parent is defined as an entity that has NATMapEntry as a child.
+// A Parent is an Ancestor which can create a NATMapEntry.
+type NATMapEntriesParent interface {
+	NATMapEntriesAncestor
+	CreateNATMapEntry(*NATMapEntry) *bambou.Error
 }
 
 // NATMapEntry represents the model of a natmapentry
 type NATMapEntry struct {
-	ID                     string `json:"ID,omitempty"`
-	ParentID               string `json:"parentID,omitempty"`
-	ParentType             string `json:"parentType,omitempty"`
-	Owner                  string `json:"owner,omitempty"`
-	LastUpdatedBy          string `json:"lastUpdatedBy,omitempty"`
-	EntityScope            string `json:"entityScope,omitempty"`
-	PrivateIP              string `json:"privateIP,omitempty"`
-	AssociatedPATNATPoolID string `json:"associatedPATNATPoolID,omitempty"`
-	PublicIP               string `json:"publicIP,omitempty"`
-	ExternalID             string `json:"externalID,omitempty"`
-	Type                   string `json:"type,omitempty"`
+	ID                     string        `json:"ID,omitempty"`
+	ParentID               string        `json:"parentID,omitempty"`
+	ParentType             string        `json:"parentType,omitempty"`
+	Owner                  string        `json:"owner,omitempty"`
+	LastUpdatedBy          string        `json:"lastUpdatedBy,omitempty"`
+	EmbeddedMetadata       []interface{} `json:"embeddedMetadata,omitempty"`
+	EntityScope            string        `json:"entityScope,omitempty"`
+	PrivateIP              string        `json:"privateIP,omitempty"`
+	PrivatePort            int           `json:"privatePort,omitempty"`
+	AssociatedPATNATPoolID string        `json:"associatedPATNATPoolID,omitempty"`
+	PublicIP               string        `json:"publicIP,omitempty"`
+	PublicPort             int           `json:"publicPort,omitempty"`
+	ExternalID             string        `json:"externalID,omitempty"`
+	Type                   string        `json:"type,omitempty"`
 }
 
 // NewNATMapEntry returns a new *NATMapEntry
 func NewNATMapEntry() *NATMapEntry {
 
-	return &NATMapEntry{}
+	return &NATMapEntry{
+		Type: "ONE_TO_ONE_NAT",
+	}
 }
 
 // Identity returns the Identity of the object.

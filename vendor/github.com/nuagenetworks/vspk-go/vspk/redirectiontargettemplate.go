@@ -38,26 +38,37 @@ var RedirectionTargetTemplateIdentity = bambou.Identity{
 // RedirectionTargetTemplatesList represents a list of RedirectionTargetTemplates
 type RedirectionTargetTemplatesList []*RedirectionTargetTemplate
 
-// RedirectionTargetTemplatesAncestor is the interface of an ancestor of a RedirectionTargetTemplate must implement.
+// RedirectionTargetTemplatesAncestor is the interface that an ancestor of a RedirectionTargetTemplate must implement.
+// An Ancestor is defined as an entity that has RedirectionTargetTemplate as a descendant.
+// An Ancestor can get a list of its child RedirectionTargetTemplates, but not necessarily create one.
 type RedirectionTargetTemplatesAncestor interface {
 	RedirectionTargetTemplates(*bambou.FetchingInfo) (RedirectionTargetTemplatesList, *bambou.Error)
-	CreateRedirectionTargetTemplates(*RedirectionTargetTemplate) *bambou.Error
+}
+
+// RedirectionTargetTemplatesParent is the interface that a parent of a RedirectionTargetTemplate must implement.
+// A Parent is defined as an entity that has RedirectionTargetTemplate as a child.
+// A Parent is an Ancestor which can create a RedirectionTargetTemplate.
+type RedirectionTargetTemplatesParent interface {
+	RedirectionTargetTemplatesAncestor
+	CreateRedirectionTargetTemplate(*RedirectionTargetTemplate) *bambou.Error
 }
 
 // RedirectionTargetTemplate represents the model of a redirectiontargettemplate
 type RedirectionTargetTemplate struct {
-	ID                string `json:"ID,omitempty"`
-	ParentID          string `json:"parentID,omitempty"`
-	ParentType        string `json:"parentType,omitempty"`
-	Owner             string `json:"owner,omitempty"`
-	Name              string `json:"name,omitempty"`
-	LastUpdatedBy     string `json:"lastUpdatedBy,omitempty"`
-	RedundancyEnabled bool   `json:"redundancyEnabled"`
-	Description       string `json:"description,omitempty"`
-	EndPointType      string `json:"endPointType,omitempty"`
-	EntityScope       string `json:"entityScope,omitempty"`
-	TriggerType       string `json:"triggerType,omitempty"`
-	ExternalID        string `json:"externalID,omitempty"`
+	ID                string        `json:"ID,omitempty"`
+	ParentID          string        `json:"parentID,omitempty"`
+	ParentType        string        `json:"parentType,omitempty"`
+	Owner             string        `json:"owner,omitempty"`
+	Name              string        `json:"name,omitempty"`
+	LastUpdatedBy     string        `json:"lastUpdatedBy,omitempty"`
+	RedundancyEnabled bool          `json:"redundancyEnabled"`
+	Description       string        `json:"description,omitempty"`
+	DestinationType   string        `json:"destinationType,omitempty"`
+	EmbeddedMetadata  []interface{} `json:"embeddedMetadata,omitempty"`
+	EndPointType      string        `json:"endPointType,omitempty"`
+	EntityScope       string        `json:"entityScope,omitempty"`
+	TriggerType       string        `json:"triggerType,omitempty"`
+	ExternalID        string        `json:"externalID,omitempty"`
 }
 
 // NewRedirectionTargetTemplate returns a new *RedirectionTargetTemplate
@@ -132,30 +143,10 @@ func (o *RedirectionTargetTemplate) CreateGlobalMetadata(child *GlobalMetadata) 
 	return bambou.CurrentSession().CreateChild(o, child)
 }
 
-// Jobs retrieves the list of child Jobs of the RedirectionTargetTemplate
-func (o *RedirectionTargetTemplate) Jobs(info *bambou.FetchingInfo) (JobsList, *bambou.Error) {
-
-	var list JobsList
-	err := bambou.CurrentSession().FetchChildren(o, JobIdentity, &list, info)
-	return list, err
-}
-
-// CreateJob creates a new child Job under the RedirectionTargetTemplate
-func (o *RedirectionTargetTemplate) CreateJob(child *Job) *bambou.Error {
-
-	return bambou.CurrentSession().CreateChild(o, child)
-}
-
 // EventLogs retrieves the list of child EventLogs of the RedirectionTargetTemplate
 func (o *RedirectionTargetTemplate) EventLogs(info *bambou.FetchingInfo) (EventLogsList, *bambou.Error) {
 
 	var list EventLogsList
 	err := bambou.CurrentSession().FetchChildren(o, EventLogIdentity, &list, info)
 	return list, err
-}
-
-// CreateEventLog creates a new child EventLog under the RedirectionTargetTemplate
-func (o *RedirectionTargetTemplate) CreateEventLog(child *EventLog) *bambou.Error {
-
-	return bambou.CurrentSession().CreateChild(o, child)
 }
