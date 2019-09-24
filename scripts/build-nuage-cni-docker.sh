@@ -17,7 +17,6 @@ version=$version-$NUAGE_BUILD_NUMBER
 cd $GOPATH/src/github.com/nuagenetworks/nuage-cni
 make -f Makefile
 
-export DOCKER_API_VERSION=1.22
 sudo docker build -t nuage/cni:${version} .
 docker save nuage/cni:${version} > nuage-cni-docker-${version}.tar
 docker rmi nuage/cni:${version}
