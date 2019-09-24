@@ -2,7 +2,6 @@
 
 set -x
 
-export DOCKER_API_VERSION=1.22
 USER_ID=$(id -u)
 GROUP_ID=$(id -g)
 DOCKERFILE="Dockerfile.build"
@@ -19,7 +18,6 @@ docker run --privileged \
     -e GOPATH=/BUILD/go \
     -e USER_ID=${USER_ID} \
     -e GROUP_ID=${GROUP_ID} \
-    -e DOCKER_API_VERSION=1.22 \
     -v ${PWD}:/BUILD/go/src/github.com/nuagenetworks/nuage-cni \
     -v /usr/global:/usr/global \
     -v /root:/root \
