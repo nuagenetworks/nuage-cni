@@ -2,21 +2,12 @@ package ovsdb
 
 import (
 	"fmt"
-
 	"github.com/golang/glog"
 	"github.com/socketplane/libovsdb"
 )
 
 // OvsDBName is the OVS database name
 const OvsDBName = "Open_vSwitch"
-
-type NuageTableOps interface {
-	InsertRow(ovs *libovsdb.OvsdbClient, row NuageTableRow) error
-	DeleteRow(ovs *libovsdb.OvsdbClient, condition []string) error
-	ReadRow(ovs *libovsdb.OvsdbClient, readRowArgs ReadRowArgs) (map[string]interface{}, error)
-	ReadRows(ovs *libovsdb.OvsdbClient, readRowArgs ReadRowArgs) ([]map[string]interface{}, error)
-	UpdateRow(ovs *libovsdb.OvsdbClient, ovsdbRow map[string]interface{}, condition []string) error
-}
 
 // NuageTable represent a Nuage OVSDB table
 type NuageTable struct {
@@ -54,7 +45,7 @@ func (nuageTable *NuageTable) InsertRow(ovs *libovsdb.OvsdbClient, row NuageTabl
 		return (errStr)
 	}
 
-	glog.V(2).Infof("Insertion into Nuage VM Table succeeded with UUID %s", reply[0].UUID)
+	glog.V(2).Info("Insertion into Nuage VM Table succeeded with UUID %s", reply[0].UUID)
 
 	return nil
 }

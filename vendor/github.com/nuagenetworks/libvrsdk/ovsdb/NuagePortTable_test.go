@@ -2,13 +2,12 @@ package ovsdb
 
 import (
 	"fmt"
+	"github.com/nuagenetworks/libvrsdk/api/entity"
+	"github.com/socketplane/libovsdb"
 	"math/rand"
 	"strings"
 	"testing"
 	"time"
-
-	"github.com/nuagenetworks/libvrsdk/api/entity"
-	"github.com/socketplane/libovsdb"
 )
 
 const mac1 = "76:22:F6:70:4E:47"

@@ -315,20 +315,14 @@ func SendPodDeletionNotification(podname string, ns string, orchestrator string)
 	url := vspK8SConfig.NuageK8SMonServer + "/namespaces/" + ns + "/pods"
 
 	// Load client cert
-	cert, err := tls.LoadX509KeyPair(nuageMonClientCertFile, nuageMonClientKeyFile)
+	cert, err := tls.X509KeyPair([]byte(nuageMonClientCertFile), []byte(nuageMonClientKeyFile))
 	if err != nil {
 		log.Errorf("Error loading client cert file to communicate with Nuage monitor: %v", err)
 		return err
 	}
 
-	// Load CA cert
-	caCert, err := ioutil.ReadFile(nuageMonClientCACertFile)
-	if err != nil {
-		log.Errorf("Error loading CA cert file to communicate with Nuage monitor: %v", err)
-		return err
-	}
 	caCertPool := x509.NewCertPool()
-	caCertPool.AppendCertsFromPEM(caCert)
+	caCertPool.AppendCertsFromPEM([]byte(nuageMonClientCACertFile))
 
 	// Setup HTTPS client
 	tlsConfig := &tls.Config{
