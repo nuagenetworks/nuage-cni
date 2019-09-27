@@ -16,7 +16,7 @@ import (
 	"gopkg.in/yaml.v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
 )
 
 var vspK8SConfig = &config.NuageVSPK8SConfig{}
@@ -55,9 +55,10 @@ func getK8SLabelsPodUIDFromAPIServer(podNs string, podname string) error {
 	log.Infof("Obtaining labels from API server for pod %s under namespace %s", podname, podNs)
 
 	// creates the in-cluster config
-	config, err := rest.InClusterConfig()
+	config, err := clientcmd.BuildConfigFromFlags("", kubeconfFile)
 	if err != nil {
-		panic(err.Error())
+		log.Errorf("failed to load kubeconfig %v", err)
+		return err
 	}
 	// creates the clientset
 	clientset, err := kubernetes.NewForConfig(config)
