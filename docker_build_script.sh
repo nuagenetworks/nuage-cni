@@ -18,6 +18,9 @@ docker run --privileged \
     -e GOPATH=/BUILD/go \
     -e USER_ID=${USER_ID} \
     -e GROUP_ID=${GROUP_ID} \
+    -e http_proxy=${http_proxy} \
+    -e https_proxy=${https_proxy} \
+    -e no_proxy=${no_proxy} \
     -v ${PWD}:/BUILD/go/src/github.com/nuagenetworks/nuage-cni \
     -v /usr/global:/usr/global \
     -v /root:/root \
