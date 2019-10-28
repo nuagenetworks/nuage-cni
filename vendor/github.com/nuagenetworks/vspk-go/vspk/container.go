@@ -38,43 +38,56 @@ var ContainerIdentity = bambou.Identity{
 // ContainersList represents a list of Containers
 type ContainersList []*Container
 
-// ContainersAncestor is the interface of an ancestor of a Container must implement.
+// ContainersAncestor is the interface that an ancestor of a Container must implement.
+// An Ancestor is defined as an entity that has Container as a descendant.
+// An Ancestor can get a list of its child Containers, but not necessarily create one.
 type ContainersAncestor interface {
 	Containers(*bambou.FetchingInfo) (ContainersList, *bambou.Error)
-	CreateContainers(*Container) *bambou.Error
+}
+
+// ContainersParent is the interface that a parent of a Container must implement.
+// A Parent is defined as an entity that has Container as a child.
+// A Parent is an Ancestor which can create a Container.
+type ContainersParent interface {
+	ContainersAncestor
+	CreateContainer(*Container) *bambou.Error
 }
 
 // Container represents the model of a container
 type Container struct {
-	ID              string        `json:"ID,omitempty"`
-	ParentID        string        `json:"parentID,omitempty"`
-	ParentType      string        `json:"parentType,omitempty"`
-	Owner           string        `json:"owner,omitempty"`
-	L2DomainIDs     []interface{} `json:"l2DomainIDs,omitempty"`
-	VRSID           string        `json:"VRSID,omitempty"`
-	UUID            string        `json:"UUID,omitempty"`
-	Name            string        `json:"name,omitempty"`
-	LastUpdatedBy   string        `json:"lastUpdatedBy,omitempty"`
-	ReasonType      string        `json:"reasonType,omitempty"`
-	DeleteExpiry    int           `json:"deleteExpiry,omitempty"`
-	DeleteMode      string        `json:"deleteMode,omitempty"`
-	ResyncInfo      interface{}   `json:"resyncInfo,omitempty"`
-	SiteIdentifier  string        `json:"siteIdentifier,omitempty"`
-	ImageID         string        `json:"imageID,omitempty"`
-	ImageName       string        `json:"imageName,omitempty"`
-	Interfaces      []interface{} `json:"interfaces,omitempty"`
-	EnterpriseID    string        `json:"enterpriseID,omitempty"`
-	EnterpriseName  string        `json:"enterpriseName,omitempty"`
-	EntityScope     string        `json:"entityScope,omitempty"`
-	DomainIDs       []interface{} `json:"domainIDs,omitempty"`
-	ZoneIDs         []interface{} `json:"zoneIDs,omitempty"`
-	OrchestrationID string        `json:"orchestrationID,omitempty"`
-	UserID          string        `json:"userID,omitempty"`
-	UserName        string        `json:"userName,omitempty"`
-	Status          string        `json:"status,omitempty"`
-	SubnetIDs       []interface{} `json:"subnetIDs,omitempty"`
-	ExternalID      string        `json:"externalID,omitempty"`
-	HypervisorIP    string        `json:"hypervisorIP,omitempty"`
+	ID                 string        `json:"ID,omitempty"`
+	ParentID           string        `json:"parentID,omitempty"`
+	ParentType         string        `json:"parentType,omitempty"`
+	Owner              string        `json:"owner,omitempty"`
+	L2DomainIDs        []interface{} `json:"l2DomainIDs,omitempty"`
+	VRSID              string        `json:"VRSID,omitempty"`
+	UUID               string        `json:"UUID,omitempty"`
+	Name               string        `json:"name,omitempty"`
+	LastUpdatedBy      string        `json:"lastUpdatedBy,omitempty"`
+	ReasonType         string        `json:"reasonType,omitempty"`
+	DeleteExpiry       int           `json:"deleteExpiry,omitempty"`
+	DeleteMode         string        `json:"deleteMode,omitempty"`
+	ResyncInfo         interface{}   `json:"resyncInfo,omitempty"`
+	SiteIdentifier     string        `json:"siteIdentifier,omitempty"`
+	ImageID            string        `json:"imageID,omitempty"`
+	ImageName          string        `json:"imageName,omitempty"`
+	EmbeddedMetadata   []interface{} `json:"embeddedMetadata,omitempty"`
+	Interfaces         []interface{} `json:"interfaces,omitempty"`
+	EnterpriseID       string        `json:"enterpriseID,omitempty"`
+	EnterpriseName     string        `json:"enterpriseName,omitempty"`
+	EntityScope        string        `json:"entityScope,omitempty"`
+	DomainIDs          []interface{} `json:"domainIDs,omitempty"`
+	ComputeProvisioned bool          `json:"computeProvisioned"`
+	ZoneIDs            []interface{} `json:"zoneIDs,omitempty"`
+	OrchestrationID    string        `json:"orchestrationID,omitempty"`
+	VrsRawVersion      string        `json:"vrsRawVersion,omitempty"`
+	VrsVersion         string        `json:"vrsVersion,omitempty"`
+	UserID             string        `json:"userID,omitempty"`
+	UserName           string        `json:"userName,omitempty"`
+	Status             string        `json:"status,omitempty"`
+	SubnetIDs          []interface{} `json:"subnetIDs,omitempty"`
+	ExternalID         string        `json:"externalID,omitempty"`
+	HypervisorIP       string        `json:"hypervisorIP,omitempty"`
 }
 
 // NewContainer returns a new *Container
@@ -141,12 +154,6 @@ func (o *Container) Alarms(info *bambou.FetchingInfo) (AlarmsList, *bambou.Error
 	return list, err
 }
 
-// CreateAlarm creates a new child Alarm under the Container
-func (o *Container) CreateAlarm(child *Alarm) *bambou.Error {
-
-	return bambou.CurrentSession().CreateChild(o, child)
-}
-
 // GlobalMetadatas retrieves the list of child GlobalMetadatas of the Container
 func (o *Container) GlobalMetadatas(info *bambou.FetchingInfo) (GlobalMetadatasList, *bambou.Error) {
 
@@ -197,22 +204,10 @@ func (o *Container) VRSs(info *bambou.FetchingInfo) (VRSsList, *bambou.Error) {
 	return list, err
 }
 
-// CreateVRS creates a new child VRS under the Container
-func (o *Container) CreateVRS(child *VRS) *bambou.Error {
-
-	return bambou.CurrentSession().CreateChild(o, child)
-}
-
 // EventLogs retrieves the list of child EventLogs of the Container
 func (o *Container) EventLogs(info *bambou.FetchingInfo) (EventLogsList, *bambou.Error) {
 
 	var list EventLogsList
 	err := bambou.CurrentSession().FetchChildren(o, EventLogIdentity, &list, info)
 	return list, err
-}
-
-// CreateEventLog creates a new child EventLog under the Container
-func (o *Container) CreateEventLog(child *EventLog) *bambou.Error {
-
-	return bambou.CurrentSession().CreateChild(o, child)
 }

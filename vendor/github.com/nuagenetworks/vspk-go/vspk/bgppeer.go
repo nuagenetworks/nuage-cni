@@ -38,23 +38,33 @@ var BGPPeerIdentity = bambou.Identity{
 // BGPPeersList represents a list of BGPPeers
 type BGPPeersList []*BGPPeer
 
-// BGPPeersAncestor is the interface of an ancestor of a BGPPeer must implement.
+// BGPPeersAncestor is the interface that an ancestor of a BGPPeer must implement.
+// An Ancestor is defined as an entity that has BGPPeer as a descendant.
+// An Ancestor can get a list of its child BGPPeers, but not necessarily create one.
 type BGPPeersAncestor interface {
 	BGPPeers(*bambou.FetchingInfo) (BGPPeersList, *bambou.Error)
-	CreateBGPPeers(*BGPPeer) *bambou.Error
+}
+
+// BGPPeersParent is the interface that a parent of a BGPPeer must implement.
+// A Parent is defined as an entity that has BGPPeer as a child.
+// A Parent is an Ancestor which can create a BGPPeer.
+type BGPPeersParent interface {
+	BGPPeersAncestor
+	CreateBGPPeer(*BGPPeer) *bambou.Error
 }
 
 // BGPPeer represents the model of a bgppeer
 type BGPPeer struct {
-	ID              string `json:"ID,omitempty"`
-	ParentID        string `json:"parentID,omitempty"`
-	ParentType      string `json:"parentType,omitempty"`
-	Owner           string `json:"owner,omitempty"`
-	LastStateChange int    `json:"lastStateChange,omitempty"`
-	Address         string `json:"address,omitempty"`
-	EntityScope     string `json:"entityScope,omitempty"`
-	Status          string `json:"status,omitempty"`
-	ExternalID      string `json:"externalID,omitempty"`
+	ID               string        `json:"ID,omitempty"`
+	ParentID         string        `json:"parentID,omitempty"`
+	ParentType       string        `json:"parentType,omitempty"`
+	Owner            string        `json:"owner,omitempty"`
+	LastStateChange  int           `json:"lastStateChange,omitempty"`
+	Address          string        `json:"address,omitempty"`
+	EmbeddedMetadata []interface{} `json:"embeddedMetadata,omitempty"`
+	EntityScope      string        `json:"entityScope,omitempty"`
+	Status           string        `json:"status,omitempty"`
+	ExternalID       string        `json:"externalID,omitempty"`
 }
 
 // NewBGPPeer returns a new *BGPPeer

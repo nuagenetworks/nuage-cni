@@ -38,56 +38,79 @@ var InfrastructureGatewayProfileIdentity = bambou.Identity{
 // InfrastructureGatewayProfilesList represents a list of InfrastructureGatewayProfiles
 type InfrastructureGatewayProfilesList []*InfrastructureGatewayProfile
 
-// InfrastructureGatewayProfilesAncestor is the interface of an ancestor of a InfrastructureGatewayProfile must implement.
+// InfrastructureGatewayProfilesAncestor is the interface that an ancestor of a InfrastructureGatewayProfile must implement.
+// An Ancestor is defined as an entity that has InfrastructureGatewayProfile as a descendant.
+// An Ancestor can get a list of its child InfrastructureGatewayProfiles, but not necessarily create one.
 type InfrastructureGatewayProfilesAncestor interface {
 	InfrastructureGatewayProfiles(*bambou.FetchingInfo) (InfrastructureGatewayProfilesList, *bambou.Error)
-	CreateInfrastructureGatewayProfiles(*InfrastructureGatewayProfile) *bambou.Error
+}
+
+// InfrastructureGatewayProfilesParent is the interface that a parent of a InfrastructureGatewayProfile must implement.
+// A Parent is defined as an entity that has InfrastructureGatewayProfile as a child.
+// A Parent is an Ancestor which can create a InfrastructureGatewayProfile.
+type InfrastructureGatewayProfilesParent interface {
+	InfrastructureGatewayProfilesAncestor
+	CreateInfrastructureGatewayProfile(*InfrastructureGatewayProfile) *bambou.Error
 }
 
 // InfrastructureGatewayProfile represents the model of a infrastructuregatewayprofile
 type InfrastructureGatewayProfile struct {
-	ID                           string `json:"ID,omitempty"`
-	ParentID                     string `json:"parentID,omitempty"`
-	ParentType                   string `json:"parentType,omitempty"`
-	Owner                        string `json:"owner,omitempty"`
-	NTPServerKey                 string `json:"NTPServerKey,omitempty"`
-	NTPServerKeyID               int    `json:"NTPServerKeyID,omitempty"`
-	Name                         string `json:"name,omitempty"`
-	LastUpdatedBy                string `json:"lastUpdatedBy,omitempty"`
-	DatapathSyncTimeout          int    `json:"datapathSyncTimeout,omitempty"`
-	DeadTimer                    string `json:"deadTimer,omitempty"`
-	DeadTimerEnabled             bool   `json:"deadTimerEnabled"`
-	RemoteLogMode                string `json:"remoteLogMode,omitempty"`
-	RemoteLogServerAddress       string `json:"remoteLogServerAddress,omitempty"`
-	RemoteLogServerPort          int    `json:"remoteLogServerPort,omitempty"`
-	Description                  string `json:"description,omitempty"`
-	MetadataUpgradePath          string `json:"metadataUpgradePath,omitempty"`
-	EnterpriseID                 string `json:"enterpriseID,omitempty"`
-	EntityScope                  string `json:"entityScope,omitempty"`
-	ControllerLessDuration       string `json:"controllerLessDuration,omitempty"`
-	ControllerLessEnabled        bool   `json:"controllerLessEnabled"`
-	ControllerLessForwardingMode string `json:"controllerLessForwardingMode,omitempty"`
-	ControllerLessRemoteDuration string `json:"controllerLessRemoteDuration,omitempty"`
-	ForceImmediateSystemSync     bool   `json:"forceImmediateSystemSync"`
-	UpgradeAction                string `json:"upgradeAction,omitempty"`
-	ProxyDNSName                 string `json:"proxyDNSName,omitempty"`
-	UseTwoFactor                 bool   `json:"useTwoFactor"`
-	StatsCollectorPort           int    `json:"statsCollectorPort,omitempty"`
-	ExternalID                   string `json:"externalID,omitempty"`
-	SystemSyncScheduler          string `json:"systemSyncScheduler,omitempty"`
+	ID                           string        `json:"ID,omitempty"`
+	ParentID                     string        `json:"parentID,omitempty"`
+	ParentType                   string        `json:"parentType,omitempty"`
+	Owner                        string        `json:"owner,omitempty"`
+	NTPServerKey                 string        `json:"NTPServerKey,omitempty"`
+	NTPServerKeyID               int           `json:"NTPServerKeyID,omitempty"`
+	Name                         string        `json:"name,omitempty"`
+	LastUpdatedBy                string        `json:"lastUpdatedBy,omitempty"`
+	DatapathSyncTimeout          int           `json:"datapathSyncTimeout,omitempty"`
+	DeadTimer                    string        `json:"deadTimer,omitempty"`
+	DeadTimerEnabled             bool          `json:"deadTimerEnabled"`
+	WebFilterDownloadPort        int           `json:"webFilterDownloadPort,omitempty"`
+	WebFilterQueryPort           int           `json:"webFilterQueryPort,omitempty"`
+	RemoteLogMode                string        `json:"remoteLogMode,omitempty"`
+	RemoteLogServerAddress       string        `json:"remoteLogServerAddress,omitempty"`
+	RemoteLogServerPort          int           `json:"remoteLogServerPort,omitempty"`
+	Description                  string        `json:"description,omitempty"`
+	MetadataUpgradePath          string        `json:"metadataUpgradePath,omitempty"`
+	FlowEvictionThreshold        int           `json:"flowEvictionThreshold,omitempty"`
+	EmbeddedMetadata             []interface{} `json:"embeddedMetadata,omitempty"`
+	EnterpriseID                 string        `json:"enterpriseID,omitempty"`
+	EntityScope                  string        `json:"entityScope,omitempty"`
+	ControllerLessDuration       string        `json:"controllerLessDuration,omitempty"`
+	ControllerLessEnabled        bool          `json:"controllerLessEnabled"`
+	ControllerLessForwardingMode string        `json:"controllerLessForwardingMode,omitempty"`
+	ControllerLessRemoteDuration string        `json:"controllerLessRemoteDuration,omitempty"`
+	ForceImmediateSystemSync     bool          `json:"forceImmediateSystemSync"`
+	OpenFlowAuditTimer           int           `json:"openFlowAuditTimer,omitempty"`
+	UpgradeAction                string        `json:"upgradeAction,omitempty"`
+	ProxyDNSName                 string        `json:"proxyDNSName,omitempty"`
+	UseTwoFactor                 bool          `json:"useTwoFactor"`
+	StatsCollectorPort           int           `json:"statsCollectorPort,omitempty"`
+	ExternalID                   string        `json:"externalID,omitempty"`
+	SystemSyncScheduler          string        `json:"systemSyncScheduler,omitempty"`
 }
 
 // NewInfrastructureGatewayProfile returns a new *InfrastructureGatewayProfile
 func NewInfrastructureGatewayProfile() *InfrastructureGatewayProfile {
 
 	return &InfrastructureGatewayProfile{
-		UpgradeAction:       "NONE",
-		StatsCollectorPort:  29090,
-		SystemSyncScheduler: "0 0 * * 0",
-		DeadTimer:           "ONE_HOUR",
-		UseTwoFactor:        true,
-		RemoteLogMode:       "DISABLED",
-		DatapathSyncTimeout: 1000,
+		DatapathSyncTimeout:          1000,
+		DeadTimerEnabled:             false,
+		WebFilterDownloadPort:        8080,
+		WebFilterQueryPort:           9090,
+		RemoteLogMode:                "DISABLED",
+		RemoteLogServerPort:          514,
+		FlowEvictionThreshold:        2500,
+		ControllerLessDuration:       "P7DT0H0M",
+		ControllerLessForwardingMode: "DISABLED",
+		ControllerLessRemoteDuration: "P3DT0H0M",
+		ForceImmediateSystemSync:     false,
+		OpenFlowAuditTimer:           180,
+		UpgradeAction:                "NONE",
+		UseTwoFactor:                 false,
+		StatsCollectorPort:           39090,
+		SystemSyncScheduler:          "0 0 * * *",
 	}
 }
 

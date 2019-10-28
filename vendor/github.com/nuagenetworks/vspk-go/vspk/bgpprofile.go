@@ -38,35 +38,50 @@ var BGPProfileIdentity = bambou.Identity{
 // BGPProfilesList represents a list of BGPProfiles
 type BGPProfilesList []*BGPProfile
 
-// BGPProfilesAncestor is the interface of an ancestor of a BGPProfile must implement.
+// BGPProfilesAncestor is the interface that an ancestor of a BGPProfile must implement.
+// An Ancestor is defined as an entity that has BGPProfile as a descendant.
+// An Ancestor can get a list of its child BGPProfiles, but not necessarily create one.
 type BGPProfilesAncestor interface {
 	BGPProfiles(*bambou.FetchingInfo) (BGPProfilesList, *bambou.Error)
-	CreateBGPProfiles(*BGPProfile) *bambou.Error
+}
+
+// BGPProfilesParent is the interface that a parent of a BGPProfile must implement.
+// A Parent is defined as an entity that has BGPProfile as a child.
+// A Parent is an Ancestor which can create a BGPProfile.
+type BGPProfilesParent interface {
+	BGPProfilesAncestor
+	CreateBGPProfile(*BGPProfile) *bambou.Error
 }
 
 // BGPProfile represents the model of a bgpprofile
 type BGPProfile struct {
-	ID                              string `json:"ID,omitempty"`
-	ParentID                        string `json:"parentID,omitempty"`
-	ParentType                      string `json:"parentType,omitempty"`
-	Owner                           string `json:"owner,omitempty"`
-	Name                            string `json:"name,omitempty"`
-	DampeningHalfLife               int    `json:"dampeningHalfLife,omitempty"`
-	DampeningMaxSuppress            int    `json:"dampeningMaxSuppress,omitempty"`
-	DampeningName                   string `json:"dampeningName,omitempty"`
-	DampeningReuse                  int    `json:"dampeningReuse,omitempty"`
-	DampeningSuppress               int    `json:"dampeningSuppress,omitempty"`
-	Description                     string `json:"description,omitempty"`
-	EntityScope                     string `json:"entityScope,omitempty"`
-	AssociatedExportRoutingPolicyID string `json:"associatedExportRoutingPolicyID,omitempty"`
-	AssociatedImportRoutingPolicyID string `json:"associatedImportRoutingPolicyID,omitempty"`
-	ExternalID                      string `json:"externalID,omitempty"`
+	ID                              string        `json:"ID,omitempty"`
+	ParentID                        string        `json:"parentID,omitempty"`
+	ParentType                      string        `json:"parentType,omitempty"`
+	Owner                           string        `json:"owner,omitempty"`
+	Name                            string        `json:"name,omitempty"`
+	DampeningHalfLife               int           `json:"dampeningHalfLife,omitempty"`
+	DampeningMaxSuppress            int           `json:"dampeningMaxSuppress,omitempty"`
+	DampeningName                   string        `json:"dampeningName,omitempty"`
+	DampeningReuse                  int           `json:"dampeningReuse,omitempty"`
+	DampeningSuppress               int           `json:"dampeningSuppress,omitempty"`
+	Description                     string        `json:"description,omitempty"`
+	EmbeddedMetadata                []interface{} `json:"embeddedMetadata,omitempty"`
+	EntityScope                     string        `json:"entityScope,omitempty"`
+	AssociatedExportRoutingPolicyID string        `json:"associatedExportRoutingPolicyID,omitempty"`
+	AssociatedImportRoutingPolicyID string        `json:"associatedImportRoutingPolicyID,omitempty"`
+	ExternalID                      string        `json:"externalID,omitempty"`
 }
 
 // NewBGPProfile returns a new *BGPProfile
 func NewBGPProfile() *BGPProfile {
 
-	return &BGPProfile{}
+	return &BGPProfile{
+		DampeningHalfLife:    15,
+		DampeningMaxSuppress: 60,
+		DampeningReuse:       750,
+		DampeningSuppress:    3000,
+	}
 }
 
 // Identity returns the Identity of the object.

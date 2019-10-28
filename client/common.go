@@ -8,18 +8,18 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	log "github.com/Sirupsen/logrus"
+	"net"
+	"os"
+	"strings"
+
 	"github.com/containernetworking/cni/pkg/ip"
 	"github.com/containernetworking/cni/pkg/ns"
 	"github.com/containernetworking/cni/pkg/skel"
-	"github.com/containernetworking/cni/pkg/types"
+	"github.com/containernetworking/cni/pkg/types/current"
 	vrsSdk "github.com/nuagenetworks/libvrsdk/api"
 	"github.com/nuagenetworks/nuage-cni/config"
+	log "github.com/sirupsen/logrus"
 	"github.com/vishvananda/netlink"
-	"net"
-	"os"
-	"os/exec"
-	"strings"
 )
 
 const (
@@ -107,10 +107,10 @@ func SetupVEth(netns string, containerInfo map[string]string, mtu int) (contVeth
 
 // AssignIPToContainerIntf will configure the container end of the veth
 // interface with IP address assigned by the Nuage CNI plugin
-func AssignIPToContainerIntf(netns string, containerInfo map[string]string) (*types.Result, error) {
+func AssignIPToContainerIntf(netns string, containerInfo map[string]string) (*current.Result, error) {
 
 	var err error
-	r := &types.Result{}
+	r := &current.Result{}
 
 	log.Debugf("Configuring container %s interface %s with IP %s and default gateway %s assigned by Nuage CNI plugin", containerInfo["name"], containerInfo["entityport"], containerInfo["ip"], containerInfo["gw"])
 
@@ -118,7 +118,7 @@ func AssignIPToContainerIntf(netns string, containerInfo map[string]string) (*ty
 	prefixSize, _ := netmask.Size()
 
 	ipV4Network := net.IPNet{IP: net.ParseIP(containerInfo["ip"]), Mask: net.CIDRMask(prefixSize, 32)}
-	r.IP4 = &types.IPConfig{IP: ipV4Network}
+	r.IPs = []*current.IPConfig{&current.IPConfig{Address: ipV4Network}}
 	err = ns.WithNetNSPath(netns, func(hostNS ns.NetNS) error {
 
 		contVeth, errStr := netlink.LinkByName(containerInfo["entityport"])
@@ -142,11 +142,13 @@ func AssignIPToContainerIntf(netns string, containerInfo map[string]string) (*ty
 		} else {
 			log.Debugf("Successfully added default route to container %s via gateway %s", containerInfo["name"], containerInfo["gw"])
 		}
-		if err = netlink.AddrAdd(contVeth, &netlink.Addr{IPNet: &r.IP4.IP}); err != nil {
-			log.Errorf("Failed to assign IP %s to container %s", &r.IP4.IP, containerInfo["name"])
-			return fmt.Errorf("failed to add IP addr to %q: %v", containerInfo["entityport"], err)
+		for _, ip := range r.IPs {
+			if err = netlink.AddrAdd(contVeth, &netlink.Addr{IPNet: &ip.Address}); err != nil {
+				log.Errorf("Failed to assign IP %s to container %s", ip.Address, containerInfo["name"])
+				return fmt.Errorf("failed to add IP addr to %q: %v", containerInfo["entityport"], err)
+			}
+			log.Debugf("Successfully assigned IP %s to container %s", ip.Address, containerInfo["name"])
 		}
-		log.Debugf("Successfully assigned IP %s to container %s", &r.IP4.IP, containerInfo["name"])
 
 		return err
 	})
@@ -299,20 +301,13 @@ func SetDefaultsForNuageCNIConfig(conf *config.Config) {
 	}
 }
 
-func IsVSPFunctional() bool {
+func IsVSPFunctional(vrsConnection vrsSdk.VRSConnection) bool {
 
 	log.Debugf("Verifying VRS-VSC connection state")
-	cmd := "docker ps | grep 'install-nuage-vrs' | awk '{ print $1 }'"
-	out, _ := exec.Command("bash", "-c", cmd).Output()
-	id := strings.Replace(string(out), "\n", "", -1)
-	cmd = "docker exec " + id + " bash -c 'ovs-vsctl show' | grep is_connected"
-	out, _ = exec.Command("bash", "-c", cmd).Output()
-	isConnected := string(out)
-	if strings.Contains(isConnected, "true") {
-		log.Debugf("VRS-VSC connection is functional")
-		return true
+	state, err := vrsConnection.GetControllerState()
+	if err != nil {
+		log.Errorf("failed getting controller state %v", err)
+		return false
 	}
-
-	log.Errorf("VRS-VSC connection is not functional")
-	return false
+	return state == vrsSdk.ControllerConnected
 }

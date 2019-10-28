@@ -38,26 +38,36 @@ var KeyServerMonitorSEKIdentity = bambou.Identity{
 // KeyServerMonitorSEKsList represents a list of KeyServerMonitorSEKs
 type KeyServerMonitorSEKsList []*KeyServerMonitorSEK
 
-// KeyServerMonitorSEKsAncestor is the interface of an ancestor of a KeyServerMonitorSEK must implement.
+// KeyServerMonitorSEKsAncestor is the interface that an ancestor of a KeyServerMonitorSEK must implement.
+// An Ancestor is defined as an entity that has KeyServerMonitorSEK as a descendant.
+// An Ancestor can get a list of its child KeyServerMonitorSEKs, but not necessarily create one.
 type KeyServerMonitorSEKsAncestor interface {
 	KeyServerMonitorSEKs(*bambou.FetchingInfo) (KeyServerMonitorSEKsList, *bambou.Error)
-	CreateKeyServerMonitorSEKs(*KeyServerMonitorSEK) *bambou.Error
+}
+
+// KeyServerMonitorSEKsParent is the interface that a parent of a KeyServerMonitorSEK must implement.
+// A Parent is defined as an entity that has KeyServerMonitorSEK as a child.
+// A Parent is an Ancestor which can create a KeyServerMonitorSEK.
+type KeyServerMonitorSEKsParent interface {
+	KeyServerMonitorSEKsAncestor
+	CreateKeyServerMonitorSEK(*KeyServerMonitorSEK) *bambou.Error
 }
 
 // KeyServerMonitorSEK represents the model of a keyservermonitorsek
 type KeyServerMonitorSEK struct {
-	ID                                 string `json:"ID,omitempty"`
-	ParentID                           string `json:"parentID,omitempty"`
-	ParentType                         string `json:"parentType,omitempty"`
-	Owner                              string `json:"owner,omitempty"`
-	LastUpdatedBy                      string `json:"lastUpdatedBy,omitempty"`
-	SeedPayloadAuthenticationAlgorithm string `json:"seedPayloadAuthenticationAlgorithm,omitempty"`
-	SeedPayloadEncryptionAlgorithm     string `json:"seedPayloadEncryptionAlgorithm,omitempty"`
-	Lifetime                           int    `json:"lifetime,omitempty"`
-	EntityScope                        string `json:"entityScope,omitempty"`
-	CreationTime                       int    `json:"creationTime,omitempty"`
-	StartTime                          int    `json:"startTime,omitempty"`
-	ExternalID                         string `json:"externalID,omitempty"`
+	ID                                 string        `json:"ID,omitempty"`
+	ParentID                           string        `json:"parentID,omitempty"`
+	ParentType                         string        `json:"parentType,omitempty"`
+	Owner                              string        `json:"owner,omitempty"`
+	LastUpdatedBy                      string        `json:"lastUpdatedBy,omitempty"`
+	SeedPayloadAuthenticationAlgorithm string        `json:"seedPayloadAuthenticationAlgorithm,omitempty"`
+	SeedPayloadEncryptionAlgorithm     string        `json:"seedPayloadEncryptionAlgorithm,omitempty"`
+	Lifetime                           int           `json:"lifetime,omitempty"`
+	EmbeddedMetadata                   []interface{} `json:"embeddedMetadata,omitempty"`
+	EntityScope                        string        `json:"entityScope,omitempty"`
+	CreationTime                       int           `json:"creationTime,omitempty"`
+	StartTime                          int           `json:"startTime,omitempty"`
+	ExternalID                         string        `json:"externalID,omitempty"`
 }
 
 // NewKeyServerMonitorSEK returns a new *KeyServerMonitorSEK

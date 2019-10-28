@@ -38,27 +38,37 @@ var KeyServerMemberIdentity = bambou.Identity{
 // KeyServerMembersList represents a list of KeyServerMembers
 type KeyServerMembersList []*KeyServerMember
 
-// KeyServerMembersAncestor is the interface of an ancestor of a KeyServerMember must implement.
+// KeyServerMembersAncestor is the interface that an ancestor of a KeyServerMember must implement.
+// An Ancestor is defined as an entity that has KeyServerMember as a descendant.
+// An Ancestor can get a list of its child KeyServerMembers, but not necessarily create one.
 type KeyServerMembersAncestor interface {
 	KeyServerMembers(*bambou.FetchingInfo) (KeyServerMembersList, *bambou.Error)
-	CreateKeyServerMembers(*KeyServerMember) *bambou.Error
+}
+
+// KeyServerMembersParent is the interface that a parent of a KeyServerMember must implement.
+// A Parent is defined as an entity that has KeyServerMember as a child.
+// A Parent is an Ancestor which can create a KeyServerMember.
+type KeyServerMembersParent interface {
+	KeyServerMembersAncestor
+	CreateKeyServerMember(*KeyServerMember) *bambou.Error
 }
 
 // KeyServerMember represents the model of a keyservermember
 type KeyServerMember struct {
-	ID                      string `json:"ID,omitempty"`
-	ParentID                string `json:"parentID,omitempty"`
-	ParentType              string `json:"parentType,omitempty"`
-	Owner                   string `json:"owner,omitempty"`
-	LastUpdatedBy           string `json:"lastUpdatedBy,omitempty"`
-	PemEncoded              string `json:"pemEncoded,omitempty"`
-	CertificateSerialNumber int    `json:"certificateSerialNumber,omitempty"`
-	EntityScope             string `json:"entityScope,omitempty"`
-	Fqdn                    string `json:"fqdn,omitempty"`
-	IssuerDN                string `json:"issuerDN,omitempty"`
-	SubjectDN               string `json:"subjectDN,omitempty"`
-	PublicKey               string `json:"publicKey,omitempty"`
-	ExternalID              string `json:"externalID,omitempty"`
+	ID                      string        `json:"ID,omitempty"`
+	ParentID                string        `json:"parentID,omitempty"`
+	ParentType              string        `json:"parentType,omitempty"`
+	Owner                   string        `json:"owner,omitempty"`
+	LastUpdatedBy           string        `json:"lastUpdatedBy,omitempty"`
+	PemEncoded              string        `json:"pemEncoded,omitempty"`
+	CertificateSerialNumber int           `json:"certificateSerialNumber,omitempty"`
+	EmbeddedMetadata        []interface{} `json:"embeddedMetadata,omitempty"`
+	EntityScope             string        `json:"entityScope,omitempty"`
+	Fqdn                    string        `json:"fqdn,omitempty"`
+	IssuerDN                string        `json:"issuerDN,omitempty"`
+	SubjectDN               string        `json:"subjectDN,omitempty"`
+	PublicKey               string        `json:"publicKey,omitempty"`
+	ExternalID              string        `json:"externalID,omitempty"`
 }
 
 // NewKeyServerMember returns a new *KeyServerMember

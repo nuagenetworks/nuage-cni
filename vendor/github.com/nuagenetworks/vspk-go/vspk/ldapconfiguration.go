@@ -38,32 +38,45 @@ var LDAPConfigurationIdentity = bambou.Identity{
 // LDAPConfigurationsList represents a list of LDAPConfigurations
 type LDAPConfigurationsList []*LDAPConfiguration
 
-// LDAPConfigurationsAncestor is the interface of an ancestor of a LDAPConfiguration must implement.
+// LDAPConfigurationsAncestor is the interface that an ancestor of a LDAPConfiguration must implement.
+// An Ancestor is defined as an entity that has LDAPConfiguration as a descendant.
+// An Ancestor can get a list of its child LDAPConfigurations, but not necessarily create one.
 type LDAPConfigurationsAncestor interface {
 	LDAPConfigurations(*bambou.FetchingInfo) (LDAPConfigurationsList, *bambou.Error)
-	CreateLDAPConfigurations(*LDAPConfiguration) *bambou.Error
+}
+
+// LDAPConfigurationsParent is the interface that a parent of a LDAPConfiguration must implement.
+// A Parent is defined as an entity that has LDAPConfiguration as a child.
+// A Parent is an Ancestor which can create a LDAPConfiguration.
+type LDAPConfigurationsParent interface {
+	LDAPConfigurationsAncestor
+	CreateLDAPConfiguration(*LDAPConfiguration) *bambou.Error
 }
 
 // LDAPConfiguration represents the model of a ldapconfiguration
 type LDAPConfiguration struct {
-	ID                    string `json:"ID,omitempty"`
-	ParentID              string `json:"parentID,omitempty"`
-	ParentType            string `json:"parentType,omitempty"`
-	Owner                 string `json:"owner,omitempty"`
-	SSLEnabled            bool   `json:"SSLEnabled"`
-	Password              string `json:"password,omitempty"`
-	LastUpdatedBy         string `json:"lastUpdatedBy,omitempty"`
-	AcceptAllCertificates bool   `json:"acceptAllCertificates"`
-	Certificate           string `json:"certificate,omitempty"`
-	Server                string `json:"server,omitempty"`
-	Enabled               bool   `json:"enabled"`
-	EntityScope           string `json:"entityScope,omitempty"`
-	Port                  string `json:"port,omitempty"`
-	GroupDN               string `json:"groupDN,omitempty"`
-	UserDNTemplate        string `json:"userDNTemplate,omitempty"`
-	AuthorizationEnabled  bool   `json:"authorizationEnabled"`
-	AuthorizingUserDN     string `json:"authorizingUserDN,omitempty"`
-	ExternalID            string `json:"externalID,omitempty"`
+	ID                    string        `json:"ID,omitempty"`
+	ParentID              string        `json:"parentID,omitempty"`
+	ParentType            string        `json:"parentType,omitempty"`
+	Owner                 string        `json:"owner,omitempty"`
+	SSLEnabled            bool          `json:"SSLEnabled"`
+	Password              string        `json:"password,omitempty"`
+	LastUpdatedBy         string        `json:"lastUpdatedBy,omitempty"`
+	AcceptAllCertificates bool          `json:"acceptAllCertificates"`
+	Certificate           string        `json:"certificate,omitempty"`
+	Server                string        `json:"server,omitempty"`
+	EmbeddedMetadata      []interface{} `json:"embeddedMetadata,omitempty"`
+	Enabled               bool          `json:"enabled"`
+	EntityScope           string        `json:"entityScope,omitempty"`
+	Port                  string        `json:"port,omitempty"`
+	GroupDN               string        `json:"groupDN,omitempty"`
+	GroupNamePrefix       string        `json:"groupNamePrefix,omitempty"`
+	GroupNameSuffix       string        `json:"groupNameSuffix,omitempty"`
+	UserDNTemplate        string        `json:"userDNTemplate,omitempty"`
+	UserNameAttribute     string        `json:"userNameAttribute,omitempty"`
+	AuthorizationEnabled  bool          `json:"authorizationEnabled"`
+	AuthorizingUserDN     string        `json:"authorizingUserDN,omitempty"`
+	ExternalID            string        `json:"externalID,omitempty"`
 }
 
 // NewLDAPConfiguration returns a new *LDAPConfiguration

@@ -1,24 +1,10 @@
 package daemon
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
-	log "github.com/Sirupsen/logrus"
-	"github.com/docker/docker/api/types"
-	dockerClient "github.com/docker/docker/client"
-	vrsSdk "github.com/nuagenetworks/libvrsdk/api"
-	"github.com/nuagenetworks/libvrsdk/api/port"
-	"github.com/nuagenetworks/nuage-cni/client"
-	"github.com/nuagenetworks/nuage-cni/config"
-	"github.com/nuagenetworks/nuage-cni/k8s"
-	"golang.org/x/net/context"
 	"io/ioutil"
-	kapi "k8s.io/kubernetes/pkg/api"
-	krestclient "k8s.io/kubernetes/pkg/client/restclient"
-	kclient "k8s.io/kubernetes/pkg/client/unversioned"
-	"k8s.io/kubernetes/pkg/client/unversioned/clientcmd"
-	"k8s.io/kubernetes/pkg/fields"
-	"k8s.io/kubernetes/pkg/labels"
 	"net/http"
 	"os"
 	"os/exec"
@@ -26,6 +12,19 @@ import (
 	"strings"
 	"syscall"
 	"time"
+
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
+
+	vrsSdk "github.com/nuagenetworks/libvrsdk/api"
+	"github.com/nuagenetworks/libvrsdk/api/port"
+	"github.com/nuagenetworks/nuage-cni/client"
+	"github.com/nuagenetworks/nuage-cni/config"
+	"github.com/nuagenetworks/nuage-cni/k8s"
+	log "github.com/sirupsen/logrus"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
+	api "k8s.io/kubernetes/pkg/apis/core"
 )
 
 var interruptChannel chan bool
@@ -34,19 +33,12 @@ var staleEntityMap map[string]int64
 var stalePortMap map[string]int64
 var staleEntryTimeout int64
 var isAtomic bool
+var hostname string
 var orchestratorType string
 
 type containerInfo struct {
 	ID string `json:"container_id"`
 }
-
-//NuageDockerClient structure holds docker client
-type NuageDockerClient struct {
-	socketFile string
-	dclient    *dockerClient.Client
-}
-
-var nuagedocker = &NuageDockerClient{}
 
 // getActiveMesosContainers will return a list of currently
 // active Mesos containers to help in audit cleanup
@@ -101,7 +93,6 @@ func cleanupStalePortsEntities(vrsConnection vrsSdk.VRSConnection, orchestrator 
 	var portList []string
 	var entityPortList []string
 	var entityUUIDList []string
-	var localEntityUUIDList []string
 	var formattedEntityUUIDList []string
 
 	// First obtain VRS entity and port list followed by orchestrator
@@ -143,17 +134,8 @@ func cleanupStalePortsEntities(vrsConnection vrsSdk.VRSConnection, orchestrator 
 	default:
 	}
 
-	// Filter out the container UUIDs local to the VRS
-	// on which the audit daemon runs
-	for _, id := range entityUUIDList {
-		entityExists, _ := vrsConnection.CheckEntityExists(id)
-		if entityExists {
-			localEntityUUIDList = append(localEntityUUIDList, id)
-		}
-	}
-
 	var formattedUUID string
-	for _, id := range localEntityUUIDList {
+	for _, id := range entityUUIDList {
 		if orchestrator == "mesos" {
 			newID := strings.Replace(id, "-", "", -1)
 			formattedUUID = newID + newID
@@ -443,6 +425,12 @@ func MonitorAgent(config *config.Config, orchestrator string) error {
 	staleEntryTimeout = config.StaleEntryTimeout
 	orchestratorType = orchestrator
 
+	hostname, err = findHostFQDN()
+	if err != nil {
+		log.Errorf("finding hostname failed with error: %v", err)
+		return err
+	}
+
 	for {
 		vrsConnection, err = client.ConnectToVRSOVSDB(config)
 		if err != nil {
@@ -451,13 +439,6 @@ func MonitorAgent(config *config.Config, orchestrator string) error {
 			break
 		}
 		time.Sleep(time.Duration(5) * time.Second)
-	}
-
-	// Setting up docker client connection
-	nuagedocker.socketFile = "unix:///var/run/docker.sock"
-	nuagedocker.dclient, err = connectToDockerDaemon(nuagedocker.socketFile)
-	if err != nil {
-		log.Errorf("Connection to docker daemon failed with error: %v", err)
 	}
 
 	log.Infof("Starting Nuage CNI monitoring daemon for %s agent nodes", orchestrator)
@@ -513,90 +494,48 @@ func MonitorAgent(config *config.Config, orchestrator string) error {
 func getActiveK8SPods(orchestrator string) ([]string, error) {
 
 	log.Infof("Obtaining currently active K8S pods on agent node")
-	var podsList []string
-	var config *krestclient.Config
-	var kubeconfFile string
-	var dir string
-	if isAtomic == true {
-		dir = "/var/usr/share"
-	} else {
-		dir = "/usr/share"
-	}
-	if orchestrator == "k8s" {
-		kubeconfFile = dir + "/vsp-k8s/nuage.kubeconfig"
-	} else {
-		kubeconfFile = dir + "/vsp-openshift/nuage.kubeconfig"
-	}
 
-	loadingRules := &clientcmd.ClientConfigLoadingRules{}
-	loadingRules.ExplicitPath = kubeconfFile
-	loader := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(loadingRules, &clientcmd.ConfigOverrides{})
-	kubeConfig, err := loader.ClientConfig()
+	// creates the in-cluster config
+	config, err := rest.InClusterConfig()
 	if err != nil {
-		log.Errorf("Error loading kubeconfig file")
-		return podsList, err
+		log.Errorf("creating the in-cluster config failed %v", err)
+		return []string{}, err
 	}
-
-	config = kubeConfig
-	kubeClient, err := kclient.New(config)
+	// creates the clientset
+	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
-		log.Errorf("Error trying to create kubeclient")
-		return podsList, err
+		log.Errorf("creating clientset for k8s failed %v", err)
+		return []string{}, err
 	}
 
-	var listOpts = &kapi.ListOptions{LabelSelector: labels.Everything(), FieldSelector: fields.Everything()}
-	pods, err := kubeClient.Pods(kapi.NamespaceAll).List(*listOpts)
+	selector := fields.OneTermEqualSelector(api.PodHostField, hostname).String()
+	options := metav1.ListOptions{FieldSelector: selector}
+	pods, err := clientset.CoreV1().Pods("").List(options)
 	if err != nil {
 		log.Errorf("Error occured while fetching pods from k8s api server")
-		return podsList, err
+		return []string{}, err
 	}
 
-	var idList []string
-	for _, entry := range pods.Items {
-		for _, element := range entry.Status.ContainerStatuses {
-			strSlice := strings.Split(element.ContainerID, "//")
-			if len(strSlice) > 1 {
-				idList = append(idList, strSlice[1])
-			}
-		}
+	var ids []string
+	for _, pod := range pods.Items {
+		ids = append(ids, string(pod.UID))
 	}
 
-	var infraIDList []string
-	for _, id := range idList {
-		contUUID, err := getPodContainerUUID(id)
-		if err != nil {
-			log.Errorf("Failed to obtain container UUID for the pod ID %s", id)
-		}
-		infraIDList = append(infraIDList, contUUID)
-	}
-
-	return infraIDList, err
+	return ids, err
 }
 
-func getPodContainerUUID(uuid string) (string, error) {
-	var err error
-	var containerInspect types.ContainerJSON
-	containerInspect, err = nuagedocker.dclient.ContainerInspect(context.Background(), uuid)
+func findHostFQDN() (string, error) {
+	var out bytes.Buffer
+	cmd := exec.Command("/bin/hostname", "-f")
+	cmd.Stdout = &out
+
+	err := cmd.Run()
 	if err != nil {
-		log.Errorf("Inspect on container failed with error: %v", err)
+		log.Errorf("fetching fqdn failed with error: %v", err)
 		return "", err
 	}
 
-	newUUIDStr := strings.Replace(string(containerInspect.HostConfig.NetworkMode), "\n", "", -1)
-	contUUID := strings.Split(newUUIDStr, ":")
-	return contUUID[1], err
-}
-
-func connectToDockerDaemon(socketFile string) (*dockerClient.Client, error) {
-	err := os.Setenv("DOCKER_HOST", socketFile)
-	if err != nil {
-		log.Errorf("Setting DOCKER_HOST failed")
-		return nil, err
-	}
-	client, err := dockerClient.NewEnvClient()
-	if err != nil {
-		log.Errorf("Connecting to docker client failed with error: %v", err)
-		return nil, err
-	}
-	return client, nil
+	fqdn := out.String()
+	fqdn = fqdn[:len(fqdn)-1]
+	return fqdn, nil
 }
