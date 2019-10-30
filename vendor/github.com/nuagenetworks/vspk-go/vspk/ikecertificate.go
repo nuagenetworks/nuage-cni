@@ -38,30 +38,40 @@ var IKECertificateIdentity = bambou.Identity{
 // IKECertificatesList represents a list of IKECertificates
 type IKECertificatesList []*IKECertificate
 
-// IKECertificatesAncestor is the interface of an ancestor of a IKECertificate must implement.
+// IKECertificatesAncestor is the interface that an ancestor of a IKECertificate must implement.
+// An Ancestor is defined as an entity that has IKECertificate as a descendant.
+// An Ancestor can get a list of its child IKECertificates, but not necessarily create one.
 type IKECertificatesAncestor interface {
 	IKECertificates(*bambou.FetchingInfo) (IKECertificatesList, *bambou.Error)
-	CreateIKECertificates(*IKECertificate) *bambou.Error
+}
+
+// IKECertificatesParent is the interface that a parent of a IKECertificate must implement.
+// A Parent is defined as an entity that has IKECertificate as a child.
+// A Parent is an Ancestor which can create a IKECertificate.
+type IKECertificatesParent interface {
+	IKECertificatesAncestor
+	CreateIKECertificate(*IKECertificate) *bambou.Error
 }
 
 // IKECertificate represents the model of a ikecertificate
 type IKECertificate struct {
-	ID                     string  `json:"ID,omitempty"`
-	ParentID               string  `json:"parentID,omitempty"`
-	ParentType             string  `json:"parentType,omitempty"`
-	Owner                  string  `json:"owner,omitempty"`
-	PEMEncoded             string  `json:"PEMEncoded,omitempty"`
-	Name                   string  `json:"name,omitempty"`
-	LastUpdatedBy          string  `json:"lastUpdatedBy,omitempty"`
-	SerialNumber           int     `json:"serialNumber,omitempty"`
-	Description            string  `json:"description,omitempty"`
-	EntityScope            string  `json:"entityScope,omitempty"`
-	NotAfter               float64 `json:"notAfter,omitempty"`
-	NotBefore              float64 `json:"notBefore,omitempty"`
-	AssociatedEnterpriseID string  `json:"associatedEnterpriseID,omitempty"`
-	IssuerDN               string  `json:"issuerDN,omitempty"`
-	SubjectDN              string  `json:"subjectDN,omitempty"`
-	ExternalID             string  `json:"externalID,omitempty"`
+	ID                     string        `json:"ID,omitempty"`
+	ParentID               string        `json:"parentID,omitempty"`
+	ParentType             string        `json:"parentType,omitempty"`
+	Owner                  string        `json:"owner,omitempty"`
+	PEMEncoded             string        `json:"PEMEncoded,omitempty"`
+	Name                   string        `json:"name,omitempty"`
+	LastUpdatedBy          string        `json:"lastUpdatedBy,omitempty"`
+	SerialNumber           int           `json:"serialNumber,omitempty"`
+	Description            string        `json:"description,omitempty"`
+	EmbeddedMetadata       []interface{} `json:"embeddedMetadata,omitempty"`
+	EntityScope            string        `json:"entityScope,omitempty"`
+	NotAfter               float64       `json:"notAfter,omitempty"`
+	NotBefore              float64       `json:"notBefore,omitempty"`
+	AssociatedEnterpriseID string        `json:"associatedEnterpriseID,omitempty"`
+	IssuerDN               string        `json:"issuerDN,omitempty"`
+	SubjectDN              string        `json:"subjectDN,omitempty"`
+	ExternalID             string        `json:"externalID,omitempty"`
 }
 
 // NewIKECertificate returns a new *IKECertificate

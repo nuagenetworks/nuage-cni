@@ -1,3 +1,14 @@
+# A Swagger 2.0 (a.k.a. OpenAPI) definition of the Engine API.
+#
+# This is used for generating API documentation and the types used by the
+# client/server. See api/README.md for more information.
+#
+# Some style notes:
+# - This file is used by ReDoc, which allows GitHub Flavored Markdown in
+#   descriptions.
+# - There is no maximum line length, for ease of editing and pretty diffs.
+# - operationIds are in the format "NounVerb", with a singular noun.
+
 swagger: "2.0"
 schemes:
   - "http"
@@ -8,18 +19,20 @@ produces:
 consumes:
   - "application/json"
   - "text/plain"
-basePath: "/v1.25"
+basePath: "/v1.26"
 info:
-  title: "Docker Remote API"
-  version: "1.25"
+  title: "Docker Engine API"
+  version: "1.26"
+  x-logo:
+    url: "https://docs.docker.com/images/logo-docker-main.png"
   description: |
-    The Docker API is an HTTP REST API served by Docker Engine. It is the API the Docker client uses to communicate with the Engine, so everything the Docker client can do can be done with the API.
+    The Engine API is an HTTP API served by Docker Engine. It is the API the Docker client uses to communicate with the Engine, so everything the Docker client can do can be done with the API.
 
-    Most of the client's commands map directly to API endpoints (e.g. `docker ps` is `GET /containers/json`). The notable exception is running containers, which consists of several API calls. [There is example of using `curl` to run a container in the SDK documentation.](#TODO)
+    Most of the client's commands map directly to API endpoints (e.g. `docker ps` is `GET /containers/json`). The notable exception is running containers, which consists of several API calls.
 
     # Errors
 
-    The Remote API uses standard HTTP status codes to indicate the success or failure of the API call. The body of the response will be JSON in the following format:
+    The API uses standard HTTP status codes to indicate the success or failure of the API call. The body of the response will be JSON in the following format:
 
     ```
     {
@@ -29,11 +42,28 @@ info:
 
     # Versioning
 
-    The API is usually changed in each release of Docker. If you want to write a client that doesn't break when connecting to newer Docker releases, you can lock to a specific API version.
+    The API is usually changed in each release of Docker, so API calls are versioned to ensure that clients don't break.
 
-    For Docker 1.13, the API version is 1.25. To lock to this version, you prefix the URL with `/v1.25`. For example, calling `/info` is the same as calling `/v1.25/info`.
+    For Docker Engine >= 1.13.1, the API version is 1.26. To lock to this version, you prefix the URL with `/v1.26`. For example, calling `/info` is the same as calling `/v1.26/info`.
+
+    Engine releases in the near future should support this version of the API, so your client will continue to work even if it is talking to a newer Engine.
+
+    In previous versions of Docker, it was possible to access the API without providing a version. This behaviour is now deprecated will be removed in a future version of Docker.
 
     The API uses an open schema model, which means server may add extra properties to responses. Likewise, the server will ignore any extra query parameters and request body properties. When you write clients, you need to ignore additional properties in responses to ensure they do not break when talking to newer Docker daemons.
+
+    This documentation is for version 1.26 of the API, which was introduced with Docker 1.13.1. Use this table to find documentation for previous versions of the API:
+
+    Docker version  | API version | Changes
+    ----------------|-------------|---------
+    1.13.0 | [1.25](https://docs.docker.com/engine/api/v1.25/) | [API changes](https://docs.docker.com/engine/api/version-history/#v1-25-api-changes)
+    1.12.x | [1.24](https://docs.docker.com/engine/api/v1.24/) | [API changes](https://docs.docker.com/engine/api/version-history/#v1-24-api-changes)
+    1.11.x | [1.23](https://docs.docker.com/engine/api/v1.23/) | [API changes](https://docs.docker.com/engine/api/version-history/#v1-23-api-changes)
+    1.10.x | [1.22](https://docs.docker.com/engine/api/v1.22/) | [API changes](https://docs.docker.com/engine/api/version-history/#v1-22-api-changes)
+    1.9.x | [1.21](https://docs.docker.com/engine/api/v1.21/) | [API changes](https://docs.docker.com/engine/api/version-history/#v1-21-api-changes)
+    1.8.x | [1.20](https://docs.docker.com/engine/api/v1.20/) | [API changes](https://docs.docker.com/engine/api/version-history/#v1-20-api-changes)
+    1.7.x | [1.19](https://docs.docker.com/engine/api/v1.19/) | [API changes](https://docs.docker.com/engine/api/version-history/#v1-19-api-changes)
+    1.6.x | [1.18](https://docs.docker.com/engine/api/v1.18/) | [API changes](https://docs.docker.com/engine/api/version-history/#v1-18-api-changes)
 
     # Authentication
 
@@ -50,13 +80,67 @@ info:
 
     The `serveraddress` is a domain/IP without a protocol. Throughout this structure, double quotes are required.
 
-    If you have already got an identity token from the [`/auth` endpoint](#operation/checkAuthentication), you can just pass this instead of credentials:
+    If you have already got an identity token from the [`/auth` endpoint](#operation/SystemAuth), you can just pass this instead of credentials:
 
     ```
     {
       "identitytoken": "9cbaf023786cd7..."
     }
     ```
+
+# The tags on paths define the menu sections in the ReDoc documentation, so
+# the usage of tags must make sense for that:
+# - They should be singular, not plural.
+# - There should not be too many tags, or the menu becomes unwieldly. For
+#   example, it is preferable to add a path to the "System" tag instead of
+#   creating a tag with a single path in it.
+# - The order of tags in this list defines the order in the menu.
+tags:
+  # Primary objects
+  - name: "Container"
+    x-displayName: "Containers"
+    description: |
+      Create and manage containers.
+  - name: "Image"
+    x-displayName: "Images"
+  - name: "Network"
+    x-displayName: "Networks"
+    description: |
+      Networks are user-defined networks that containers can be attached to. See the [networking documentation](https://docs.docker.com/engine/userguide/networking/) for more information.
+  - name: "Volume"
+    x-displayName: "Volumes"
+    description: |
+      Create and manage persistent storage that can be attached to containers.
+  - name: "Exec"
+    x-displayName: "Exec"
+    description: |
+      Run new commands inside running containers. See the [command-line reference](https://docs.docker.com/engine/reference/commandline/exec/) for more information.
+
+      To exec a command in a container, you first need to create an exec instance, then start it. These two API endpoints are wrapped up in a single command-line command, `docker exec`.
+  - name: "Secret"
+    x-displayName: "Secrets"
+  # Swarm things
+  - name: "Swarm"
+    x-displayName: "Swarm"
+    description: |
+      Engines can be clustered together in a swarm. See [the swarm mode documentation](https://docs.docker.com/engine/swarm/) for more information.
+  - name: "Node"
+    x-displayName: "Nodes"
+    description: |
+      Nodes are instances of the Engine participating in a swarm. Swarm mode must be enabled for these endpoints to work.
+  - name: "Service"
+    x-displayName: "Services"
+    description: |
+      Services are the definitions of tasks to run on a swarm. Swarm mode must be enabled for these endpoints to work.
+  - name: "Task"
+    x-displayName: "Tasks"
+    description: |
+      A task is a container running on a swarm. It is the atomic scheduling unit of swarm. Swarm mode must be enabled for these endpoints to work.
+  # System things
+  - name: "Plugin"
+    x-displayName: "Plugins"
+  - name: "System"
+    x-displayName: "System"
 
 definitions:
   Port:
@@ -147,10 +231,12 @@ definitions:
 
           - `bind` Mounts a file or directory from the host into the container. Must exist prior to creating the container.
           - `volume` Creates a volume with the given name and options (or uses a pre-existing volume with the same name and options). These are **not** removed when the container is removed.
+          - `tmpfs` Create a tmpfs with the given options. The mount source cannot be specified for tmpfs.
         type: "string"
         enum:
           - "bind"
           - "volume"
+          - "tmpfs"
       ReadOnly:
         description: "Whether the mount should be read-only."
         type: "boolean"
@@ -176,7 +262,7 @@ definitions:
             type: "boolean"
             default: false
           Labels:
-            description: "User-defined name and labels for the volume as key/value pairs."
+            description: "User-defined key/value metadata."
             type: "object"
             additionalProperties:
               type: "string"
@@ -192,7 +278,17 @@ definitions:
                 type: "object"
                 additionalProperties:
                   type: "string"
-
+      TmpfsOptions:
+        description: "Optional configuration for the `tmpfs` type."
+        type: "object"
+        properties:
+          SizeBytes:
+            description: "The size for the tmpfs mount in bytes."
+            type: "integer"
+            format: "int64"
+          Mode:
+            description: "The permission mode for the tmpfs mount in an integer."
+            type: "integer"
   RestartPolicy:
     description: |
       The behavior to apply when the container exits. The default is not to restart.
@@ -234,7 +330,7 @@ definitions:
       BlkioWeight:
         description: "Block IO weight (relative weight)."
         type: "integer"
-        minimum: 10
+        minimum: 0
         maximum: 1000
       BlkioWeightDevice:
         description: |
@@ -275,9 +371,19 @@ definitions:
       CpuPeriod:
         description: "The length of a CPU period in microseconds."
         type: "integer"
+        format: "int64"
       CpuQuota:
         description: "Microseconds of CPU time that the container can get in a CPU period."
         type: "integer"
+        format: "int64"
+      CpuRealtimePeriod:
+        description: "The length of a CPU real-time period in microseconds. Set to 0 to allocate no time allocated to real-time tasks."
+        type: "integer"
+        format: "int64"
+      CpuRealtimeRuntime:
+        description: "The length of a CPU real-time runtime in microseconds. Set to 0 to allocate no time allocated to real-time tasks."
+        type: "integer"
+        format: "int64"
       CpusetCpus:
         description: "CPUs in which to allow execution (e.g., `0-3`, `0,1`)"
         type: "string"
@@ -311,6 +417,10 @@ definitions:
         format: "int64"
         minimum: 0
         maximum: 100
+      NanoCPUs:
+        description: "CPU quota in units of 10<sup>-9</sup> CPUs."
+        type: "integer"
+        format: "int64"
       OomKillDisable:
         description: "Disable OOM Killer for the container."
         type: "boolean"
@@ -336,11 +446,17 @@ definitions:
               type: "integer"
       # Applicable to Windows
       CpuCount:
-        description: "CPU count (Windows only)"
+        description: |
+          The number of usable CPUs (Windows only).
+
+          On Windows Server containers, the processor resource controls are mutually exclusive. The order of precedence is `CPUCount` first, then `CPUShares`, and `CPUPercent` last.
         type: "integer"
         format: "int64"
       CpuPercent:
-        description: "CPU percent (Windows only)"
+        description: |
+          The usable percentage of the available CPUs (Windows only).
+
+          On Windows Server containers, the processor resource controls are mutually exclusive. The order of precedence is `CPUCount` first, then `CPUShares`, and `CPUPercent` last.
         type: "integer"
         format: "int64"
       IOMaximumIOps:
@@ -509,7 +625,8 @@ definitions:
               type: "string"
           Tmpfs:
             type: "object"
-            description: "List of tmpfs mounts for this container."
+            description: |
+              A map of container directories which should be replaced by tmpfs mounts, and their corresponding mount options. For example: `{ "/run": "rw,noexec,nosuid,size=65536k" }`.
             additionalProperties:
               type: "string"
           UTSMode:
@@ -525,7 +642,7 @@ definitions:
           Sysctls:
             type: "object"
             description: |
-              A list of kernel parameters (sysctls) to set in the container. For example: `{ "net.ipv4.ip_forward": "1" }`
+              A list of kernel parameters (sysctls) to set in the container. For example: `{"net.ipv4.ip_forward": "1"}`
             additionalProperties:
               type: "string"
           Runtime:
@@ -562,15 +679,15 @@ definitions:
         description: "The user that commands are run as inside the container."
         type: "string"
       AttachStdin:
-        description: "Whether to attach to stdin."
+        description: "Whether to attach to `stdin`."
         type: "boolean"
         default: false
       AttachStdout:
-        description: "Whether to attach to stdout."
+        description: "Whether to attach to `stdout`."
         type: "boolean"
         default: true
       AttachStderr:
-        description: "Whether to attach to stderr."
+        description: "Whether to attach to `stderr`."
         type: "boolean"
         default: true
       ExposedPorts:
@@ -585,20 +702,20 @@ definitions:
             - {}
           default: {}
       Tty:
-        description: "Attach standard streams to a TTY, including stdin if it is not closed."
+        description: "Attach standard streams to a TTY, including `stdin` if it is not closed."
         type: "boolean"
         default: false
       OpenStdin:
-        description: "Open stdin"
+        description: "Open `stdin`"
         type: "boolean"
         default: false
       StdinOnce:
-        description: "Close stdin after one attached client disconnects"
+        description: "Close `stdin` after one attached client disconnects"
         type: "boolean"
         default: false
       Env:
         description: |
-          A list of environment variables to set inside the container in the form `["VAR=value"[,"VAR2=value2"]]`
+          A list of environment variables to set inside the container in the form `["VAR=value", ...]`
         type: "array"
         items:
           type: "string"
@@ -655,7 +772,7 @@ definitions:
         description: |
           The entry point for the container as a string or an array of strings.
 
-          If the array consists of exactly one empty string (`[""]`) then the entry point is reset to system default (i.e., the entry point used by docker when there is no `ENTRYPOINT` instruction in the Dockerfile).
+          If the array consists of exactly one empty string (`[""]`) then the entry point is reset to system default (i.e., the entry point used by docker when there is no `ENTRYPOINT` instruction in the `Dockerfile`).
         type:
           - "array"
           - "string"
@@ -673,7 +790,7 @@ definitions:
         items:
           type: "string"
       Labels:
-        description: "User-defined key/value data attached to the container."
+        description: "User-defined key/value metadata."
         type: "object"
         additionalProperties:
           type: "string"
@@ -681,6 +798,10 @@ definitions:
         description: "Signal to stop a container as a string or unsigned integer."
         type: "string"
         default: "SIGTERM"
+      StopTimeout:
+        description: "Timeout to stop a container in seconds."
+        type: "integer"
+        default: 10
       Shell:
         description: "Shell for when `RUN`, `CMD`, and `ENTRYPOINT` uses a shell."
         type: "array"
@@ -884,7 +1005,7 @@ definitions:
           type: "object"
       Labels:
         type: "object"
-        description: "A mapping of abitrary key/value data set on this volume."
+        description: "User-defined key/value metadata."
         x-nullable: false
         additionalProperties:
           type: "string"
@@ -932,6 +1053,9 @@ definitions:
         type: "string"
       Id:
         type: "string"
+      Created:
+        type: "string"
+        format: "dateTime"
       Scope:
         type: "string"
       Driver:
@@ -957,6 +1081,7 @@ definitions:
     example:
       Name: "net01"
       Id: "7d86d31b1478e7cca9ebed7e73aa0fdeec46c5ca29497431d3007d2d9e15ed99"
+      Created: "2016-10-19T04:33:30.360899459Z"
       Scope: "local"
       Driver: "bridge"
       EnableIPv6: false
@@ -988,13 +1113,24 @@ definitions:
   IPAM:
     type: "object"
     properties:
+      Driver:
+        description: "Name of the IPAM driver to use."
+        type: "string"
+        default: "default"
       Config:
+        description: "List of IPAM configuration options, specified as a map: `{\"Subnet\": <CIDR>, \"IPRange\": <CIDR>, \"Gateway\": <IP address>, \"AuxAddress\": <device_name:IP address>}`"
         type: "array"
         items:
           type: "object"
           additionalProperties:
             type: "string"
-
+      Options:
+        description: "Driver-specific options, specified as a map."
+        type: "array"
+        items:
+          type: "object"
+          additionalProperties:
+            type: "string"
   NetworkContainer:
     type: "object"
     properties:
@@ -1209,23 +1345,20 @@ definitions:
         x-nullable: false
 
   Plugin:
-    description: "A plugin for the Remote API"
+    description: "A plugin for the Engine API"
     type: "object"
-    required: [Config, Enabled, Manifest, Name, Tag]
+    required: [Settings, Enabled, Config, Name]
     properties:
       Id:
         type: "string"
       Name:
         type: "string"
         x-nullable: false
-      Tag:
-        type: "string"
-        x-nullable: false
       Enabled:
         description: "True when the plugin is running. False when the plugin is not running, only installed."
         type: "boolean"
         x-nullable: false
-      Config:
+      Settings:
         description: "Settings that can be modified by users."
         type: "object"
         x-nullable: false
@@ -1247,27 +1380,27 @@ definitions:
             type: "array"
             items:
               $ref: "#/definitions/PluginDevice"
-      Manifest:
-        description: "The manifest of a plugin."
+      PluginReference:
+        description: "plugin remote reference used to push/pull the plugin"
+        type: "string"
+        x-nullable: false
+      Config:
+        description: "The config of a plugin."
         type: "object"
         x-nullable: false
         required:
-          - ManifestVersion
           - Description
           - Documentation
           - Interface
           - Entrypoint
-          - Workdir
+          - WorkDir
           - Network
-          - Capabilities
+          - Linux
+          - PropagatedMount
           - Mounts
-          - Devices
           - Env
           - Args
         properties:
-          ManifestVersion:
-            type: "string"
-            x-nullable: false
           Description:
             type: "string"
             x-nullable: false
@@ -1291,7 +1424,7 @@ definitions:
             type: "array"
             items:
               type: "string"
-          Workdir:
+          WorkDir:
             type: "string"
             x-nullable: false
           User:
@@ -1312,18 +1445,29 @@ definitions:
               Type:
                 x-nullable: false
                 type: "string"
-          Capabilities:
-            type: "array"
-            items:
-              type: "string"
+          Linux:
+            type: "object"
+            x-nullable: false
+            required: [Capabilities, AllowAllDevices, Devices]
+            properties:
+              Capabilities:
+                type: "array"
+                items:
+                  type: "string"
+              AllowAllDevices:
+                type: "boolean"
+                x-nullable: false
+              Devices:
+                type: "array"
+                items:
+                  $ref: "#/definitions/PluginDevice"
+          PropagatedMount:
+            type: "string"
+            x-nullable: false
           Mounts:
             type: "array"
             items:
               $ref: "#/definitions/PluginMount"
-          Devices:
-            type: "array"
-            items:
-              $ref: "#/definitions/PluginDevice"
           Env:
             type: "array"
             items:
@@ -1347,76 +1491,50 @@ definitions:
                 type: "array"
                 items:
                   type: "string"
+          rootfs:
+            type: "object"
+            properties:
+              type:
+                type: "string"
+              diff_ids:
+                type: "array"
+                items:
+                  type: "string"
     example:
       Id: "5724e2c8652da337ab2eedd19fc6fc0ec908e4bd907c7421bf6a8dfc70c4c078"
-      Name: "tiborvass/no-remove"
+      Name: "tiborvass/sample-volume-plugin"
       Tag: "latest"
       Active: true
-      Config:
-        Mounts:
-          - Name: ""
-            Description: ""
-            Settable: null
-            Source: "/data"
-            Destination: "/data"
-            Type: "bind"
-            Options:
-              - "shared"
-              - "rbind"
-          - Name: ""
-            Description: ""
-            Settable: null
-            Source: null
-            Destination: "/foobar"
-            Type: "tmpfs"
-            Options: null
+      Settings:
         Env:
-          - "DEBUG=1"
+          - "DEBUG=0"
         Args: null
         Devices: null
-      Manifest:
-        ManifestVersion: "v0"
-        Description: "A test plugin for Docker"
+      Config:
+        Description: "A sample volume plugin for Docker"
         Documentation: "https://docs.docker.com/engine/extend/plugins/"
         Interface:
           Types:
             - "docker.volumedriver/1.0"
           Socket: "plugins.sock"
         Entrypoint:
-          - "plugin-no-remove"
+          - "/usr/bin/sample-volume-plugin"
           - "/data"
-        Workdir: ""
+        WorkDir: ""
         User: {}
         Network:
-          Type: "host"
-        Capabilities: null
-        Mounts:
-          - Name: ""
-            Description: ""
-            Settable: null
-            Source: "/data"
-            Destination: "/data"
-            Type: "bind"
-            Options:
-              - "shared"
-              - "rbind"
-          - Name: ""
-            Description: ""
-            Settable: null
-            Source: null
-            Destination: "/foobar"
-            Type: "tmpfs"
-            Options: null
-        Devices:
-          - Name: "device"
-            Description: "a host device to mount"
-            Settable: null
-            Path: "/dev/cpu_dma_latency"
+          Type: ""
+        Linux:
+          Capabilities: null
+          AllowAllDevices: false
+          Devices: null
+        Mounts: null
+        PropagatedMount: "/data"
         Env:
           - Name: "DEBUG"
             Description: "If set, prints debug messages"
             Settable: null
-            Value: "1"
+            Value: "0"
         Args:
           Name: "args"
           Description: "command line arguments"
@@ -1532,7 +1650,7 @@ definitions:
           NanoCPUs: 4000000000
           MemoryBytes: 8272408576
         Engine:
-          EngineVersion: "1.12.0-dev"
+          EngineVersion: "1.13.0"
           Labels:
             foo: "bar"
           Plugins:
@@ -1546,6 +1664,7 @@ definitions:
               Name: "overlay"
       Status:
         State: "ready"
+        Addr: "172.17.0.2"
       ManagerStatus:
         Leader: true
         Reachability: "reachable"
@@ -1621,8 +1740,7 @@ definitions:
               type: "object"
               properties:
                 Protocol:
-                  description: "Protocol for communication with the external CA
-          (currently only `cfssl` is supported)."
+                  description: "Protocol for communication with the external CA (currently only `cfssl` is supported)."
                   type: "string"
                   enum:
                     - "cfssl"
@@ -1635,6 +1753,13 @@ definitions:
                   type: "object"
                   additionalProperties:
                     type: "string"
+      EncryptionConfig:
+        description: "Parameters related to encryption-at-rest."
+        type: "object"
+        properties:
+          AutoLockManagers:
+            description: "If set, generate a key and use it to lock data stored on the managers."
+            type: "boolean"
       TaskDefaults:
         description: "Defaults for creating tasks in this cluster."
         type: "object"
@@ -1668,6 +1793,8 @@ definitions:
       JoinTokens:
         Worker: "SWMTKN-1-3pu6hszjas19xyp7ghgosyx9k8atbfcr8p2is99znpy26u2lkl-1awxwuwd3z9j1z3puu7rcgdbx"
         Manager: "SWMTKN-1-3pu6hszjas19xyp7ghgosyx9k8atbfcr8p2is99znpy26u2lkl-7p73s1dx5in4tatdymyhg9hu2"
+      EncryptionConfig:
+        AutoLockManagers: false
   # The Swarm information for `GET /info`. It is the same as `GET /swarm`, but
   # without `JoinTokens`.
   ClusterInfo:
@@ -1692,6 +1819,7 @@ definitions:
         $ref: "#/definitions/SwarmSpec"
   TaskSpec:
     description: "User modifiable task configuration."
+    type: "object"
     properties:
       ContainerSpec:
         type: "object"
@@ -1721,10 +1849,13 @@ definitions:
             description: "The user inside the container."
             type: "string"
           Labels:
-            description: "A map of labels to associate with the service."
+            description: "User-defined key/value data."
             type: "object"
             additionalProperties:
               type: "string"
+          TTY:
+            description: "Whether a pseudo-TTY should be allocated."
+            type: "boolean"
           Mounts:
             description: "Specification for mounts to be added to containers created as part of the service."
             type: "array"
@@ -1734,6 +1865,25 @@ definitions:
             description: "Amount of time to wait for the container to terminate before forcefully killing it."
             type: "integer"
             format: "int64"
+          DNSConfig:
+            description: "Specification for DNS related configurations in resolver configuration file (`resolv.conf`)."
+            type: "object"
+            properties:
+              Nameservers:
+                description: "The IP addresses of the name servers."
+                type: "array"
+                items:
+                  type: "string"
+              Search:
+                description: "A search list for host-name lookup."
+                type: "array"
+                items:
+                  type: "string"
+              Options:
+                description: "A list of internal resolver variables to be modified (e.g., `debug`, `ndots:3`, etc.)."
+                type: "array"
+                items:
+                  type: "string"
       Resources:
         description: "Resource requirements which apply to each individual container created as part of the service."
         type: "object"
@@ -1794,6 +1944,9 @@ definitions:
             type: "array"
             items:
               type: "string"
+      ForceUpdate:
+        description: "A counter that triggers an update even if no relevant parameters have been changed."
+        type: "integer"
       Networks:
         type: "array"
         items:
@@ -1980,7 +2133,7 @@ definitions:
             type: "integer"
             format: "int64"
           Delay:
-            description: "Amount of time between updates."
+            description: "Amount of time between updates, in nanoseconds."
             type: "integer"
             format: "int64"
           FailureAction:
@@ -1989,6 +2142,14 @@ definitions:
             enum:
               - "continue"
               - "pause"
+          Monitor:
+            description: "Amount of time to monitor each updated task for failures, in nanoseconds."
+            type: "integer"
+            format: "int64"
+          MaxFailureRatio:
+            description: "The fraction of tasks that may fail during an update before the failure action is invoked, specified as a floating point number between 0 and 1."
+            type: "number"
+            default: 0
       Networks:
         description: "Array of network names or IDs to attach the service to."
         type: "array"
@@ -2109,12 +2270,15 @@ definitions:
             Condition: "any"
             MaxAttempts: 0
           Placement: {}
+          ForceUpdate: 0
         Mode:
           Replicated:
             Replicas: 1
         UpdateConfig:
           Parallelism: 1
           FailureAction: "pause"
+          Monitor: 15000000000
+          MaxFailureRatio: 0.15
         EndpointSpec:
           Mode: "vip"
           Ports:
@@ -2142,11 +2306,133 @@ definitions:
           -
             NetworkID: "4qvuz4ko70xaltuqbt8956gd1"
             Addr: "10.255.0.3/16"
+  ImageDeleteResponse:
+    type: "object"
+    properties:
+      Untagged:
+        description: "The image ID of an image that was untagged"
+        type: "string"
+      Deleted:
+        description: "The image ID of an image that was deleted"
+        type: "string"
+  ServiceUpdateResponse:
+    type: "object"
+    properties:
+      Warnings:
+        description: "Optional warning messages"
+        type: "array"
+        items:
+          type: "string"
+    example:
+      Warning: "unable to pin image doesnotexist:latest to digest: image library/doesnotexist:latest not found"
+  ContainerSummary:
+    type: "array"
+    items:
+      type: "object"
+      properties:
+        Id:
+          description: "The ID of this container"
+          type: "string"
+          x-go-name: "ID"
+        Names:
+          description: "The names that this container has been given"
+          type: "array"
+          items:
+            type: "string"
+        Image:
+          description: "The name of the image used when creating this container"
+          type: "string"
+        ImageID:
+          description: "The ID of the image that this container was created from"
+          type: "string"
+        Command:
+          description: "Command to run when starting the container"
+          type: "string"
+        Created:
+          description: "When the container was created"
+          type: "integer"
+          format: "int64"
+        Ports:
+          description: "The ports exposed by this container"
+          type: "array"
+          items:
+            $ref: "#/definitions/Port"
+        SizeRw:
+          description: "The size of files that have been created or changed by this container"
+          type: "integer"
+          format: "int64"
+        SizeRootFs:
+          description: "The total size of all the files in this container"
+          type: "integer"
+          format: "int64"
+        Labels:
+          description: "User-defined key/value metadata."
+          type: "object"
+          additionalProperties:
+            type: "string"
+        State:
+          description: "The state of this container (e.g. `Exited`)"
+          type: "string"
+        Status:
+          description: "Additional human-readable status of this container (e.g. `Exit 0`)"
+          type: "string"
+        HostConfig:
+          type: "object"
+          properties:
+            NetworkMode:
+              type: "string"
+        NetworkSettings:
+          description: "A summary of the container's network settings"
+          type: "object"
+          properties:
+            Networks:
+              type: "object"
+              additionalProperties:
+                $ref: "#/definitions/EndpointSettings"
+        Mounts:
+          type: "array"
+          items:
+            $ref: "#/definitions/Mount"
+  SecretSpec:
+    type: "object"
+    properties:
+      Name:
+        description: "User-defined name of the secret."
+        type: "string"
+      Labels:
+        description: "User-defined key/value metadata."
+        type: "object"
+        additionalProperties:
+          type: "string"
+      Data:
+        description: "Base64-url-safe-encoded secret data"
+        type: "array"
+        items:
+          type: "string"
+  Secret:
+    type: "object"
+    properties:
+      ID:
+        type: "string"
+      Version:
+        type: "object"
+        properties:
+          Index:
+            type: "integer"
+            format: "int64"
+      CreatedAt:
+        type: "string"
+        format: "dateTime"
+      UpdatedAt:
+        type: "string"
+        format: "dateTime"
+      Spec:
+        $ref: "#/definitions/ServiceSpec"
 paths:
   /containers/json:
     get:
       summary: "List containers"
-      operationId: "GetContainerList"
+      operationId: "ContainerList"
       produces:
         - "application/json"
       parameters:
@@ -2171,86 +2457,24 @@ paths:
 
             Available filters:
             - `exited=<int>` containers with exit code of `<int>`
-            - `status=`(`created`|`restarting`|`running`|`paused`|`exited`|`dead`)
+            - `status=`(`created`|`restarting`|`running`|`removing`|`paused`|`exited`|`dead`)
             - `label=key` or `label="key=value"` of a container label
             - `isolation=`(`default`|`process`|`hyperv`) (Windows daemon only)
+            - `id=<ID>` a container's ID
+            - `name=<name>` a container's name
+            - `is-task=`(`true`|`false`)
             - `ancestor`=(`<image-name>[:<tag>]`, `<image id>`, or `<image@digest>`)
             - `before`=(`<container id>` or `<container name>`)
             - `since`=(`<container id>` or `<container name>`)
             - `volume`=(`<volume name>` or `<mount point destination>`)
             - `network`=(`<network id>` or `<network name>`)
+            - `health`=(`starting`|`healthy`|`unhealthy`|`none`)
           type: "string"
       responses:
         200:
           description: "no error"
           schema:
-            type: "array"
-            items:
-              type: "object"
-              properties:
-                Id:
-                  description: "The ID of this container"
-                  type: "string"
-                  x-go-name: "ID"
-                Names:
-                  description: "The names that this container has been given"
-                  type: "array"
-                  items:
-                    type: "string"
-                Image:
-                  description: "The name of the image used when creating this container"
-                  type: "string"
-                ImageID:
-                  description: "The ID of the image that this container was created from"
-                  type: "string"
-                Command:
-                  description: "Command to run when starting the container"
-                  type: "string"
-                Created:
-                  description: "When the container was created"
-                  type: "integer"
-                  format: "int64"
-                Ports:
-                  description: "The ports exposed by this container"
-                  type: "array"
-                  items:
-                    $ref: "#/definitions/Port"
-                SizeRw:
-                  description: "The size of files that have been created or changed by this container"
-                  type: "integer"
-                  format: "int64"
-                SizeRootFs:
-                  description: "The total size of all the files in this container"
-                  type: "integer"
-                  format: "int64"
-                Labels:
-                  description: "Labels that have been applied to this container"
-                  type: "object"
-                  additionalProperties:
-                    type: "string"
-                State:
-                  description: "The state of this container (e.g. `Exited`)"
-                  type: "string"
-                Status:
-                  description: "Additional human-readable status of this container (e.g. `Exit 0`)"
-                  type: "string"
-                HostConfig:
-                  type: "object"
-                  properties:
-                    NetworkMode:
-                      type: "string"
-                NetworkSettings:
-                  description: "A summary of the container's network settings"
-                  type: "object"
-                  properties:
-                    Networks:
-                      type: "object"
-                      additionalProperties:
-                        $ref: "#/definitions/EndpointSettings"
-                Mounts:
-                  type: "array"
-                  items:
-                    $ref: "#/definitions/Mount"
+            $ref: "#/definitions/ContainerSummary"
           examples:
             application/json:
               - Id: "8dfafdbc3a40"
@@ -2277,9 +2501,6 @@ paths:
                 NetworkSettings:
                   Networks:
                     bridge:
-                      IPAMConfig: null
-                      Links: null
-                      Aliases: null
                       NetworkID: "7ea29fc1412292a2d7bba362f9253545fecdfa8ce9a6e37dd10ba8bee7129812"
                       EndpointID: "2cdc4edb1ded3631c81f57966563e5c8525b81121bb3706a9a9a3ae102711f3f"
                       Gateway: "172.17.0.1"
@@ -2315,9 +2536,6 @@ paths:
                 NetworkSettings:
                   Networks:
                     bridge:
-                      IPAMConfig: null
-                      Links: null
-                      Aliases: null
                       NetworkID: "7ea29fc1412292a2d7bba362f9253545fecdfa8ce9a6e37dd10ba8bee7129812"
                       EndpointID: "88eaed7b37b38c2a3f0c4bc796494fdf51b270c2d22656412a2ca5d559a64d7a"
                       Gateway: "172.17.0.1"
@@ -2346,9 +2564,6 @@ paths:
                 NetworkSettings:
                   Networks:
                     bridge:
-                      IPAMConfig: null
-                      Links: null
-                      Aliases: null
                       NetworkID: "7ea29fc1412292a2d7bba362f9253545fecdfa8ce9a6e37dd10ba8bee7129812"
                       EndpointID: "8b27c041c30326d59cd6e6f510d4f8d1d570a228466f956edf7815508f78e30d"
                       Gateway: "172.17.0.1"
@@ -2377,9 +2592,6 @@ paths:
                 NetworkSettings:
                   Networks:
                     bridge:
-                      IPAMConfig: null
-                      Links: null
-                      Aliases: null
                       NetworkID: "7ea29fc1412292a2d7bba362f9253545fecdfa8ce9a6e37dd10ba8bee7129812"
                       EndpointID: "d91c7b2f0644403d7ef3095985ea0e2370325cd2332ff3a3225c4247328e66e9"
                       Gateway: "172.17.0.1"
@@ -2398,8 +2610,7 @@ paths:
           description: "server error"
           schema:
             $ref: "#/definitions/ErrorResponse"
-      tags:
-        - "Container"
+      tags: ["Container"]
   /containers/create:
     post:
       summary: "Create a container"
@@ -2463,6 +2674,7 @@ paths:
               ExposedPorts:
                 22/tcp: {}
               StopSignal: "SIGTERM"
+              StopTimeout: 10
               HostConfig:
                 Binds:
                   - "/tmp:/tmp"
@@ -2472,9 +2684,12 @@ paths:
                 MemorySwap: 0
                 MemoryReservation: 0
                 KernelMemory: 0
+                NanoCPUs: 500000
                 CpuPercent: 80
                 CpuShares: 512
                 CpuPeriod: 100000
+                CpuRealtimePeriod: 1000000
+                CpuRealtimeRuntime: 10000
                 CpuQuota: 50000
                 CpusetCpus: "0,1"
                 CpusetMems: "0,1"
@@ -2594,13 +2809,12 @@ paths:
           description: "server error"
           schema:
             $ref: "#/definitions/ErrorResponse"
-      tags:
-        - "Container"
+      tags: ["Container"]
   /containers/{id}/json:
     get:
       summary: "Inspect a container"
       description: "Return low-level information about a container."
-      operationId: "GetContainerInspect"
+      operationId: "ContainerInspect"
       produces:
         - "application/json"
       responses:
@@ -2721,10 +2935,8 @@ paths:
                   - "-c"
                   - "exit 9"
                 Domainname: ""
-                Entrypoint: null
                 Env:
                   - "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
-                ExposedPorts: null
                 Hostname: "ba033ac44011"
                 Image: "ubuntu"
                 Labels:
@@ -2733,7 +2945,6 @@ paths:
                   com.example.version: "1.0"
                 MacAddress: ""
                 NetworkDisabled: false
-                OnBuild: null
                 OpenStdin: false
                 StdinOnce: false
                 Tty: false
@@ -2742,11 +2953,10 @@ paths:
                   /volumes/data: {}
                 WorkingDir: ""
                 StopSignal: "SIGTERM"
+                StopTimeout: 10
               Created: "2015-01-06T15:47:31.485331387Z"
               Driver: "devicemapper"
-              ExecIDs: null
               HostConfig:
-                Binds: null
                 MaximumIOps: 0
                 MaximumIOBps: 0
                 BlkioWeight: 0
@@ -2760,21 +2970,16 @@ paths:
                   - {}
                 BlkioDeviceWriteIOps:
                   - {}
-                CapAdd: null
-                CapDrop: null
                 ContainerIDFile: ""
                 CpusetCpus: ""
                 CpusetMems: ""
                 CpuPercent: 80
                 CpuShares: 0
                 CpuPeriod: 100000
+                CpuRealtimePeriod: 1000000
+                CpuRealtimeRuntime: 10000
                 Devices: []
-                Dns: null
-                DnsOptions: null
-                DnsSearch: null
-                ExtraHosts: null
                 IpcMode: ""
-                Links: null
                 LxcConf: []
                 Memory: 0
                 MemorySwap: 0
@@ -2792,13 +2997,9 @@ paths:
                   MaximumRetryCount: 2
                   Name: "on-failure"
                 LogConfig:
-                  Config: null
                   Type: "json-file"
-                SecurityOpt: null
                 Sysctls:
                   net.ipv4.ip_forward: "1"
-                StorageOpt: null
-                VolumesFrom: null
                 Ulimits:
                   - {}
                 VolumeDriver: ""
@@ -2816,7 +3017,6 @@ paths:
                 HairpinMode: false
                 LinkLocalIPv6Address: ""
                 LinkLocalIPv6PrefixLen: 0
-                Ports: null
                 SandboxKey: ""
                 SecondaryIPAddresses: null
                 SecondaryIPv6Addresses: null
@@ -2885,13 +3085,12 @@ paths:
           type: "boolean"
           default: false
           description: "Return the size of container as fields `SizeRw` and `SizeRootFs`"
-      tags:
-        - "Container"
+      tags: ["Container"]
   /containers/{id}/top:
     get:
       summary: "List processes running inside a container"
       description: "On Unix systems, this is done by running the `ps` command. This endpoint is not supported on Windows."
-      operationId: "GetContainerTop"
+      operationId: "ContainerTop"
       responses:
         200:
           description: "no error"
@@ -2962,16 +3161,15 @@ paths:
           description: "The arguments to pass to `ps`. For example, `aux`"
           type: "string"
           default: "-ef"
-      tags:
-        - "Container"
+      tags: ["Container"]
   /containers/{id}/logs:
     get:
       summary: "Get container logs"
       description: |
-        Get stdout and stderr logs from a container.
+        Get `stdout` and `stderr` logs from a container.
 
         Note: This endpoint works only for containers with the `json-file` or `journald` logging driver.
-      operationId: "GetContainerLogs"
+      operationId: "ContainerLogs"
       responses:
         101:
           description: "logs returned as a stream"
@@ -3004,17 +3202,17 @@ paths:
           description: |
             Return the logs as a stream.
 
-            This will return a `101` HTTP response with a `Connection: upgrade` header, then hijack the HTTP connection to send raw output. For more information about hijacking and the stream format, [see the documentation for the attach endpoint](#operation/PostContainerAttach).
+            This will return a `101` HTTP response with a `Connection: upgrade` header, then hijack the HTTP connection to send raw output. For more information about hijacking and the stream format, [see the documentation for the attach endpoint](#operation/ContainerAttach).
           type: "boolean"
           default: false
         - name: "stdout"
           in: "query"
-          description: "Return logs from stdout"
+          description: "Return logs from `stdout`"
           type: "boolean"
           default: false
         - name: "stderr"
           in: "query"
-          description: "Return logs from stderr"
+          description: "Return logs from `stderr`"
           type: "boolean"
           default: false
         - name: "since"
@@ -3032,8 +3230,7 @@ paths:
           description: "Only return this number of log lines from the end of the logs. Specify as an integer or `all` to output all log lines."
           type: "string"
           default: "all"
-      tags:
-        - "Container"
+      tags: ["Container"]
   /containers/{id}/changes:
     get:
       summary: "Get changes on a container’s filesystem"
@@ -3043,7 +3240,7 @@ paths:
         - `0`: Modified
         - `1`: Added
         - `2`: Deleted
-      operationId: "GetContainerChanges"
+      operationId: "ContainerChanges"
       produces:
         - "application/json"
       responses:
@@ -3089,13 +3286,12 @@ paths:
           required: true
           description: "ID or name of the container"
           type: "string"
-      tags:
-        - "Container"
+      tags: ["Container"]
   /containers/{id}/export:
     get:
       summary: "Export a container"
       description: "Export the contents of a container as a tarball."
-      operationId: "GetContainerExport"
+      operationId: "ContainerExport"
       produces:
         - "application/octet-stream"
       responses:
@@ -3118,8 +3314,7 @@ paths:
           required: true
           description: "ID or name of the container"
           type: "string"
-      tags:
-        - "Container"
+      tags: ["Container"]
   /containers/{id}/stats:
     get:
       summary: "Get container stats based on resource usage"
@@ -3127,7 +3322,7 @@ paths:
         This endpoint returns a live stream of a container’s resource usage statistics.
 
         The `precpu_stats` is the CPU statistic of last read, which is used for calculating the CPU usage percentage. It is not the same as the `cpu_stats` field.
-      operationId: "GetContainerStats"
+      operationId: "ContainerStats"
       produces:
         - "application/json"
       responses:
@@ -3247,13 +3442,12 @@ paths:
           description: "Stream the output. If false, the stats will be output once and then it will disconnect."
           type: "boolean"
           default: true
-      tags:
-        - "Container"
+      tags: ["Container"]
   /containers/{id}/resize:
     post:
       summary: "Resize a container TTY"
       description: "Resize the TTY for a container. You must restart the container for the resize to take effect."
-      operationId: "PostContainerResize"
+      operationId: "ContainerResize"
       consumes:
         - "application/octet-stream"
       produces:
@@ -3286,12 +3480,11 @@ paths:
           in: "query"
           description: "Width of the tty session in characters"
           type: "integer"
-      tags:
-        - "Container"
+      tags: ["Container"]
   /containers/{id}/start:
     post:
       summary: "Start a container"
-      operationId: "PostContainerStart"
+      operationId: "ContainerStart"
       responses:
         204:
           description: "no error"
@@ -3320,12 +3513,11 @@ paths:
           in: "query"
           description: "Override the key sequence for detaching a container. Format is a single character `[a-Z]` or `ctrl-<value>` where `<value>` is one of: `a-z`, `@`, `^`, `[`, `,` or `_`."
           type: "string"
-      tags:
-        - "Container"
+      tags: ["Container"]
   /containers/{id}/stop:
     post:
       summary: "Stop a container"
-      operationId: "PostContainerStop"
+      operationId: "ContainerStop"
       responses:
         204:
           description: "no error"
@@ -3354,12 +3546,11 @@ paths:
           in: "query"
           description: "Number of seconds to wait before killing the container"
           type: "integer"
-      tags:
-        - "Container"
+      tags: ["Container"]
   /containers/{id}/restart:
     post:
       summary: "Restart a container"
-      operationId: "PostContainerRestart"
+      operationId: "ContainerRestart"
       responses:
         204:
           description: "no error"
@@ -3384,13 +3575,12 @@ paths:
           in: "query"
           description: "Number of seconds to wait before killing the container"
           type: "integer"
-      tags:
-        - "Container"
+      tags: ["Container"]
   /containers/{id}/kill:
     post:
       summary: "Kill a container"
       description: "Send a POSIX signal to a container, defaulting to killing to the container."
-      operationId: "PostContainerKill"
+      operationId: "ContainerKill"
       responses:
         204:
           description: "no error"
@@ -3416,8 +3606,7 @@ paths:
           description: "Signal to send to the container as an integer or string (e.g. `SIGINT`)"
           type: "string"
           default: "SIGKILL"
-      tags:
-        - "Container"
+      tags: ["Container"]
   /containers/{id}/update:
     post:
       summary: "Update a container"
@@ -3467,6 +3656,8 @@ paths:
               CpuShares: 512
               CpuPeriod: 100000
               CpuQuota: 50000
+              CpuRealtimePeriod: 1000000
+              CpuRealtimeRuntime: 10000
               CpusetCpus: "0,1"
               CpusetMems: "0"
               Memory: 314572800
@@ -3476,12 +3667,11 @@ paths:
               RestartPolicy:
                 MaximumRetryCount: 4
                 Name: "on-failure"
-      tags:
-        - "Container"
+      tags: ["Container"]
   /containers/{id}/rename:
     post:
       summary: "Rename a container"
-      operationId: "PostContainerRename"
+      operationId: "ContainerRename"
       responses:
         204:
           description: "no error"
@@ -3511,8 +3701,7 @@ paths:
           required: true
           description: "New name for the container"
           type: "string"
-      tags:
-        - "Container"
+      tags: ["Container"]
   /containers/{id}/pause:
     post:
       summary: "Pause a container"
@@ -3520,7 +3709,7 @@ paths:
         Use the cgroups freezer to suspend all processes in a container.
 
         Traditionally, when suspending a process the `SIGSTOP` signal is used, which is observable by the process being suspended. With the cgroups freezer the process is unaware, and unable to capture, that it is being suspended, and subsequently resumed.
-      operationId: "PostContainerPause"
+      operationId: "ContainerPause"
       responses:
         204:
           description: "no error"
@@ -3541,13 +3730,12 @@ paths:
           required: true
           description: "ID or name of the container"
           type: "string"
-      tags:
-        - "Container"
+      tags: ["Container"]
   /containers/{id}/unpause:
     post:
       summary: "Unpause a container"
       description: "Resume a container which has been paused."
-      operationId: "PostContainerUnpause"
+      operationId: "ContainerUnpause"
       responses:
         204:
           description: "no error"
@@ -3568,8 +3756,7 @@ paths:
           required: true
           description: "ID or name of the container"
           type: "string"
-      tags:
-        - "Container"
+      tags: ["Container"]
   /containers/{id}/attach:
     post:
       summary: "Attach to a container"
@@ -3618,7 +3805,7 @@ paths:
 
         ### Stream format
 
-        When the TTY setting is disabled in [`POST /containers/create`](#operation/PostContainerCreate), the stream over the hijacked connected is multiplexed to separate out `stdout` and `stderr`. The stream consists of a series of frames, each containing a header and a payload.
+        When the TTY setting is disabled in [`POST /containers/create`](#operation/ContainerCreate), the stream over the hijacked connected is multiplexed to separate out `stdout` and `stderr`. The stream consists of a series of frames, each containing a header and a payload.
 
         The header contains the information which the stream writes (`stdout` or `stderr`). It also contains the size of the associated frame encoded in the last four bytes (`uint32`).
 
@@ -3648,9 +3835,9 @@ paths:
 
         ### Stream format when using a TTY
 
-        When the TTY setting is enabled in [`POST /containers/create`](#operation/PostContainerCreate), the stream is not multiplexed. The data exchanged over the hijacked connection is simply the raw data from the process PTY and client's `stdin`.
+        When the TTY setting is enabled in [`POST /containers/create`](#operation/ContainerCreate), the stream is not multiplexed. The data exchanged over the hijacked connection is simply the raw data from the process PTY and client's `stdin`.
 
-      operationId: "PostContainerAttach"
+      operationId: "ContainerAttach"
       produces:
         - "application/vnd.docker.raw-stream"
       responses:
@@ -3700,25 +3887,24 @@ paths:
           default: false
         - name: "stdin"
           in: "query"
-          description: "Attach to stdin"
+          description: "Attach to `stdin`"
           type: "boolean"
           default: false
         - name: "stdout"
           in: "query"
-          description: "Attach to stdout"
+          description: "Attach to `stdout`"
           type: "boolean"
           default: false
         - name: "stderr"
           in: "query"
-          description: "Attach to stderr"
+          description: "Attach to `stderr`"
           type: "boolean"
           default: false
-      tags:
-        - "Container"
+      tags: ["Container"]
   /containers/{id}/attach/ws:
     get:
       summary: "Attach to a container via a websocket"
-      operationId: "PostContainerAttachWebsocket"
+      operationId: "ContainerAttachWebsocket"
       responses:
         101:
           description: "no error, hints proxy about hijacking"
@@ -3761,21 +3947,20 @@ paths:
           default: false
         - name: "stdin"
           in: "query"
-          description: "Attach to stdin"
+          description: "Attach to `stdin`"
           type: "boolean"
           default: false
         - name: "stdout"
           in: "query"
-          description: "Attach to stdout"
+          description: "Attach to `stdout`"
           type: "boolean"
           default: false
         - name: "stderr"
           in: "query"
-          description: "Attach to stderr"
+          description: "Attach to `stderr`"
           type: "boolean"
           default: false
-      tags:
-        - "Container"
+      tags: ["Container"]
   /containers/{id}/wait:
     post:
       summary: "Wait for a container"
@@ -3810,12 +3995,11 @@ paths:
           required: true
           description: "ID or name of the container"
           type: "string"
-      tags:
-        - "Container"
+      tags: ["Container"]
   /containers/{id}:
     delete:
       summary: "Remove a container"
-      operationId: "DeleteContainer"
+      operationId: "ContainerDelete"
       responses:
         204:
           description: "no error"
@@ -3850,13 +4034,12 @@ paths:
           description: "If the container is running, kill it before removing it."
           type: "boolean"
           default: false
-      tags:
-        - "Container"
+      tags: ["Container"]
   /containers/{id}/archive:
     head:
       summary: "Get information about files in a container"
       description: "A response header `X-Docker-Container-Path-Stat` is return containing a base64 - encoded JSON object with some filesystem header information about the path."
-      operationId: "HeadContainerArchive"
+      operationId: "ContainerArchiveHead"
       responses:
         200:
           description: "no error"
@@ -3865,18 +4048,25 @@ paths:
               type: "string"
               description: "TODO"
         400:
-          description: "client error, bad parameter, details in JSON response body, one of: must specify path parameter (path cannot be empty) not a directory (path was asserted to be a directory but exists as a file)"
+          description: "Bad parameter"
           schema:
-            $ref: "#/definitions/ErrorResponse"
+            allOf:
+              - $ref: "#/definitions/ErrorResponse"
+              - type: "object"
+                properties:
+                  message:
+                    description: "The error message. Either \"must specify path parameter\" (path cannot be empty) or \"not a directory\" (path was asserted to be a directory but exists as a file)."
+                    type: "string"
+                    x-nullable: false
         404:
-          description: "client error, resource not found, one of: 1) no such container (container id does not exist) 2) no such file or directory (path resource does not exist)"
+          description: "Container or path does not exist"
           schema:
             $ref: "#/definitions/ErrorResponse"
           examples:
             application/json:
               message: "No such container: c2ada9df5af8"
         500:
-          description: "server error"
+          description: "Server error"
           schema:
             $ref: "#/definitions/ErrorResponse"
       parameters:
@@ -3890,23 +4080,29 @@ paths:
           required: true
           description: "Resource in the container’s filesystem to archive."
           type: "string"
-      tags:
-        - "Container"
+      tags: ["Container"]
     get:
       summary: "Get an archive of a filesystem resource in a container"
       description: "Get an tar archive of a resource in the filesystem of container id."
-      operationId: "GetContainerArchive"
+      operationId: "ContainerGetArchive"
       produces:
         - "application/x-tar"
       responses:
         200:
           description: "no error"
         400:
-          description: "client error, bad parameter, details in JSON response body, one of: must specify path parameter (path cannot be empty) not a directory (path was asserted to be a directory but exists as a file)"
+          description: "Bad parameter"
           schema:
-            $ref: "#/definitions/ErrorResponse"
+            allOf:
+              - $ref: "#/definitions/ErrorResponse"
+              - type: "object"
+                properties:
+                  message:
+                    description: "The error message. Either \"must specify path parameter\" (path cannot be empty) or \"not a directory\" (path was asserted to be a directory but exists as a file)."
+                    type: "string"
+                    x-nullable: false
         404:
-          description: "client error, resource not found, one of: 1) no such container (container id does not exist) 2) no such file or directory (path resource does not exist)"
+          description: "Container or path does not exist"
           schema:
             $ref: "#/definitions/ErrorResponse"
           examples:
@@ -3927,12 +4123,11 @@ paths:
           required: true
           description: "Resource in the container’s filesystem to archive."
           type: "string"
-      tags:
-        - "Container"
+      tags: ["Container"]
     put:
       summary: "Extract an archive of files or folders to a directory in a container"
       description: "Upload a tar archive to be extracted to a path in the filesystem of container id."
-      operationId: "PutContainerArchive"
+      operationId: "ContainerPutArchive"
       consumes:
         - "application/x-tar"
         - "application/octet-stream"
@@ -3979,13 +4174,46 @@ paths:
           description: "The input stream must be a tar archive compressed with one of the following algorithms: identity (no compression), gzip, bzip2, xz."
           schema:
             type: "string"
-      tags:
-        - "Container"
+      tags: ["Container"]
+  /containers/prune:
+    post:
+      summary: "Delete stopped containers"
+      produces:
+        - "application/json"
+      operationId: "ContainerPrune"
+      parameters:
+        - name: "filters"
+          in: "query"
+          description: |
+            Filters to process on the prune list, encoded as JSON (a `map[string][]string`).
+
+            Available filters:
+          type: "string"
+      responses:
+        200:
+          description: "No error"
+          schema:
+            type: "object"
+            properties:
+              ContainersDeleted:
+                description: "Container IDs that were deleted"
+                type: "array"
+                items:
+                  type: "string"
+              SpaceReclaimed:
+                description: "Disk space reclaimed in bytes"
+                type: "integer"
+                format: "int64"
+        500:
+          description: "Server error"
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+      tags: ["Container"]
   /images/json:
     get:
       summary: "List Images"
       description: "Returns a list of images on the server. Note that it uses a different, smaller representation of an image than inspecting a single image."
-      operationId: "GetImageList"
+      operationId: "ImageList"
       produces:
         - "application/json"
       responses:
@@ -3997,25 +4225,33 @@ paths:
               $ref: "#/definitions/ImageSummary"
           examples:
             application/json:
-              - RepoTags:
+              - Id: "sha256:e216a057b1cb1efc11f8a268f37ef62083e70b1b38323ba252e25ac88904a7e8"
+                ParentId: ""
+                RepoTags:
                   - "ubuntu:12.04"
                   - "ubuntu:precise"
-                  - "ubuntu:latest"
-                Id: "8dbd9e392a964056420e5d58ca5cc376ef18e2de93b5cc90e868a1bbc8318c1c"
-                Created: 1365714795
-                Size: 131506275
-                VirtualSize: 131506275
+                RepoDigests:
+                  - "ubuntu@sha256:992069aee4016783df6345315302fa59681aae51a8eeb2f889dea59290f21787"
+                Created: 1474925151
+                Size: 103579269
+                VirtualSize: 103579269
+                SharedSize: 0
                 Labels: {}
-              - RepoTags:
+                Containers: 2
+              - Id: "sha256:3e314f95dcace0f5e4fd37b10862fe8398e3c60ed36600bc0ca5fda78b087175"
+                ParentId: ""
+                RepoTags:
                   - "ubuntu:12.10"
                   - "ubuntu:quantal"
-                ParentId: "27cf784147099545"
-                Id: "b750fe79269d2ec9a3c593ef05b4332b1d1a02a62b4accb2c21d589ff2f5f2dc"
-                Created: 1364102658
-                Size: 24653
-                VirtualSize: 180116135
-                Labels:
-                  com.example.version: "v1"
+                RepoDigests:
+                  - "ubuntu@sha256:002fba3e3255af10be97ea26e476692a7ebed0bb074a9ab960b2e7a1526b15d7"
+                  - "ubuntu@sha256:68ea0200f0b90df725d99d823905b04cf844f6039ef60c60bf3e019915017bd3"
+                Created: 1403128455
+                Size: 172064416
+                VirtualSize: 172064416
+                SharedSize: 0
+                Labels: {}
+                Containers: 5
         500:
           description: "server error"
           schema:
@@ -4028,29 +4264,34 @@ paths:
           default: false
         - name: "filters"
           in: "query"
-          description: "A JSON encoded value of the filters (a `map[string][]string`) to process on the containers list"
-          type: "string"
-        - name: "filter"
-          in: "query"
-          description: "Only return images with the specified name."
+          description: |
+            A JSON encoded value of the filters (a `map[string][]string`) to process on the images list.
+
+            Available filters:
+            - `dangling=true`
+            - `label=key` or `label="key=value"` of an image label
+            - `before`=(`<image-name>[:<tag>]`,  `<image id>` or `<image@digest>`)
+            - `since`=(`<image-name>[:<tag>]`,  `<image id>` or `<image@digest>`)
+            - `reference`=(`<image-name>[:<tag>]`)
           type: "string"
         - name: "digests"
           in: "query"
           description: "Show digest information as a `RepoDigests` field on each image."
           type: "boolean"
           default: false
-      tags:
-        - "Image"
+      tags: ["Image"]
   /build:
     post:
       summary: "Build an image"
       description: |
-        Build an image from a tar archive with a Dockerfile in it.
+        Build an image from a tar archive with a `Dockerfile` in it.
 
-        The Dockerfile specifies how the image is built from the tar archive. It is typically in the archive's root, but can be at a different path or have a different name by specifying the `dockerfile` parameter. [See the Dockerfile reference for more information](https://docs.docker.com/engine/reference/builder/).
+        The `Dockerfile` specifies how the image is built from the tar archive. It is typically in the archive's root, but can be at a different path or have a different name by specifying the `dockerfile` parameter. [See the `Dockerfile` reference for more information](https://docs.docker.com/engine/reference/builder/).
+
+        The Docker daemon performs a preliminary validation of the `Dockerfile` before starting the build, and returns an error if the syntax is incorrect. After that, each instruction is run one-by-one until the ID of the new image is output.
 
         The build is canceled if the client drops the connection by quitting or being killed.
-      operationId: "PostImageBuild"
+      operationId: "ImageBuild"
       consumes:
         - "application/octet-stream"
       produces:
@@ -4064,7 +4305,7 @@ paths:
             format: "binary"
         - name: "dockerfile"
           in: "query"
-          description: "Path within the build context to the `Dockerfile`. This is ignored if `remote` is specified and points to an individual filename."
+          description: "Path within the build context to the `Dockerfile`. This is ignored if `remote` is specified and points to an external `Dockerfile`."
           type: "string"
           default: "Dockerfile"
         - name: "t"
@@ -4085,6 +4326,10 @@ paths:
           description: "Do not use the cache when building the image."
           type: "boolean"
           default: false
+        - name: "cachefrom"
+          in: "query"
+          description: "JSON array of images used for build cache resolution."
+          type: "string"
         - name: "pull"
           in: "query"
           description: "Attempt to pull the image even if an older image exists locally."
@@ -4125,15 +4370,26 @@ paths:
           type: "integer"
         - name: "buildargs"
           in: "query"
-          description: "JSON map of string pairs for build-time variables. Users pass these values at build-time. Docker uses the buildargs as the environment context for commands run via the Dockerfile’s RUN instruction, or for variable expansion in other Dockerfile instructions. This is not meant for passing secret values. [Read more about the buildargs instruction.](https://docs.docker.com/engine/reference/builder/#arg)"
+          description: "JSON map of string pairs for build-time variables. Users pass these values at build-time. Docker uses the buildargs as the environment context for commands run via the `Dockerfile` RUN instruction, or for variable expansion in other `Dockerfile` instructions. This is not meant for passing secret values. [Read more about the buildargs instruction.](https://docs.docker.com/engine/reference/builder/#arg)"
           type: "integer"
         - name: "shmsize"
           in: "query"
           description: "Size of `/dev/shm` in bytes. The size must be greater than 0. If omitted the system uses 64MB."
           type: "integer"
+        - name: "squash"
+          in: "query"
+          description: "Squash the resulting images layers into a single layer. *(Experimental release only.)*"
+          type: "boolean"
         - name: "labels"
           in: "query"
           description: "Arbitrary key/value labels to set on the image, as a JSON map of string pairs."
+          type: "string"
+        - name: "networkmode"
+          in: "query"
+          description: "Sets the networking mode for the run commands during
+        build. Supported standard values are: `bridge`, `host`, `none`, and
+        `container:<name|id>`. Any other value is taken as a custom network's
+        name to which this container should connect to."
           type: "string"
         - name: "Content-type"
           in: "header"
@@ -4166,17 +4422,20 @@ paths:
       responses:
         200:
           description: "no error"
+        400:
+          description: "Bad parameter"
+          schema:
+            $ref: "#/definitions/ErrorResponse"
         500:
           description: "server error"
           schema:
             $ref: "#/definitions/ErrorResponse"
-      tags:
-        - "Image"
+      tags: ["Image"]
   /images/create:
     post:
       summary: "Create an image"
       description: "Create an image by either pulling it from a registry or importing it."
-      operationId: "PostImageCreate"
+      operationId: "ImageCreate"
       consumes:
         - "text/plain"
         - "application/octet-stream"
@@ -4185,6 +4444,10 @@ paths:
       responses:
         200:
           description: "no error"
+        404:
+          description: "repository does not exist or no read access"
+          schema:
+            $ref: "#/definitions/ErrorResponse"
         500:
           description: "server error"
           schema:
@@ -4204,7 +4467,7 @@ paths:
           type: "string"
         - name: "tag"
           in: "query"
-          description: "Tag or digest."
+          description: "Tag or digest. If empty when pulling an image, this causes all tags for the given image to be pulled."
           type: "string"
         - name: "inputImage"
           in: "body"
@@ -4216,13 +4479,12 @@ paths:
           in: "header"
           description: "A base64-encoded auth configuration. [See the authentication section for details.](#section/Authentication)"
           type: "string"
-      tags:
-        - "Image"
+      tags: ["Image"]
   /images/{name}/json:
     get:
       summary: "Inspect an image"
       description: "Return low-level information about an image."
-      operationId: "GetImageInspect"
+      operationId: "ImageInspect"
       produces:
         - "application/json"
       responses:
@@ -4241,7 +4503,6 @@ paths:
               ContainerConfig:
                 Tty: false
                 Hostname: "e611e15f9c9d"
-                Volumes: null
                 Domainname: ""
                 AttachStdout: false
                 PublishService: ""
@@ -4253,7 +4514,6 @@ paths:
                 Image: "91e54dfb11794fad694460162bf0cb0a4fa710cfa3f60979c177d920813e267c"
                 User: ""
                 WorkingDir: ""
-                Entrypoint: null
                 MacAddress: ""
                 AttachStderr: false
                 Labels:
@@ -4262,7 +4522,6 @@ paths:
                   com.example.vendor: "Acme"
                 Env:
                   - "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
-                ExposedPorts: null
                 Cmd:
                   - "/bin/sh"
                   - "-c"
@@ -4274,7 +4533,6 @@ paths:
               Created: "2015-09-10T08:30:53.26995814Z"
               GraphDriver:
                 Name: "aufs"
-                Data: null
               RepoDigests:
                 - "localhost:5000/test/busybox/example@sha256:cbbf2f9a99b47fc460d422812b6a5adff7dfee951d8fa2e4a98caa0382cfbdbf"
               RepoTags:
@@ -4293,17 +4551,14 @@ paths:
                 AttachStdout: false
                 Tty: false
                 Hostname: "e611e15f9c9d"
-                Volumes: null
                 Cmd:
                   - "/bin/bash"
-                ExposedPorts: null
                 Env:
                   - "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
                 Labels:
                   com.example.vendor: "Acme"
                   com.example.version: "1.0"
                   com.example.license: "GPL"
-                Entrypoint: null
                 MacAddress: ""
                 AttachStderr: false
                 WorkingDir: ""
@@ -4330,13 +4585,12 @@ paths:
           description: "Image name or id"
           type: "string"
           required: true
-      tags:
-        - "Image"
+      tags: ["Image"]
   /images/{name}/history:
     get:
       summary: "Get the history of an image"
       description: "Return parent layers of an image."
-      operationId: "GetImageHistory"
+      operationId: "ImageHistory"
       produces:
         - "application/json"
       responses:
@@ -4376,7 +4630,7 @@ paths:
               - Id: "6cfa4d1f33fb861d4d114f43b25abd0ac737509268065cdfd69d544a59c85ab8"
                 Created: 1398108222
                 CreatedBy: "/bin/sh -c #(nop) MAINTAINER Tianon Gravi <admwiggin@gmail.com> - mkimage-debootstrap.sh -i iproute,iputils-ping,ubuntu-minimal -t lucid.tar.xz lucid http://archive.ubuntu.com/ubuntu/"
-                Tags: null
+                Tags: []
                 Size: 0
                 Comment: ""
               - Id: "511136ea3c5a64f264b78b5433614aec563103b4d4702f3ba7d4d2698e22c158"
@@ -4401,8 +4655,7 @@ paths:
           description: "Image name or ID"
           type: "string"
           required: true
-      tags:
-        - "Image"
+      tags: ["Image"]
   /images/{name}/push:
     post:
       summary: "Push an image"
@@ -4412,7 +4665,7 @@ paths:
         If you wish to push an image on to a private registry, that image must already have a tag which references the registry. For example, `registry.example.com/myimage:latest`.
 
         The push is cancelled if the HTTP connection is closed.
-      operationId: "PostImagePush"
+      operationId: "ImagePush"
       consumes:
         - "application/octet-stream"
       responses:
@@ -4441,13 +4694,12 @@ paths:
           description: "A base64-encoded auth configuration. [See the authentication section for details.](#section/Authentication)"
           type: "string"
           required: true
-      tags:
-        - "Image"
+      tags: ["Image"]
   /images/{name}/tag:
     post:
       summary: "Tag an image"
       description: "Tag an image so that it becomes part of a repository."
-      operationId: "PostImageTag"
+      operationId: "ImageTag"
       responses:
         201:
           description: "No error"
@@ -4481,8 +4733,7 @@ paths:
           in: "query"
           description: "The name of the new tag."
           type: "string"
-      tags:
-        - "Image"
+      tags: ["Image"]
   /images/{name}:
     delete:
       summary: "Remove an image"
@@ -4490,7 +4741,7 @@ paths:
         Remove an image, along with any untagged parent images that were referenced by that image.
 
         Images can't be removed if they have descendant images, are being used by a running container or are being used by a build.
-      operationId: "DeleteImage"
+      operationId: "ImageDelete"
       produces:
         - "application/json"
       responses:
@@ -4499,14 +4750,7 @@ paths:
           schema:
             type: "array"
             items:
-              type: "object"
-              properties:
-                Untagged:
-                  description: "The image ID of an image that was untagged"
-                  type: "string"
-                Deleted:
-                  description: "The image ID of an image that was deleted"
-                  type: "string"
+              $ref: "#/definitions/ImageDeleteResponse"
           examples:
             application/json:
               - Untagged: "3e2f21a89f"
@@ -4540,13 +4784,12 @@ paths:
           description: "Do not delete untagged parent images"
           type: "boolean"
           default: false
-      tags:
-        - "Image"
+      tags: ["Image"]
   /images/search:
     get:
       summary: "Search images"
       description: "Search for an image on Docker Hub."
-      operationId: "GetImageSearch"
+      operationId: "ImageSearch"
       produces:
         - "application/json"
       responses:
@@ -4607,13 +4850,49 @@ paths:
             - `is-automated=(true|false)`
             - `is-official=(true|false)`
           type: "string"
-      tags:
-        - "Image"
+      tags: ["Image"]
+  /images/prune:
+    post:
+      summary: "Delete unused images"
+      produces:
+        - "application/json"
+      operationId: "ImagePrune"
+      parameters:
+        - name: "filters"
+          in: "query"
+          description: |
+            Filters to process on the prune list, encoded as JSON (a `map[string][]string`).
+
+            Available filters:
+            - `dangling=<boolean>` When set to `true` (or `1`), prune only
+               unused *and* untagged images. When set to `false`
+               (or `0`), all unused images are pruned.
+          type: "string"
+      responses:
+        200:
+          description: "No error"
+          schema:
+            type: "object"
+            properties:
+              ImagesDeleted:
+                description: "Images that were deleted"
+                type: "array"
+                items:
+                  $ref: "#/definitions/ImageDeleteResponse"
+              SpaceReclaimed:
+                description: "Disk space reclaimed in bytes"
+                type: "integer"
+                format: "int64"
+        500:
+          description: "Server error"
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+      tags: ["Image"]
   /auth:
     post:
       summary: "Check auth configuration"
       description: "Validate credentials for a registry and, if available, get an identity token for accessing the registry without password."
-      operationId: "Authenticate"
+      operationId: "SystemAuth"
       consumes: ["application/json"]
       produces: ["application/json"]
       responses:
@@ -4647,11 +4926,11 @@ paths:
           description: "Authentication to check"
           schema:
             $ref: "#/definitions/AuthConfig"
-      tags: ["Registry"]
+      tags: ["System"]
   /info:
     get:
       summary: "Get system information"
-      operationId: "getSystemInformation"
+      operationId: "SystemInfo"
       produces:
         - "application/json"
       responses:
@@ -4705,8 +4984,6 @@ paths:
                     type: "array"
                     items:
                       type: "string"
-              ExecutionDriver:
-                type: "string"
               ExperimentalBuild:
                 type: "boolean"
               HttpProxy:
@@ -4834,16 +5111,22 @@ paths:
               RegistryConfig:
                 IndexConfigs:
                   docker.io:
-                    Mirrors: null
                     Name: "docker.io"
                     Official: true
                     Secure: true
                 InsecureRegistryCIDRs:
                   - "127.0.0.0/8"
               SecurityOptions:
-                - "apparmor"
-                - "seccomp"
-                - "selinux"
+                - Key: "Name"
+                  Value: "seccomp"
+                - Key: "Profile"
+                  Value: "default"
+                - Key: "Name"
+                  Value: "apparmor"
+                - Key: "Name"
+                  Value: "selinux"
+                - Key: "Name"
+                  Value: "userns"
               ServerVersion: "1.9.0"
               SwapLimit: false
               SystemStatus:
@@ -4855,13 +5138,12 @@ paths:
           description: "Server error"
           schema:
             $ref: "#/definitions/ErrorResponse"
-      tags:
-        - "Misc"
+      tags: ["System"]
   /version:
     get:
       summary: "Get version"
       description: "Returns the version of Docker that is running and various information about the system that Docker is running on."
-      operationId: "getVersion"
+      operationId: "SystemVersion"
       produces:
         - "application/json"
       responses:
@@ -4873,6 +5155,8 @@ paths:
               Version:
                 type: "string"
               ApiVersion:
+                type: "string"
+              MinAPIVersion:
                 type: "string"
               GitCommit:
                 type: "string"
@@ -4897,19 +5181,19 @@ paths:
               GitCommit: "deadbee"
               Arch: "amd64"
               ApiVersion: "1.25"
+              MinAPIVersion: "1.12"
               BuildTime: "2016-06-14T07:09:13.444803460+00:00"
               Experimental: true
         500:
           description: "server error"
           schema:
             $ref: "#/definitions/ErrorResponse"
-      tags:
-        - "Misc"
+      tags: ["System"]
   /_ping:
     get:
       summary: "Ping"
       description: "This is a dummy endpoint you can use to test if the server is accessible."
-      operationId: "ping"
+      operationId: "SystemPing"
       produces:
         - "text/plain"
       responses:
@@ -4922,12 +5206,11 @@ paths:
           description: "server error"
           schema:
             $ref: "#/definitions/ErrorResponse"
-      tags:
-        - "Misc"
+      tags: ["System"]
   /commit:
     post:
       summary: "Create a new image from a container"
-      operationId: "PostImageCommit"
+      operationId: "ImageCommit"
       consumes:
         - "application/json"
       produces:
@@ -4981,10 +5264,9 @@ paths:
           default: true
         - name: "changes"
           in: "query"
-          description: "Dockerfile instructions to apply while committing"
+          description: "`Dockerfile` instructions to apply while committing"
           type: "string"
-      tags:
-        - "Image"
+      tags: ["Image"]
   /events:
     get:
       summary: "Monitor events"
@@ -5003,7 +5285,7 @@ paths:
 
         The Docker daemon reports these events: `reload`
 
-      operationId: "getEvents"
+      operationId: "SystemEvents"
       produces:
         - "application/json"
       responses:
@@ -5035,6 +5317,7 @@ paths:
               timeNano:
                 description: "Timestamp of event, with nanosecond accuracy"
                 type: "integer"
+                format: "int64"
           examples:
             application/json:
               Type: "container"
@@ -5046,7 +5329,6 @@ paths:
                   image: "alpine"
                   name: "my-container"
               time: 1461943101
-              timeNano: 1461943101381709551
         500:
           description: "server error"
           schema:
@@ -5054,11 +5336,11 @@ paths:
       parameters:
         - name: "since"
           in: "query"
-          description: "Show events created since this timestamp then stream new events"
+          description: "Show events created since this timestamp then stream new events."
           type: "string"
         - name: "until"
           in: "query"
-          description: "Show events created until this timestamp then stop streaming"
+          description: "Show events created until this timestamp then stop streaming."
           type: "string"
         - name: "filters"
           in: "query"
@@ -5074,8 +5356,96 @@ paths:
             - `network=<string>` network name or ID
             - `daemon=<string>` daemon name or ID
           type: "string"
-      tags:
-        - "Misc"
+      tags: ["System"]
+  /system/df:
+    get:
+      summary: "Get data usage information"
+      operationId: "SystemDataUsage"
+      responses:
+        200:
+          description: "no error"
+          schema:
+            type: "object"
+            properties:
+              LayersSize:
+                type: "integer"
+                format: "int64"
+              Images:
+                type: "array"
+                items:
+                  $ref: "#/definitions/ImageSummary"
+              Containers:
+                type: "array"
+                items:
+                  $ref: "#/definitions/ContainerSummary"
+              Volumes:
+                type: "array"
+                items:
+                  $ref: "#/definitions/Volume"
+            example:
+              LayersSize: 1092588
+              Images:
+                -
+                  Id: "sha256:2b8fd9751c4c0f5dd266fcae00707e67a2545ef34f9a29354585f93dac906749"
+                  ParentId: ""
+                  RepoTags:
+                    - "busybox:latest"
+                  RepoDigests:
+                    - "busybox@sha256:a59906e33509d14c036c8678d687bd4eec81ed7c4b8ce907b888c607f6a1e0e6"
+                  Created: 1466724217
+                  Size: 1092588
+                  SharedSize: 0
+                  VirtualSize: 1092588
+                  Labels: {}
+                  Containers: 1
+              Containers:
+                -
+                  Id: "e575172ed11dc01bfce087fb27bee502db149e1a0fad7c296ad300bbff178148"
+                  Names:
+                    - "/top"
+                  Image: "busybox"
+                  ImageID: "sha256:2b8fd9751c4c0f5dd266fcae00707e67a2545ef34f9a29354585f93dac906749"
+                  Command: "top"
+                  Created: 1472592424
+                  Ports: []
+                  SizeRootFs: 1092588
+                  Labels: {}
+                  State: "exited"
+                  Status: "Exited (0) 56 minutes ago"
+                  HostConfig:
+                    NetworkMode: "default"
+                  NetworkSettings:
+                    Networks:
+                      bridge:
+                        IPAMConfig: null
+                        Links: null
+                        Aliases: null
+                        NetworkID: "d687bc59335f0e5c9ee8193e5612e8aee000c8c62ea170cfb99c098f95899d92"
+                        EndpointID: "8ed5115aeaad9abb174f68dcf135b49f11daf597678315231a32ca28441dec6a"
+                        Gateway: "172.18.0.1"
+                        IPAddress: "172.18.0.2"
+                        IPPrefixLen: 16
+                        IPv6Gateway: ""
+                        GlobalIPv6Address: ""
+                        GlobalIPv6PrefixLen: 0
+                        MacAddress: "02:42:ac:12:00:02"
+                  Mounts: []
+              Volumes:
+                -
+                  Name: "my-volume"
+                  Driver: "local"
+                  Mountpoint: ""
+                  Labels: null
+                  Scope: ""
+                  Options: null
+                  UsageData:
+                    Size: 0
+                    RefCount: 0
+        500:
+          description: "server error"
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+      tags: ["System"]
   /images/{name}/get:
     get:
       summary: "Export an image"
@@ -5103,7 +5473,7 @@ paths:
           }
         }
         ```
-      operationId: "GetImage"
+      operationId: "ImageGet"
       produces:
         - "application/x-tar"
       responses:
@@ -5122,8 +5492,7 @@ paths:
           description: "Image name or ID"
           type: "string"
           required: true
-      tags:
-        - "Image"
+      tags: ["Image"]
   /images/get:
     get:
       summary: "Export several images"
@@ -5132,8 +5501,8 @@ paths:
 
         For each value of the `names` parameter: if it is a specific name and tag (e.g. `ubuntu:latest`), then only that image (and its parents) are returned; if it is an image ID, similarly only that image (and its parents) are returned and there would be no names referenced in the 'repositories' file for this image ID.
 
-        For details on the format, see [the export image endpoint](#operation/GetImage).
-      operationId: "GetImageSaveAll"
+        For details on the format, see [the export image endpoint](#operation/ImageGet).
+      operationId: "ImageGetAll"
       produces:
         - "application/x-tar"
       responses:
@@ -5153,16 +5522,15 @@ paths:
           type: "array"
           items:
             type: "string"
-      tags:
-        - "Image"
+      tags: ["Image"]
   /images/load:
     post:
       summary: "Import images"
       description: |
         Load a set of images and tags into a repository.
 
-        For details on the format, see [the export image endpoint](#operation/GetImage).
-      operationId: "PostImageLoad"
+        For details on the format, see [the export image endpoint](#operation/ImageGet).
+      operationId: "ImageLoad"
       consumes:
         - "application/x-tar"
       produces:
@@ -5181,13 +5549,17 @@ paths:
           schema:
             type: "string"
             format: "binary"
-      tags:
-        - "Image"
+        - name: "quiet"
+          in: "query"
+          description: "Suppress progress details during load."
+          type: "boolean"
+          default: false
+      tags: ["Image"]
   /containers/{id}/exec:
     post:
       summary: "Create an exec instance"
       description: "Run a command inside a running container."
-      operationId: "PostContainerExec"
+      operationId: "ContainerExec"
       consumes:
         - "application/json"
       produces:
@@ -5234,11 +5606,23 @@ paths:
               Tty:
                 type: "boolean"
                 description: "Allocate a pseudo-TTY."
+              Env:
+                description: "A list of environment variables in the form `[\"VAR=value\", ...]`."
+                type: "array"
+                items:
+                  type: "string"
               Cmd:
                 type: "array"
                 description: "Command to run, as a string or array of strings."
                 items:
                   type: "string"
+              Privileged:
+                type: "boolean"
+                description: "Runs the exec process with extended privileges."
+                default: false
+              User:
+                type: "string"
+                description: "The user, and optionally, group to run the exec process inside the container. Format is one of: `user`, `user:group`, `uid`, or `uid:gid`."
             example:
               AttachStdin: false
               AttachStdout: true
@@ -5247,19 +5631,21 @@ paths:
               Tty: false
               Cmd:
                 - "date"
+              Env:
+                - "FOO=bar"
+                - "BAZ=quux"
           required: true
         - name: "id"
           in: "path"
           description: "ID or name of container"
           type: "string"
           required: true
-      tags:
-        - "Exec"
+      tags: ["Exec"]
   /exec/{id}/start:
     post:
       summary: "Start an exec instance"
       description: "Starts a previously set up exec instance. If detach is true, this endpoint returns immediately after starting the command. Otherwise, it sets up an interactive session with the command."
-      operationId: "PostExecStart"
+      operationId: "ExecStart"
       consumes:
         - "application/json"
       produces:
@@ -5295,13 +5681,12 @@ paths:
           description: "Exec instance ID"
           required: true
           type: "string"
-      tags:
-        - "Exec"
+      tags: ["Exec"]
   /exec/{id}/resize:
     post:
       summary: "Resize an exec instance"
       description: "Resize the TTY session used by an exec instance. This endpoint only works if `tty` was specified as part of creating and starting the exec instance."
-      operationId: "PostExecResize"
+      operationId: "ExecResize"
       responses:
         201:
           description: "No error"
@@ -5323,13 +5708,12 @@ paths:
           in: "query"
           description: "Width of the TTY session in characters"
           type: "integer"
-      tags:
-        - "Exec"
+      tags: ["Exec"]
   /exec/{id}/json:
     get:
       summary: "Inspect an exec instance"
       description: "Return low-level information about an exec instance."
-      operationId: "PostExecInspect"
+      operationId: "ExecInspect"
       produces:
         - "application/json"
       responses:
@@ -5354,6 +5738,9 @@ paths:
                 type: "boolean"
               ContainerID:
                 type: "string"
+              Pid:
+                type: "integer"
+                description: "The system process ID for the exec process."
           examples:
             application/json:
               CanRemove: false
@@ -5373,6 +5760,7 @@ paths:
                 tty: true
                 user: "1000"
               Running: false
+              Pid: 42000
         404:
           description: "No such exec instance"
           schema:
@@ -5387,13 +5775,12 @@ paths:
           description: "Exec instance ID"
           required: true
           type: "string"
-      tags:
-        - "Exec"
+      tags: ["Exec"]
 
   /volumes:
     get:
       summary: "List volumes"
-      operationId: "VolumesList"
+      operationId: "VolumeList"
       produces: ["application/json"]
       responses:
         200:
@@ -5425,6 +5812,10 @@ paths:
                     com.example.some-label: "some-value"
                     com.example.some-other-label: "some-other-value"
                   Scope: "local"
+                  Options:
+                    device: "tmpfs"
+                    o: "size=100m,uid=1000"
+                    type: "tmpfs"
               Warnings: []
         500:
           description: "Server error"
@@ -5451,7 +5842,7 @@ paths:
   /volumes/create:
     post:
       summary: "Create a volume"
-      operationId: "VolumesCreate"
+      operationId: "VolumeCreate"
       consumes: ["application/json"]
       produces: ["application/json"]
       responses:
@@ -5486,7 +5877,7 @@ paths:
                 additionalProperties:
                   type: "string"
               Labels:
-                description: "A mapping of arbitrary key/value data to set on the volume."
+                description: "User-defined key/value metadata."
                 type: "object"
                 additionalProperties:
                   type: "string"
@@ -5501,7 +5892,7 @@ paths:
   /volumes/{name}:
     get:
       summary: "Inspect a volume"
-      operationId: "VolumesInspect"
+      operationId: "VolumeInspect"
       produces: ["application/json"]
       responses:
         200:
@@ -5527,7 +5918,7 @@ paths:
     delete:
       summary: "Remove a volume"
       description: "Instruct the driver to remove the volume."
-      operationId: "VolumesDelete"
+      operationId: "VolumeDelete"
       responses:
         204:
           description: "The volume was removed"
@@ -5549,12 +5940,50 @@ paths:
           required: true
           description: "Volume name or ID"
           type: "string"
+        - name: "force"
+          in: "query"
+          description: "Force the removal of the volume"
+          type: "boolean"
+          default: false
       tags: ["Volume"]
+  /volumes/prune:
+    post:
+      summary: "Delete unused volumes"
+      produces:
+        - "application/json"
+      operationId: "VolumePrune"
+      parameters:
+        - name: "filters"
+          in: "query"
+          description: |
+            Filters to process on the prune list, encoded as JSON (a `map[string][]string`).
 
+            Available filters:
+          type: "string"
+      responses:
+        200:
+          description: "No error"
+          schema:
+            type: "object"
+            properties:
+              VolumesDeleted:
+                description: "Volumes that were deleted"
+                type: "array"
+                items:
+                  type: "string"
+              SpaceReclaimed:
+                description: "Disk space reclaimed in bytes"
+                type: "integer"
+                format: "int64"
+        500:
+          description: "Server error"
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+      tags: ["Volume"]
   /networks:
     get:
       summary: "List networks"
-      operationId: "NetworksList"
+      operationId: "NetworkList"
       produces:
         - "application/json"
       responses:
@@ -5568,6 +5997,7 @@ paths:
             application/json:
               - Name: "bridge"
                 Id: "f2de39df4171b0dc801e8002d1d999b77256983dfc63041c0f34030aa3977566"
+                Created: "2016-10-19T06:21:00.416543526Z"
                 Scope: "local"
                 Driver: "bridge"
                 EnableIPv6: false
@@ -5592,6 +6022,7 @@ paths:
                   com.docker.network.driver.mtu: "1500"
               - Name: "none"
                 Id: "e086a3893b05ab69242d3c44e49483a3bbbd3a26b46baa8f61ab797c1088d794"
+                Created: "0001-01-01T00:00:00Z"
                 Scope: "local"
                 Driver: "null"
                 EnableIPv6: false
@@ -5603,6 +6034,7 @@ paths:
                 Options: {}
               - Name: "host"
                 Id: "13e871235c677f196c4e1ecebb9dc733b9b2d2ab589e30c539efeda84a24215e"
+                Created: "0001-01-01T00:00:00Z"
                 Scope: "local"
                 Driver: "host"
                 EnableIPv6: false
@@ -5633,7 +6065,7 @@ paths:
   /networks/{id}:
     get:
       summary: "Inspect a network"
-      operationId: "NetworksInspect"
+      operationId: "NetworkInspect"
       produces:
         - "application/json"
       responses:
@@ -5655,7 +6087,7 @@ paths:
 
     delete:
       summary: "Remove a network"
-      operationId: "DeleteNetworks"
+      operationId: "NetworkDelete"
       responses:
         204:
           description: "No error"
@@ -5678,7 +6110,7 @@ paths:
   /networks/create:
     post:
       summary: "Create a network"
-      operationId: "NetworksCreate"
+      operationId: "NetworkCreate"
       consumes:
         - "application/json"
       produces:
@@ -5697,6 +6129,10 @@ paths:
             example:
               Id: "22be93d5babb089c5aab8dbc369042fad48ff791584ca2da2100db837a1c7c30"
               Warning: ""
+        403:
+          description: "operation not supported for pre-defined networks"
+          schema:
+            $ref: "#/definitions/ErrorResponse"
         404:
           description: "plugin not found"
           schema:
@@ -5739,7 +6175,7 @@ paths:
                 additionalProperties:
                   type: "string"
               Labels:
-                description: "Arbitrary key/value metadata to attach to the network."
+                description: "User-defined key/value metadata."
                 type: "object"
                 additionalProperties:
                   type: "string"
@@ -5749,6 +6185,7 @@ paths:
               Driver: "bridge"
               EnableIPv6: true
               IPAM:
+                Driver: "default"
                 Config:
                   - Subnet: "172.20.0.0/16"
                     IPRange: "172.20.10.0/24"
@@ -5773,7 +6210,7 @@ paths:
   /networks/{id}/connect:
     post:
       summary: "Connect a container to a network"
-      operationId: "NetworksConnect"
+      operationId: "NetworkConnect"
       consumes:
         - "application/octet-stream"
       responses:
@@ -5819,7 +6256,7 @@ paths:
   /networks/{id}/disconnect:
     post:
       summary: "Disconnect a container from a network"
-      operationId: "NetworksDisconnect"
+      operationId: "NetworkDisconnect"
       consumes:
         - "application/json"
       responses:
@@ -5856,11 +6293,42 @@ paths:
                 type: "boolean"
                 description: "Force the container to disconnect from the network."
       tags: ["Network"]
+  /networks/prune:
+    post:
+      summary: "Delete unused networks"
+      consumes:
+        - "application/json"
+      produces:
+        - "application/json"
+      operationId: "NetworkPrune"
+      parameters:
+        - name: "filters"
+          in: "query"
+          description: |
+            Filters to process on the prune list, encoded as JSON (a `map[string][]string`).
 
+            Available filters:
+          type: "string"
+      responses:
+        200:
+          description: "No error"
+          schema:
+            type: "object"
+            properties:
+              NetworksDeleted:
+                description: "Networks that were deleted"
+                type: "array"
+                items:
+                  type: "string"
+        500:
+          description: "Server error"
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+      tags: ["Network"]
   /plugins:
     get:
       summary: "List plugins"
-      operationId: "PluginsList"
+      operationId: "PluginList"
       description: "Returns information about installed plugins."
       produces: ["application/json"]
       responses:
@@ -5872,74 +6340,39 @@ paths:
               $ref: "#/definitions/Plugin"
             example:
               - Id: "5724e2c8652da337ab2eedd19fc6fc0ec908e4bd907c7421bf6a8dfc70c4c078"
-                Name: "tiborvass/no-remove"
+                Name: "tiborvass/sample-volume-plugin"
                 Tag: "latest"
                 Active: true
-                Config:
-                  Mounts:
-                    - Name: ""
-                      Description: ""
-                      Settable: null
-                      Source: "/data"
-                      Destination: "/data"
-                      Type: "bind"
-                      Options:
-                        - "shared"
-                        - "rbind"
-                    - Name: ""
-                      Description: ""
-                      Settable: null
-                      Source: null
-                      Destination: "/foobar"
-                      Type: "tmpfs"
-                      Options: null
+                Settings:
                   Env:
-                    - "DEBUG=1"
+                    - "DEBUG=0"
                   Args: null
                   Devices: null
-                Manifest:
-                  ManifestVersion: "v0"
-                  Description: "A test plugin for Docker"
+                Config:
+                  Description: "A sample volume plugin for Docker"
                   Documentation: "https://docs.docker.com/engine/extend/plugins/"
                   Interface:
                     Types:
                       - "docker.volumedriver/1.0"
                     Socket: "plugins.sock"
                   Entrypoint:
-                    - "plugin-no-remove"
+                    - "/usr/bin/sample-volume-plugin"
                     - "/data"
-                  Workdir: ""
+                  WorkDir: ""
                   User: {}
                   Network:
-                    Type: "host"
-                  Capabilities: null
-                  Mounts:
-                    - Name: ""
-                      Description: ""
-                      Settable: null
-                      Source: "/data"
-                      Destination: "/data"
-                      Type: "bind"
-                      Options:
-                        - "shared"
-                        - "rbind"
-                    - Name: ""
-                      Description: ""
-                      Settable: null
-                      Source: null
-                      Destination: "/foobar"
-                      Type: "tmpfs"
-                      Options: null
-                  Devices:
-                    - Name: "device"
-                      Description: "a host device to mount"
-                      Settable: null
-                      Path: "/dev/cpu_dma_latency"
+                    Type: ""
+                  Linux:
+                    Capabilities: null
+                    AllowAllDevices: false
+                    Devices: null
+                  Mounts: null
+                  PropagatedMount: "/data"
                   Env:
                     - Name: "DEBUG"
                       Description: "If set, prints debug messages"
                       Settable: null
-                      Value: "1"
+                      Value: "0"
                   Args:
                     Name: "args"
                     Description: "command line arguments"
@@ -5949,16 +6382,12 @@ paths:
           description: "Server error"
           schema:
             $ref: "#/definitions/ErrorResponse"
-      tags: ["Plugins"]
+      tags: ["Plugin"]
 
-  /plugins/pull:
-    post:
-      summary: "Install a plugin"
-      operationId: "PostPluginsPull"
-      description: |
-        Pulls and installs a plugin. After the plugin is installed, it can be enabled using the [`POST /plugins/{name}/enable` endpoint](#operation/PostPluginEnable).
-      produces:
-        - "application/json"
+  /plugins/privileges:
+    get:
+      summary: "Get plugin privileges"
+      operationId: "GetPluginPrivileges"
       responses:
         200:
           description: "no error"
@@ -5996,22 +6425,82 @@ paths:
       parameters:
         - name: "name"
           in: "query"
+          description: "The name of the plugin. The `:latest` tag is optional, and is the default if omitted."
+          required: true
+          type: "string"
+      tags:
+        - "Plugin"
+
+  /plugins/pull:
+    post:
+      summary: "Install a plugin"
+      operationId: "PluginPull"
+      description: |
+        Pulls and installs a plugin. After the plugin is installed, it can be enabled using the [`POST /plugins/{name}/enable` endpoint](#operation/PostPluginsEnable).
+      produces:
+        - "application/json"
+      responses:
+        204:
+          description: "no error"
+        500:
+          description: "server error"
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+      parameters:
+        - name: "remote"
+          in: "query"
           description: |
-            The plugin to install.
+            Remote reference for plugin to install.
 
             The `:latest` tag is optional, and is used as the default if omitted.
           required: true
+          type: "string"
+        - name: "name"
+          in: "query"
+          description: |
+            Local name for the pulled plugin.
+
+            The `:latest` tag is optional, and is used as the default if omitted.
+          required: false
           type: "string"
         - name: "X-Registry-Auth"
           in: "header"
           description: "A base64-encoded auth configuration to use when pulling a plugin from a registry. [See the authentication section for details.](#section/Authentication)"
           type: "string"
-      tags:
-        - "Plugins"
-  /plugins/{name}:
+        - name: "body"
+          in: "body"
+          schema:
+            type: "array"
+            items:
+              description: "Describes a permission accepted by the user upon installing the plugin."
+              type: "object"
+              properties:
+                Name:
+                  type: "string"
+                Description:
+                  type: "string"
+                Value:
+                  type: "array"
+                  items:
+                    type: "string"
+            example:
+              - Name: "network"
+                Description: ""
+                Value:
+                  - "host"
+              - Name: "mount"
+                Description: ""
+                Value:
+                  - "/data"
+              - Name: "device"
+                Description: ""
+                Value:
+                  - "/dev/cpu_dma_latency"
+      tags: ["Plugin"]
+  /plugins/{name}/json:
     get:
       summary: "Inspect a plugin"
-      operationId: "GetPluginsInspect"
+      operationId: "PluginInspect"
       responses:
         200:
           description: "no error"
@@ -6031,11 +6520,11 @@ paths:
           description: "The name of the plugin. The `:latest` tag is optional, and is the default if omitted."
           required: true
           type: "string"
-      tags:
-        - "Plugins"
+      tags: ["Plugin"]
+  /plugins/{name}:
     delete:
       summary: "Remove a plugin"
-      operationId: "DeletePlugins"
+      operationId: "PluginDelete"
       responses:
         200:
           description: "no error"
@@ -6060,12 +6549,11 @@ paths:
           description: "Disable the plugin before removing. This may result in issues if the plugin is in use by a container."
           type: "boolean"
           default: false
-      tags:
-        - "Plugins"
+      tags: ["Plugin"]
   /plugins/{name}/enable:
     post:
       summary: "Enable a plugin"
-      operationId: "PostPluginsEnable"
+      operationId: "PluginEnable"
       responses:
         200:
           description: "no error"
@@ -6079,12 +6567,16 @@ paths:
           description: "The name of the plugin. The `:latest` tag is optional, and is the default if omitted."
           required: true
           type: "string"
-      tags:
-        - "Plugins"
+        - name: "timeout"
+          in: "query"
+          description: "Set the HTTP client timeout (in seconds)"
+          type: "integer"
+          default: 0
+      tags: ["Plugin"]
   /plugins/{name}/disable:
     post:
       summary: "Disable a plugin"
-      operationId: "PostPluginsDisable"
+      operationId: "PluginDisable"
       responses:
         200:
           description: "no error"
@@ -6098,12 +6590,155 @@ paths:
           description: "The name of the plugin. The `:latest` tag is optional, and is the default if omitted."
           required: true
           type: "string"
-      tags:
-        - "Plugins"
+      tags: ["Plugin"]
+  /plugins/{name}/upgrade:
+    post:
+      summary: "Upgrade a plugin"
+      operationId: "PluginUpgrade"
+      responses:
+        204:
+          description: "no error"
+        404:
+          description: "plugin not installed"
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        500:
+          description: "server error"
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+      parameters:
+        - name: "name"
+          in: "path"
+          description: "The name of the plugin. The `:latest` tag is optional, and is the default if omitted."
+          required: true
+          type: "string"
+        - name: "remote"
+          in: "query"
+          description: |
+            Remote reference to upgrade to.
+
+            The `:latest` tag is optional, and is used as the default if omitted.
+          required: true
+          type: "string"
+        - name: "X-Registry-Auth"
+          in: "header"
+          description: "A base64-encoded auth configuration to use when pulling a plugin from a registry. [See the authentication section for details.](#section/Authentication)"
+          type: "string"
+        - name: "body"
+          in: "body"
+          schema:
+            type: "array"
+            items:
+              description: "Describes a permission accepted by the user upon installing the plugin."
+              type: "object"
+              properties:
+                Name:
+                  type: "string"
+                Description:
+                  type: "string"
+                Value:
+                  type: "array"
+                  items:
+                    type: "string"
+            example:
+              - Name: "network"
+                Description: ""
+                Value:
+                  - "host"
+              - Name: "mount"
+                Description: ""
+                Value:
+                  - "/data"
+              - Name: "device"
+                Description: ""
+                Value:
+                  - "/dev/cpu_dma_latency"
+      tags: ["Plugin"]
+  /plugins/create:
+    post:
+      summary: "Create a plugin"
+      operationId: "PluginCreate"
+      consumes:
+        - "application/x-tar"
+      responses:
+        204:
+          description: "no error"
+        500:
+          description: "server error"
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+      parameters:
+        - name: "name"
+          in: "query"
+          description: "The name of the plugin. The `:latest` tag is optional, and is the default if omitted."
+          required: true
+          type: "string"
+        - name: "tarContext"
+          in: "body"
+          description: "Path to tar containing plugin rootfs and manifest"
+          schema:
+            type: "string"
+            format: "binary"
+      tags: ["Plugin"]
+  /plugins/{name}/push:
+    post:
+      summary: "Push a plugin"
+      operationId: "PluginPush"
+      description: |
+        Push a plugin to the registry.
+      parameters:
+        - name: "name"
+          in: "path"
+          description: "The name of the plugin. The `:latest` tag is optional, and is the default if omitted."
+          required: true
+          type: "string"
+      responses:
+        200:
+          description: "no error"
+        404:
+          description: "plugin not installed"
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        500:
+          description: "server error"
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+      tags: ["Plugin"]
+  /plugins/{name}/set:
+    post:
+      summary: "Configure a plugin"
+      operationId: "PluginSet"
+      consumes:
+        - "application/json"
+      parameters:
+        - name: "name"
+          in: "path"
+          description: "The name of the plugin. The `:latest` tag is optional, and is the default if omitted."
+          required: true
+          type: "string"
+        - name: "body"
+          in: "body"
+          schema:
+            type: "array"
+            items:
+              type: "string"
+            example: ["DEBUG=1"]
+      responses:
+        204:
+          description: "No error"
+        404:
+          description: "Plugin not installed"
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        500:
+          description: "Server error"
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+      tags: ["Plugin"]
   /nodes:
     get:
       summary: "List nodes"
-      operationId: "GetNodesList"
+      operationId: "NodeList"
       responses:
         200:
           description: "no error"
@@ -6123,16 +6758,16 @@ paths:
 
             Available filters:
             - `id=<node id>`
+            - `label=<engine label>`
+            - `membership=`(`accepted`|`pending`)`
             - `name=<node name>`
-            - `membership=`(`pending`|`accepted`|`rejected`)`
-            - `role=`(`worker`|`manager`)`
+            - `role=`(`manager`|`worker`)`
           type: "string"
-      tags:
-        - "Nodes"
+      tags: ["Node"]
   /nodes/{id}:
     get:
       summary: "Inspect a node"
-      operationId: "GetNodesInspect"
+      operationId: "NodeInspect"
       responses:
         200:
           description: "no error"
@@ -6149,14 +6784,13 @@ paths:
       parameters:
         - name: "id"
           in: "path"
-          description: "The ID of the node"
+          description: "The ID or name of the node"
           type: "string"
           required: true
-      tags:
-        - "Nodes"
+      tags: ["Node"]
     delete:
       summary: "Delete a node"
-      operationId: "DeleteNodes"
+      operationId: "NodeDelete"
       responses:
         200:
           description: "no error"
@@ -6171,7 +6805,7 @@ paths:
       parameters:
         - name: "id"
           in: "path"
-          description: "The ID of the node"
+          description: "The ID or name of the node"
           type: "string"
           required: true
         - name: "force"
@@ -6179,12 +6813,11 @@ paths:
           description: "Force remove a node from the swarm"
           default: false
           type: "boolean"
-      tags:
-        - "Nodes"
+      tags: ["Node"]
   /nodes/{id}/update:
     post:
       summary: "Update a node"
-      operationId: "PostNodesUpdate"
+      operationId: "NodeUpdate"
       responses:
         200:
           description: "no error"
@@ -6212,12 +6845,11 @@ paths:
           type: "integer"
           format: "int64"
           required: true
-      tags:
-        - "Nodes"
+      tags: ["Node"]
   /swarm:
     get:
       summary: "Inspect swarm"
-      operationId: "GetSwarmInspect"
+      operationId: "SwarmInspect"
       responses:
         200:
           description: "no error"
@@ -6251,6 +6883,8 @@ paths:
                   SnapshotInterval: 10000
                   ElectionTick: 3
                 TaskDefaults: {}
+                EncryptionConfig:
+                  AutoLockManagers: false
                 Name: "default"
               JoinTokens:
                 Worker: "SWMTKN-1-1h8aps2yszaiqmz2l3oc5392pgk8e49qhx2aj3nyv0ui0hez2a-6qmn92w6bu3jdvnglku58u11a"
@@ -6263,12 +6897,11 @@ paths:
           description: "server error"
           schema:
             $ref: "#/definitions/ErrorResponse"
-      tags:
-        - "Swarm"
+      tags: ["Swarm"]
   /swarm/init:
     post:
       summary: "Initialize a new swarm"
-      operationId: "PostSwarmInit"
+      operationId: "SwarmInit"
       produces:
         - "application/json"
         - "text/plain"
@@ -6318,12 +6951,13 @@ paths:
                 Raft: {}
                 Dispatcher: {}
                 CAConfig: {}
-      tags:
-        - "Swarm"
+                EncryptionConfig:
+                  AutoLockManagers: false
+      tags: ["Swarm"]
   /swarm/join:
     post:
       summary: "Join an existing swarm"
-      operationId: "PostSwarmJoin"
+      operationId: "SwarmJoin"
       responses:
         200:
           description: "no error"
@@ -6331,12 +6965,12 @@ paths:
           description: "bad parameter"
           schema:
             $ref: "#/definitions/ErrorResponse"
-        406:
-          description: "node is already part of a swarm"
-          schema:
-            $ref: "#/definitions/ErrorResponse"
         500:
           description: "server error"
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        503:
+          description: "node is already part of a swarm"
           schema:
             $ref: "#/definitions/ErrorResponse"
       parameters:
@@ -6364,21 +6998,20 @@ paths:
               RemoteAddrs:
                 - "node1:2377"
               JoinToken: "SWMTKN-1-3pu6hszjas19xyp7ghgosyx9k8atbfcr8p2is99znpy26u2lkl-7p73s1dx5in4tatdymyhg9hu2"
-      tags:
-        - "Swarm"
+      tags: ["Swarm"]
   /swarm/leave:
     post:
       summary: "Leave a swarm"
-      operationId: "PostSwarmLeave"
+      operationId: "SwarmLeave"
       responses:
         200:
           description: "no error"
-        406:
-          description: "node is not part of a swarm"
-          schema:
-            $ref: "#/definitions/ErrorResponse"
         500:
           description: "server error"
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        503:
+          description: "node is not part of a swarm"
           schema:
             $ref: "#/definitions/ErrorResponse"
       parameters:
@@ -6387,12 +7020,11 @@ paths:
           in: "query"
           type: "boolean"
           default: false
-      tags:
-        - "Swarm"
+      tags: ["Swarm"]
   /swarm/update:
     post:
       summary: "Update a swarm"
-      operationId: "PostSwarmUpdate"
+      operationId: "SwarmUpdate"
       responses:
         200:
           description: "no error"
@@ -6400,12 +7032,12 @@ paths:
           description: "bad parameter"
           schema:
             $ref: "#/definitions/ErrorResponse"
-        406:
-          description: "node is not part of a swarm"
-          schema:
-            $ref: "#/definitions/ErrorResponse"
         500:
           description: "server error"
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        503:
+          description: "node is not part of a swarm"
           schema:
             $ref: "#/definitions/ErrorResponse"
       parameters:
@@ -6430,12 +7062,66 @@ paths:
           description: "Rotate the manager join token."
           type: "boolean"
           default: false
-      tags:
-        - "Swarm"
+        - name: "rotateManagerUnlockKey"
+          in: "query"
+          description: "Rotate the manager unlock key."
+          type: "boolean"
+          default: false
+      tags: ["Swarm"]
+  /swarm/unlockkey:
+    get:
+      summary: "Get the unlock key"
+      operationId: "SwarmUnlockkey"
+      consumes:
+        - "application/json"
+      responses:
+        200:
+          description: "no error"
+          schema:
+            type: "object"
+            properties:
+              UnlockKey:
+                description: "The swarm's unlock key."
+                type: "string"
+            example:
+              UnlockKey: "SWMKEY-1-7c37Cc8654o6p38HnroywCi19pllOnGtbdZEgtKxZu8"
+        500:
+          description: "server error"
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+      tags: ["Swarm"]
+  /swarm/unlock:
+    post:
+      summary: "Unlock a locked manager"
+      operationId: "SwarmUnlock"
+      consumes:
+        - "application/json"
+      produces:
+        - "application/json"
+      parameters:
+        - name: "body"
+          in: "body"
+          required: true
+          schema:
+            type: "object"
+            properties:
+              UnlockKey:
+                description: "The swarm's unlock key."
+                type: "string"
+            example:
+              UnlockKey: "SWMKEY-1-7c37Cc8654o6p38HnroywCi19pllOnGtbdZEgtKxZu8"
+      responses:
+        200:
+          description: "no error"
+        500:
+          description: "server error"
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+      tags: ["Swarm"]
   /services:
     get:
       summary: "List services"
-      operationId: "GetServicesList"
+      operationId: "ServiceList"
       responses:
         200:
           description: "no error"
@@ -6454,14 +7140,14 @@ paths:
           description: |
             A JSON encoded value of the filters (a `map[string][]string`) to process on the services list. Available filters:
 
-            - `id=<node id>`
-            - `name=<node name>`
-      tags:
-        - "Services"
+            - `id=<service id>`
+            - `name=<service name>`
+            - `label=<service label>`
+      tags: ["Service"]
   /services/create:
     post:
       summary: "Create a service"
-      operationId: "PostServicesCreate"
+      operationId: "ServiceCreate"
       consumes:
         - "application/json"
       produces:
@@ -6475,10 +7161,14 @@ paths:
               ID:
                 description: "The ID of the created service."
                 type: "string"
+              Warning:
+                description: "Optional warning message"
+                type: "string"
             example:
               ID: "ak7w3gjqoa3kuz8xcpnyy0pvl"
-        406:
-          description: "server error or node is not part of a swarm"
+              Warning: "unable to pin image doesnotexist:latest to digest: image library/doesnotexist:latest not found"
+        403:
+          description: "network is not eligible for services"
           schema:
             $ref: "#/definitions/ErrorResponse"
         409:
@@ -6489,6 +7179,10 @@ paths:
           description: "server error"
           schema:
             $ref: "#/definitions/ErrorResponse"
+        503:
+          description: "server error or node is not part of a swarm"
+          schema:
+            $ref: "#/definitions/ErrorResponse"
       parameters:
         - name: "body"
           in: "body"
@@ -6496,7 +7190,8 @@ paths:
           schema:
             allOf:
               - $ref: "#/definitions/ServiceSpec"
-              - example:
+              - type: "object"
+                example:
                   Name: "web"
                   TaskTemplate:
                     ContainerSpec:
@@ -6512,6 +7207,10 @@ paths:
                             Labels:
                               com.example.something: "something-value"
                       User: "33"
+                      DNSConfig:
+                        Nameservers: ["8.8.8.8"]
+                        Search: ["example.org"]
+                        Options: ["timeout:3"]
                     LogDriver:
                       Name: "json-file"
                       Options:
@@ -6545,12 +7244,11 @@ paths:
           in: "header"
           description: "A base64-encoded auth configuration for pulling from private registries. [See the authentication section for details.](#section/Authentication)"
           type: "string"
-      tags:
-        - "Services"
+      tags: ["Service"]
   /services/{id}:
     get:
       summary: "Inspect a service"
-      operationId: "GetServicesInspect"
+      operationId: "ServiceInspect"
       responses:
         200:
           description: "no error"
@@ -6570,11 +7268,10 @@ paths:
           description: "ID or name of service."
           required: true
           type: "string"
-      tags:
-        - "Services"
+      tags: ["Service"]
     delete:
       summary: "Delete a service"
-      operationId: "DeleteServices"
+      operationId: "ServiceDelete"
       responses:
         200:
           description: "no error"
@@ -6592,15 +7289,18 @@ paths:
           description: "ID or name of service."
           required: true
           type: "string"
-      tags:
-        - "Services"
+      tags: ["Service"]
   /services/{id}/update:
     post:
       summary: "Update a service"
-      operationId: "PostServicesUpdate"
+      operationId: "ServiceUpdate"
+      consumes: ["application/json"]
+      produces: ["application/json"]
       responses:
         200:
           description: "no error"
+          schema:
+            $ref: "#/definitions/ImageDeleteResponse"
         404:
           description: "no such service"
           schema:
@@ -6621,7 +7321,8 @@ paths:
           schema:
             allOf:
               - $ref: "#/definitions/ServiceSpec"
-              - example:
+              - type: "object"
+                example:
                   Name: "top"
                   TaskTemplate:
                     ContainerSpec:
@@ -6635,11 +7336,14 @@ paths:
                       Condition: "any"
                       MaxAttempts: 0
                     Placement: {}
+                    ForceUpdate: 0
                   Mode:
                     Replicated:
                       Replicas: 1
                   UpdateConfig:
                     Parallelism: 1
+                    Monitor: 15000000000
+                    MaxFailureRatio: 0.15
                   EndpointSpec:
                     Mode: "vip"
 
@@ -6648,17 +7352,100 @@ paths:
           description: "The version number of the service object being updated. This is required to avoid conflicting writes."
           required: true
           type: "integer"
+        - name: "registryAuthFrom"
+          in: "query"
+          type: "string"
+          description: "If the X-Registry-Auth header is not specified, this
+  parameter indicates where to find registry authorization credentials. The
+  valid values are `spec` and `previous-spec`."
+          default: "spec"
         - name: "X-Registry-Auth"
           in: "header"
           description: "A base64-encoded auth configuration for pulling from private registries. [See the authentication section for details.](#section/Authentication)"
           type: "string"
 
-      tags:
-        - "Services"
+      tags: ["Service"]
+  /services/{id}/logs:
+    get:
+      summary: "Get service logs"
+      description: |
+        Get `stdout` and `stderr` logs from a service.
+
+        **Note**: This endpoint works only for services with the `json-file` or `journald` logging drivers.
+      operationId: "ServiceLogs"
+      produces:
+        - "application/vnd.docker.raw-stream"
+        - "application/json"
+      responses:
+        101:
+          description: "logs returned as a stream"
+          schema:
+            type: "string"
+            format: "binary"
+        200:
+          description: "logs returned as a string in response body"
+          schema:
+            type: "string"
+        404:
+          description: "no such container"
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+          examples:
+            application/json:
+              message: "No such container: c2ada9df5af8"
+        500:
+          description: "server error"
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          description: "ID or name of the container"
+          type: "string"
+        - name: "details"
+          in: "query"
+          description: "Show extra details provided to logs."
+          type: "boolean"
+          default: false
+        - name: "follow"
+          in: "query"
+          description: |
+            Return the logs as a stream.
+
+            This will return a `101` HTTP response with a `Connection: upgrade` header, then hijack the HTTP connection to send raw output. For more information about hijacking and the stream format, [see the documentation for the attach endpoint](#operation/ContainerAttach).
+          type: "boolean"
+          default: false
+        - name: "stdout"
+          in: "query"
+          description: "Return logs from `stdout`"
+          type: "boolean"
+          default: false
+        - name: "stderr"
+          in: "query"
+          description: "Return logs from `stderr`"
+          type: "boolean"
+          default: false
+        - name: "since"
+          in: "query"
+          description: "Only return logs since this time, as a UNIX timestamp"
+          type: "integer"
+          default: 0
+        - name: "timestamps"
+          in: "query"
+          description: "Add timestamps to every log line"
+          type: "boolean"
+          default: false
+        - name: "tail"
+          in: "query"
+          description: "Only return this number of log lines from the end of the logs. Specify as an integer or `all` to output all log lines."
+          type: "string"
+          default: "all"
+      tags: ["Service"]
   /tasks:
     get:
       summary: "List tasks"
-      operationId: "GetTasksList"
+      operationId: "TaskList"
       produces:
         - "application/json"
       responses:
@@ -6794,15 +7581,14 @@ paths:
             - `id=<task id>`
             - `name=<task name>`
             - `service=<service name>`
-            - `node=<node id>`
+            - `node=<node id or name>`
             - `label=key` or `label="key=value"`
             - `desired-state=(running | shutdown | accepted)`
-      tags:
-        - "Tasks"
+      tags: ["Task"]
   /tasks/{id}:
     get:
       summary: "Inspect a task"
-      operationId: "GetTasksInspect"
+      operationId: "TaskInspect"
       produces:
         - "application/json"
       responses:
@@ -6824,5 +7610,176 @@ paths:
           description: "ID of the task"
           required: true
           type: "string"
-      tags:
-        - "Tasks"
+      tags: ["Task"]
+  /secrets:
+    get:
+      summary: "List secrets"
+      operationId: "SecretList"
+      produces:
+        - "application/json"
+      responses:
+        200:
+          description: "no error"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/Secret"
+            example:
+              - ID: "ktnbjxoalbkvbvedmg1urrz8h"
+                Version:
+                  Index: 11
+                CreatedAt: "2016-11-05T01:20:17.327670065Z"
+                UpdatedAt: "2016-11-05T01:20:17.327670065Z"
+                Spec:
+                  Name: "app-dev.crt"
+        500:
+          description: "server error"
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+      parameters:
+        - name: "filters"
+          in: "query"
+          type: "string"
+          description: |
+            A JSON encoded value of the filters (a `map[string][]string`) to process on the secrets list. Available filters:
+
+            - `names=<secret name>`
+      tags: ["Secret"]
+  /secrets/create:
+    post:
+      summary: "Create a secret"
+      operationId: "SecretCreate"
+      consumes:
+        - "application/json"
+      produces:
+        - "application/json"
+      responses:
+        201:
+          description: "no error"
+          schema:
+            type: "object"
+            properties:
+              ID:
+                description: "The ID of the created secret."
+                type: "string"
+            example:
+              ID: "ktnbjxoalbkvbvedmg1urrz8h"
+        406:
+          description: "server error or node is not part of a swarm"
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        409:
+          description: "name conflicts with an existing object"
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        500:
+          description: "server error"
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+      parameters:
+        - name: "body"
+          in: "body"
+          schema:
+            allOf:
+              - $ref: "#/definitions/SecretSpec"
+              - type: "object"
+                example:
+                  Name: "app-key.crt"
+                  Labels:
+                    foo: "bar"
+                  Data: "VEhJUyBJUyBOT1QgQSBSRUFMIENFUlRJRklDQVRFCg=="
+      tags: ["Secret"]
+  /secrets/{id}:
+    get:
+      summary: "Inspect a secret"
+      operationId: "SecretInspect"
+      produces:
+        - "application/json"
+      responses:
+        200:
+          description: "no error"
+          schema:
+            $ref: "#/definitions/Secret"
+            example:
+              ID: "ktnbjxoalbkvbvedmg1urrz8h"
+              Version:
+                Index: 11
+              CreatedAt: "2016-11-05T01:20:17.327670065Z"
+              UpdatedAt: "2016-11-05T01:20:17.327670065Z"
+              Spec:
+                Name: "app-dev.crt"
+        404:
+          description: "secret not found"
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        406:
+          description: "node is not part of a swarm"
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        500:
+          description: "server error"
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          type: "string"
+          description: "ID of the secret"
+      tags: ["Secret"]
+    delete:
+      summary: "Delete a secret"
+      operationId: "SecretDelete"
+      produces:
+        - "application/json"
+      responses:
+        204:
+          description: "no error"
+        404:
+          description: "secret not found"
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        500:
+          description: "server error"
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          type: "string"
+          description: "ID of the secret"
+      tags: ["Secret"]
+  /secrets/{id}/update:
+    post:
+      summary: "Update a Secret"
+      operationId: "SecretUpdate"
+      responses:
+        200:
+          description: "no error"
+        404:
+          description: "no such secret"
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        500:
+          description: "server error"
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+      parameters:
+        - name: "id"
+          in: "path"
+          description: "The ID of the secret"
+          type: "string"
+          required: true
+        - name: "body"
+          in: "body"
+          schema:
+            $ref: "#/definitions/SecretSpec"
+          description: "The spec of the secret to update. Currently, only the Labels field can be updated. All other fields must remain unchanged from the [SecretInspect endpoint](#operation/SecretInspect) response values."
+        - name: "version"
+          in: "query"
+          description: "The version number of the secret object being updated. This is required to avoid conflicting writes."
+          type: "integer"
+          format: "int64"
+          required: true
+      tags: ["Secret"]

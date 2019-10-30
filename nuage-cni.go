@@ -10,9 +10,16 @@ package main
 import (
 	"flag"
 	"fmt"
-	log "github.com/Sirupsen/logrus"
+	"io/ioutil"
+	"os"
+	"runtime"
+	"strconv"
+	"strings"
+	"time"
+
 	"github.com/containernetworking/cni/pkg/skel"
 	"github.com/containernetworking/cni/pkg/types"
+	"github.com/containernetworking/cni/pkg/types/current"
 	"github.com/containernetworking/cni/pkg/version"
 	vrsSdk "github.com/nuagenetworks/libvrsdk/api"
 	"github.com/nuagenetworks/libvrsdk/api/entity"
@@ -21,14 +28,9 @@ import (
 	"github.com/nuagenetworks/nuage-cni/config"
 	"github.com/nuagenetworks/nuage-cni/daemon"
 	"github.com/nuagenetworks/nuage-cni/k8s"
+	log "github.com/sirupsen/logrus"
 	"gopkg.in/natefinch/lumberjack.v2"
 	"gopkg.in/yaml.v2"
-	"io/ioutil"
-	"os"
-	"runtime"
-	"strconv"
-	"strings"
-	"time"
 )
 
 var hostname string
@@ -170,7 +172,7 @@ func networkConnect(args *skel.CmdArgs) error {
 	log.Infof("Nuage CNI plugin invoked to add an entity to Nuage defined VSD network")
 	var err error
 	var vrsConnection vrsSdk.VRSConnection
-	var result *types.Result
+	var result *current.Result
 	entityInfo := make(map[string]string)
 
 	for {

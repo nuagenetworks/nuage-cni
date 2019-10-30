@@ -38,25 +38,35 @@ var DiskStatIdentity = bambou.Identity{
 // DiskStatsList represents a list of DiskStats
 type DiskStatsList []*DiskStat
 
-// DiskStatsAncestor is the interface of an ancestor of a DiskStat must implement.
+// DiskStatsAncestor is the interface that an ancestor of a DiskStat must implement.
+// An Ancestor is defined as an entity that has DiskStat as a descendant.
+// An Ancestor can get a list of its child DiskStats, but not necessarily create one.
 type DiskStatsAncestor interface {
 	DiskStats(*bambou.FetchingInfo) (DiskStatsList, *bambou.Error)
-	CreateDiskStats(*DiskStat) *bambou.Error
+}
+
+// DiskStatsParent is the interface that a parent of a DiskStat must implement.
+// A Parent is defined as an entity that has DiskStat as a child.
+// A Parent is an Ancestor which can create a DiskStat.
+type DiskStatsParent interface {
+	DiskStatsAncestor
+	CreateDiskStat(*DiskStat) *bambou.Error
 }
 
 // DiskStat represents the model of a diskstat
 type DiskStat struct {
-	ID          string  `json:"ID,omitempty"`
-	ParentID    string  `json:"parentID,omitempty"`
-	ParentType  string  `json:"parentType,omitempty"`
-	Owner       string  `json:"owner,omitempty"`
-	Name        string  `json:"name,omitempty"`
-	Size        float64 `json:"size,omitempty"`
-	Unit        string  `json:"unit,omitempty"`
-	EntityScope string  `json:"entityScope,omitempty"`
-	Used        float64 `json:"used,omitempty"`
-	Available   float64 `json:"available,omitempty"`
-	ExternalID  string  `json:"externalID,omitempty"`
+	ID               string        `json:"ID,omitempty"`
+	ParentID         string        `json:"parentID,omitempty"`
+	ParentType       string        `json:"parentType,omitempty"`
+	Owner            string        `json:"owner,omitempty"`
+	Name             string        `json:"name,omitempty"`
+	Size             float64       `json:"size,omitempty"`
+	EmbeddedMetadata []interface{} `json:"embeddedMetadata,omitempty"`
+	Unit             string        `json:"unit,omitempty"`
+	EntityScope      string        `json:"entityScope,omitempty"`
+	Used             float64       `json:"used,omitempty"`
+	Available        float64       `json:"available,omitempty"`
+	ExternalID       string        `json:"externalID,omitempty"`
 }
 
 // NewDiskStat returns a new *DiskStat
@@ -99,4 +109,32 @@ func (o *DiskStat) Save() *bambou.Error {
 func (o *DiskStat) Delete() *bambou.Error {
 
 	return bambou.CurrentSession().DeleteEntity(o)
+}
+
+// Metadatas retrieves the list of child Metadatas of the DiskStat
+func (o *DiskStat) Metadatas(info *bambou.FetchingInfo) (MetadatasList, *bambou.Error) {
+
+	var list MetadatasList
+	err := bambou.CurrentSession().FetchChildren(o, MetadataIdentity, &list, info)
+	return list, err
+}
+
+// CreateMetadata creates a new child Metadata under the DiskStat
+func (o *DiskStat) CreateMetadata(child *Metadata) *bambou.Error {
+
+	return bambou.CurrentSession().CreateChild(o, child)
+}
+
+// GlobalMetadatas retrieves the list of child GlobalMetadatas of the DiskStat
+func (o *DiskStat) GlobalMetadatas(info *bambou.FetchingInfo) (GlobalMetadatasList, *bambou.Error) {
+
+	var list GlobalMetadatasList
+	err := bambou.CurrentSession().FetchChildren(o, GlobalMetadataIdentity, &list, info)
+	return list, err
+}
+
+// CreateGlobalMetadata creates a new child GlobalMetadata under the DiskStat
+func (o *DiskStat) CreateGlobalMetadata(child *GlobalMetadata) *bambou.Error {
+
+	return bambou.CurrentSession().CreateChild(o, child)
 }

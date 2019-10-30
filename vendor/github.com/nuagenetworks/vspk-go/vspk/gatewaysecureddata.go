@@ -38,25 +38,36 @@ var GatewaySecuredDataIdentity = bambou.Identity{
 // GatewaySecuredDatasList represents a list of GatewaySecuredDatas
 type GatewaySecuredDatasList []*GatewaySecuredData
 
-// GatewaySecuredDatasAncestor is the interface of an ancestor of a GatewaySecuredData must implement.
+// GatewaySecuredDatasAncestor is the interface that an ancestor of a GatewaySecuredData must implement.
+// An Ancestor is defined as an entity that has GatewaySecuredData as a descendant.
+// An Ancestor can get a list of its child GatewaySecuredDatas, but not necessarily create one.
 type GatewaySecuredDatasAncestor interface {
 	GatewaySecuredDatas(*bambou.FetchingInfo) (GatewaySecuredDatasList, *bambou.Error)
-	CreateGatewaySecuredDatas(*GatewaySecuredData) *bambou.Error
+}
+
+// GatewaySecuredDatasParent is the interface that a parent of a GatewaySecuredData must implement.
+// A Parent is defined as an entity that has GatewaySecuredData as a child.
+// A Parent is an Ancestor which can create a GatewaySecuredData.
+type GatewaySecuredDatasParent interface {
+	GatewaySecuredDatasAncestor
+	CreateGatewaySecuredData(*GatewaySecuredData) *bambou.Error
 }
 
 // GatewaySecuredData represents the model of a gatewaysecureddata
 type GatewaySecuredData struct {
-	ID                        string `json:"ID,omitempty"`
-	ParentID                  string `json:"parentID,omitempty"`
-	ParentType                string `json:"parentType,omitempty"`
-	Owner                     string `json:"owner,omitempty"`
-	LastUpdatedBy             string `json:"lastUpdatedBy,omitempty"`
-	Data                      string `json:"data,omitempty"`
-	GatewayCertSerialNumber   string `json:"gatewayCertSerialNumber,omitempty"`
-	KeyserverCertSerialNumber string `json:"keyserverCertSerialNumber,omitempty"`
-	SignedData                string `json:"signedData,omitempty"`
-	EntityScope               string `json:"entityScope,omitempty"`
-	ExternalID                string `json:"externalID,omitempty"`
+	ID                        string        `json:"ID,omitempty"`
+	ParentID                  string        `json:"parentID,omitempty"`
+	ParentType                string        `json:"parentType,omitempty"`
+	Owner                     string        `json:"owner,omitempty"`
+	LastUpdatedBy             string        `json:"lastUpdatedBy,omitempty"`
+	Data                      string        `json:"data,omitempty"`
+	GatewayCertSerialNumber   string        `json:"gatewayCertSerialNumber,omitempty"`
+	KeyserverCertSerialNumber string        `json:"keyserverCertSerialNumber,omitempty"`
+	SignedData                string        `json:"signedData,omitempty"`
+	EmbeddedMetadata          []interface{} `json:"embeddedMetadata,omitempty"`
+	EntityScope               string        `json:"entityScope,omitempty"`
+	AssociatedEnterpriseID    string        `json:"associatedEnterpriseID,omitempty"`
+	ExternalID                string        `json:"externalID,omitempty"`
 }
 
 // NewGatewaySecuredData returns a new *GatewaySecuredData

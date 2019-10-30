@@ -38,22 +38,32 @@ var MultiNICVPortIdentity = bambou.Identity{
 // MultiNICVPortsList represents a list of MultiNICVPorts
 type MultiNICVPortsList []*MultiNICVPort
 
-// MultiNICVPortsAncestor is the interface of an ancestor of a MultiNICVPort must implement.
+// MultiNICVPortsAncestor is the interface that an ancestor of a MultiNICVPort must implement.
+// An Ancestor is defined as an entity that has MultiNICVPort as a descendant.
+// An Ancestor can get a list of its child MultiNICVPorts, but not necessarily create one.
 type MultiNICVPortsAncestor interface {
 	MultiNICVPorts(*bambou.FetchingInfo) (MultiNICVPortsList, *bambou.Error)
-	CreateMultiNICVPorts(*MultiNICVPort) *bambou.Error
+}
+
+// MultiNICVPortsParent is the interface that a parent of a MultiNICVPort must implement.
+// A Parent is defined as an entity that has MultiNICVPort as a child.
+// A Parent is an Ancestor which can create a MultiNICVPort.
+type MultiNICVPortsParent interface {
+	MultiNICVPortsAncestor
+	CreateMultiNICVPort(*MultiNICVPort) *bambou.Error
 }
 
 // MultiNICVPort represents the model of a multinicvport
 type MultiNICVPort struct {
-	ID            string `json:"ID,omitempty"`
-	ParentID      string `json:"parentID,omitempty"`
-	ParentType    string `json:"parentType,omitempty"`
-	Owner         string `json:"owner,omitempty"`
-	Name          string `json:"name,omitempty"`
-	LastUpdatedBy string `json:"lastUpdatedBy,omitempty"`
-	EntityScope   string `json:"entityScope,omitempty"`
-	ExternalID    string `json:"externalID,omitempty"`
+	ID               string        `json:"ID,omitempty"`
+	ParentID         string        `json:"parentID,omitempty"`
+	ParentType       string        `json:"parentType,omitempty"`
+	Owner            string        `json:"owner,omitempty"`
+	Name             string        `json:"name,omitempty"`
+	LastUpdatedBy    string        `json:"lastUpdatedBy,omitempty"`
+	EmbeddedMetadata []interface{} `json:"embeddedMetadata,omitempty"`
+	EntityScope      string        `json:"entityScope,omitempty"`
+	ExternalID       string        `json:"externalID,omitempty"`
 }
 
 // NewMultiNICVPort returns a new *MultiNICVPort
@@ -132,10 +142,4 @@ func (o *MultiNICVPort) VPorts(info *bambou.FetchingInfo) (VPortsList, *bambou.E
 	var list VPortsList
 	err := bambou.CurrentSession().FetchChildren(o, VPortIdentity, &list, info)
 	return list, err
-}
-
-// CreateVPort creates a new child VPort under the MultiNICVPort
-func (o *MultiNICVPort) CreateVPort(child *VPort) *bambou.Error {
-
-	return bambou.CurrentSession().CreateChild(o, child)
 }

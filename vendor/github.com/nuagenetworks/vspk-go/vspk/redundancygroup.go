@@ -38,40 +38,55 @@ var RedundancyGroupIdentity = bambou.Identity{
 // RedundancyGroupsList represents a list of RedundancyGroups
 type RedundancyGroupsList []*RedundancyGroup
 
-// RedundancyGroupsAncestor is the interface of an ancestor of a RedundancyGroup must implement.
+// RedundancyGroupsAncestor is the interface that an ancestor of a RedundancyGroup must implement.
+// An Ancestor is defined as an entity that has RedundancyGroup as a descendant.
+// An Ancestor can get a list of its child RedundancyGroups, but not necessarily create one.
 type RedundancyGroupsAncestor interface {
 	RedundancyGroups(*bambou.FetchingInfo) (RedundancyGroupsList, *bambou.Error)
-	CreateRedundancyGroups(*RedundancyGroup) *bambou.Error
+}
+
+// RedundancyGroupsParent is the interface that a parent of a RedundancyGroup must implement.
+// A Parent is defined as an entity that has RedundancyGroup as a child.
+// A Parent is an Ancestor which can create a RedundancyGroup.
+type RedundancyGroupsParent interface {
+	RedundancyGroupsAncestor
+	CreateRedundancyGroup(*RedundancyGroup) *bambou.Error
 }
 
 // RedundancyGroup represents the model of a redundancygroup
 type RedundancyGroup struct {
-	ID                                  string `json:"ID,omitempty"`
-	ParentID                            string `json:"parentID,omitempty"`
-	ParentType                          string `json:"parentType,omitempty"`
-	Owner                               string `json:"owner,omitempty"`
-	Name                                string `json:"name,omitempty"`
-	LastUpdatedBy                       string `json:"lastUpdatedBy,omitempty"`
-	GatewayPeer1AutodiscoveredGatewayID string `json:"gatewayPeer1AutodiscoveredGatewayID,omitempty"`
-	GatewayPeer1ID                      string `json:"gatewayPeer1ID,omitempty"`
-	GatewayPeer1Name                    string `json:"gatewayPeer1Name,omitempty"`
-	GatewayPeer2AutodiscoveredGatewayID string `json:"gatewayPeer2AutodiscoveredGatewayID,omitempty"`
-	GatewayPeer2ID                      string `json:"gatewayPeer2ID,omitempty"`
-	GatewayPeer2Name                    string `json:"gatewayPeer2Name,omitempty"`
-	RedundantGatewayStatus              string `json:"redundantGatewayStatus,omitempty"`
-	PermittedAction                     string `json:"permittedAction,omitempty"`
-	Personality                         string `json:"personality,omitempty"`
-	Description                         string `json:"description,omitempty"`
-	EnterpriseID                        string `json:"enterpriseID,omitempty"`
-	EntityScope                         string `json:"entityScope,omitempty"`
-	Vtep                                string `json:"vtep,omitempty"`
-	ExternalID                          string `json:"externalID,omitempty"`
+	ID                                  string        `json:"ID,omitempty"`
+	ParentID                            string        `json:"parentID,omitempty"`
+	ParentType                          string        `json:"parentType,omitempty"`
+	Owner                               string        `json:"owner,omitempty"`
+	Name                                string        `json:"name,omitempty"`
+	LastUpdatedBy                       string        `json:"lastUpdatedBy,omitempty"`
+	GatewayPeer1AutodiscoveredGatewayID string        `json:"gatewayPeer1AutodiscoveredGatewayID,omitempty"`
+	GatewayPeer1Connected               bool          `json:"gatewayPeer1Connected"`
+	GatewayPeer1ID                      string        `json:"gatewayPeer1ID,omitempty"`
+	GatewayPeer1Name                    string        `json:"gatewayPeer1Name,omitempty"`
+	GatewayPeer2AutodiscoveredGatewayID string        `json:"gatewayPeer2AutodiscoveredGatewayID,omitempty"`
+	GatewayPeer2Connected               bool          `json:"gatewayPeer2Connected"`
+	GatewayPeer2ID                      string        `json:"gatewayPeer2ID,omitempty"`
+	GatewayPeer2Name                    string        `json:"gatewayPeer2Name,omitempty"`
+	RedundantGatewayStatus              string        `json:"redundantGatewayStatus,omitempty"`
+	PermittedAction                     string        `json:"permittedAction,omitempty"`
+	Personality                         string        `json:"personality,omitempty"`
+	Description                         string        `json:"description,omitempty"`
+	EmbeddedMetadata                    []interface{} `json:"embeddedMetadata,omitempty"`
+	EnterpriseID                        string        `json:"enterpriseID,omitempty"`
+	EntityScope                         string        `json:"entityScope,omitempty"`
+	Vtep                                string        `json:"vtep,omitempty"`
+	ExternalID                          string        `json:"externalID,omitempty"`
 }
 
 // NewRedundancyGroup returns a new *RedundancyGroup
 func NewRedundancyGroup() *RedundancyGroup {
 
-	return &RedundancyGroup{}
+	return &RedundancyGroup{
+		GatewayPeer1Connected: false,
+		GatewayPeer2Connected: false,
+	}
 }
 
 // Identity returns the Identity of the object.
@@ -110,6 +125,38 @@ func (o *RedundancyGroup) Delete() *bambou.Error {
 	return bambou.CurrentSession().DeleteEntity(o)
 }
 
+// L2Domains retrieves the list of child L2Domains of the RedundancyGroup
+func (o *RedundancyGroup) L2Domains(info *bambou.FetchingInfo) (L2DomainsList, *bambou.Error) {
+
+	var list L2DomainsList
+	err := bambou.CurrentSession().FetchChildren(o, L2DomainIdentity, &list, info)
+	return list, err
+}
+
+// MACFilterProfiles retrieves the list of child MACFilterProfiles of the RedundancyGroup
+func (o *RedundancyGroup) MACFilterProfiles(info *bambou.FetchingInfo) (MACFilterProfilesList, *bambou.Error) {
+
+	var list MACFilterProfilesList
+	err := bambou.CurrentSession().FetchChildren(o, MACFilterProfileIdentity, &list, info)
+	return list, err
+}
+
+// SAPEgressQoSProfiles retrieves the list of child SAPEgressQoSProfiles of the RedundancyGroup
+func (o *RedundancyGroup) SAPEgressQoSProfiles(info *bambou.FetchingInfo) (SAPEgressQoSProfilesList, *bambou.Error) {
+
+	var list SAPEgressQoSProfilesList
+	err := bambou.CurrentSession().FetchChildren(o, SAPEgressQoSProfileIdentity, &list, info)
+	return list, err
+}
+
+// SAPIngressQoSProfiles retrieves the list of child SAPIngressQoSProfiles of the RedundancyGroup
+func (o *RedundancyGroup) SAPIngressQoSProfiles(info *bambou.FetchingInfo) (SAPIngressQoSProfilesList, *bambou.Error) {
+
+	var list SAPIngressQoSProfilesList
+	err := bambou.CurrentSession().FetchChildren(o, SAPIngressQoSProfileIdentity, &list, info)
+	return list, err
+}
+
 // Gateways retrieves the list of child Gateways of the RedundancyGroup
 func (o *RedundancyGroup) Gateways(info *bambou.FetchingInfo) (GatewaysList, *bambou.Error) {
 
@@ -118,10 +165,26 @@ func (o *RedundancyGroup) Gateways(info *bambou.FetchingInfo) (GatewaysList, *ba
 	return list, err
 }
 
-// CreateGateway creates a new child Gateway under the RedundancyGroup
-func (o *RedundancyGroup) CreateGateway(child *Gateway) *bambou.Error {
+// GatewayRedundantPorts retrieves the list of child GatewayRedundantPorts of the RedundancyGroup
+func (o *RedundancyGroup) GatewayRedundantPorts(info *bambou.FetchingInfo) (GatewayRedundantPortsList, *bambou.Error) {
+
+	var list GatewayRedundantPortsList
+	err := bambou.CurrentSession().FetchChildren(o, GatewayRedundantPortIdentity, &list, info)
+	return list, err
+}
+
+// CreateGatewayRedundantPort creates a new child GatewayRedundantPort under the RedundancyGroup
+func (o *RedundancyGroup) CreateGatewayRedundantPort(child *GatewayRedundantPort) *bambou.Error {
 
 	return bambou.CurrentSession().CreateChild(o, child)
+}
+
+// DeploymentFailures retrieves the list of child DeploymentFailures of the RedundancyGroup
+func (o *RedundancyGroup) DeploymentFailures(info *bambou.FetchingInfo) (DeploymentFailuresList, *bambou.Error) {
+
+	var list DeploymentFailuresList
+	err := bambou.CurrentSession().FetchChildren(o, DeploymentFailureIdentity, &list, info)
+	return list, err
 }
 
 // Permissions retrieves the list of child Permissions of the RedundancyGroup
@@ -166,18 +229,26 @@ func (o *RedundancyGroup) CreateMetadata(child *Metadata) *bambou.Error {
 	return bambou.CurrentSession().CreateChild(o, child)
 }
 
+// EgressProfiles retrieves the list of child EgressProfiles of the RedundancyGroup
+func (o *RedundancyGroup) EgressProfiles(info *bambou.FetchingInfo) (EgressProfilesList, *bambou.Error) {
+
+	var list EgressProfilesList
+	err := bambou.CurrentSession().FetchChildren(o, EgressProfileIdentity, &list, info)
+	return list, err
+}
+
+// CreateEgressProfile creates a new child EgressProfile under the RedundancyGroup
+func (o *RedundancyGroup) CreateEgressProfile(child *EgressProfile) *bambou.Error {
+
+	return bambou.CurrentSession().CreateChild(o, child)
+}
+
 // Alarms retrieves the list of child Alarms of the RedundancyGroup
 func (o *RedundancyGroup) Alarms(info *bambou.FetchingInfo) (AlarmsList, *bambou.Error) {
 
 	var list AlarmsList
 	err := bambou.CurrentSession().FetchChildren(o, AlarmIdentity, &list, info)
 	return list, err
-}
-
-// CreateAlarm creates a new child Alarm under the RedundancyGroup
-func (o *RedundancyGroup) CreateAlarm(child *Alarm) *bambou.Error {
-
-	return bambou.CurrentSession().CreateChild(o, child)
 }
 
 // GlobalMetadatas retrieves the list of child GlobalMetadatas of the RedundancyGroup
@@ -190,6 +261,20 @@ func (o *RedundancyGroup) GlobalMetadatas(info *bambou.FetchingInfo) (GlobalMeta
 
 // CreateGlobalMetadata creates a new child GlobalMetadata under the RedundancyGroup
 func (o *RedundancyGroup) CreateGlobalMetadata(child *GlobalMetadata) *bambou.Error {
+
+	return bambou.CurrentSession().CreateChild(o, child)
+}
+
+// IngressProfiles retrieves the list of child IngressProfiles of the RedundancyGroup
+func (o *RedundancyGroup) IngressProfiles(info *bambou.FetchingInfo) (IngressProfilesList, *bambou.Error) {
+
+	var list IngressProfilesList
+	err := bambou.CurrentSession().FetchChildren(o, IngressProfileIdentity, &list, info)
+	return list, err
+}
+
+// CreateIngressProfile creates a new child IngressProfile under the RedundancyGroup
+func (o *RedundancyGroup) CreateIngressProfile(child *IngressProfile) *bambou.Error {
 
 	return bambou.CurrentSession().CreateChild(o, child)
 }
@@ -208,6 +293,20 @@ func (o *RedundancyGroup) CreateEnterprisePermission(child *EnterprisePermission
 	return bambou.CurrentSession().CreateChild(o, child)
 }
 
+// Jobs retrieves the list of child Jobs of the RedundancyGroup
+func (o *RedundancyGroup) Jobs(info *bambou.FetchingInfo) (JobsList, *bambou.Error) {
+
+	var list JobsList
+	err := bambou.CurrentSession().FetchChildren(o, JobIdentity, &list, info)
+	return list, err
+}
+
+// CreateJob creates a new child Job under the RedundancyGroup
+func (o *RedundancyGroup) CreateJob(child *Job) *bambou.Error {
+
+	return bambou.CurrentSession().CreateChild(o, child)
+}
+
 // Ports retrieves the list of child Ports of the RedundancyGroup
 func (o *RedundancyGroup) Ports(info *bambou.FetchingInfo) (PortsList, *bambou.Error) {
 
@@ -220,6 +319,22 @@ func (o *RedundancyGroup) Ports(info *bambou.FetchingInfo) (PortsList, *bambou.E
 func (o *RedundancyGroup) CreatePort(child *Port) *bambou.Error {
 
 	return bambou.CurrentSession().CreateChild(o, child)
+}
+
+// IPFilterProfiles retrieves the list of child IPFilterProfiles of the RedundancyGroup
+func (o *RedundancyGroup) IPFilterProfiles(info *bambou.FetchingInfo) (IPFilterProfilesList, *bambou.Error) {
+
+	var list IPFilterProfilesList
+	err := bambou.CurrentSession().FetchChildren(o, IPFilterProfileIdentity, &list, info)
+	return list, err
+}
+
+// IPv6FilterProfiles retrieves the list of child IPv6FilterProfiles of the RedundancyGroup
+func (o *RedundancyGroup) IPv6FilterProfiles(info *bambou.FetchingInfo) (IPv6FilterProfilesList, *bambou.Error) {
+
+	var list IPv6FilterProfilesList
+	err := bambou.CurrentSession().FetchChildren(o, IPv6FilterProfileIdentity, &list, info)
+	return list, err
 }
 
 // VsgRedundantPorts retrieves the list of child VsgRedundantPorts of the RedundancyGroup
@@ -242,10 +357,4 @@ func (o *RedundancyGroup) EventLogs(info *bambou.FetchingInfo) (EventLogsList, *
 	var list EventLogsList
 	err := bambou.CurrentSession().FetchChildren(o, EventLogIdentity, &list, info)
 	return list, err
-}
-
-// CreateEventLog creates a new child EventLog under the RedundancyGroup
-func (o *RedundancyGroup) CreateEventLog(child *EventLog) *bambou.Error {
-
-	return bambou.CurrentSession().CreateChild(o, child)
 }

@@ -38,39 +38,52 @@ var VsgRedundantPortIdentity = bambou.Identity{
 // VsgRedundantPortsList represents a list of VsgRedundantPorts
 type VsgRedundantPortsList []*VsgRedundantPort
 
-// VsgRedundantPortsAncestor is the interface of an ancestor of a VsgRedundantPort must implement.
+// VsgRedundantPortsAncestor is the interface that an ancestor of a VsgRedundantPort must implement.
+// An Ancestor is defined as an entity that has VsgRedundantPort as a descendant.
+// An Ancestor can get a list of its child VsgRedundantPorts, but not necessarily create one.
 type VsgRedundantPortsAncestor interface {
 	VsgRedundantPorts(*bambou.FetchingInfo) (VsgRedundantPortsList, *bambou.Error)
-	CreateVsgRedundantPorts(*VsgRedundantPort) *bambou.Error
+}
+
+// VsgRedundantPortsParent is the interface that a parent of a VsgRedundantPort must implement.
+// A Parent is defined as an entity that has VsgRedundantPort as a child.
+// A Parent is an Ancestor which can create a VsgRedundantPort.
+type VsgRedundantPortsParent interface {
+	VsgRedundantPortsAncestor
+	CreateVsgRedundantPort(*VsgRedundantPort) *bambou.Error
 }
 
 // VsgRedundantPort represents the model of a vsgredundantport
 type VsgRedundantPort struct {
-	ID                          string `json:"ID,omitempty"`
-	ParentID                    string `json:"parentID,omitempty"`
-	ParentType                  string `json:"parentType,omitempty"`
-	Owner                       string `json:"owner,omitempty"`
-	VLANRange                   string `json:"VLANRange,omitempty"`
-	Name                        string `json:"name,omitempty"`
-	LastUpdatedBy               string `json:"lastUpdatedBy,omitempty"`
-	PermittedAction             string `json:"permittedAction,omitempty"`
-	Description                 string `json:"description,omitempty"`
-	PhysicalName                string `json:"physicalName,omitempty"`
-	EntityScope                 string `json:"entityScope,omitempty"`
-	PortPeer1ID                 string `json:"portPeer1ID,omitempty"`
-	PortPeer2ID                 string `json:"portPeer2ID,omitempty"`
-	PortType                    string `json:"portType,omitempty"`
-	UseUserMnemonic             bool   `json:"useUserMnemonic"`
-	UserMnemonic                string `json:"userMnemonic,omitempty"`
-	AssociatedEgressQOSPolicyID string `json:"associatedEgressQOSPolicyID,omitempty"`
-	Status                      string `json:"status,omitempty"`
-	ExternalID                  string `json:"externalID,omitempty"`
+	ID                          string        `json:"ID,omitempty"`
+	ParentID                    string        `json:"parentID,omitempty"`
+	ParentType                  string        `json:"parentType,omitempty"`
+	Owner                       string        `json:"owner,omitempty"`
+	VLANRange                   string        `json:"VLANRange,omitempty"`
+	Name                        string        `json:"name,omitempty"`
+	LastUpdatedBy               string        `json:"lastUpdatedBy,omitempty"`
+	PeerLink                    bool          `json:"peerLink"`
+	PermittedAction             string        `json:"permittedAction,omitempty"`
+	Description                 string        `json:"description,omitempty"`
+	PhysicalName                string        `json:"physicalName,omitempty"`
+	EmbeddedMetadata            []interface{} `json:"embeddedMetadata,omitempty"`
+	EntityScope                 string        `json:"entityScope,omitempty"`
+	PortPeer1ID                 string        `json:"portPeer1ID,omitempty"`
+	PortPeer2ID                 string        `json:"portPeer2ID,omitempty"`
+	PortType                    string        `json:"portType,omitempty"`
+	UseUserMnemonic             bool          `json:"useUserMnemonic"`
+	UserMnemonic                string        `json:"userMnemonic,omitempty"`
+	AssociatedEgressQOSPolicyID string        `json:"associatedEgressQOSPolicyID,omitempty"`
+	Status                      string        `json:"status,omitempty"`
+	ExternalID                  string        `json:"externalID,omitempty"`
 }
 
 // NewVsgRedundantPort returns a new *VsgRedundantPort
 func NewVsgRedundantPort() *VsgRedundantPort {
 
-	return &VsgRedundantPort{}
+	return &VsgRedundantPort{
+		PeerLink: false,
+	}
 }
 
 // Identity returns the Identity of the object.
@@ -157,12 +170,6 @@ func (o *VsgRedundantPort) Alarms(info *bambou.FetchingInfo) (AlarmsList, *bambo
 	var list AlarmsList
 	err := bambou.CurrentSession().FetchChildren(o, AlarmIdentity, &list, info)
 	return list, err
-}
-
-// CreateAlarm creates a new child Alarm under the VsgRedundantPort
-func (o *VsgRedundantPort) CreateAlarm(child *Alarm) *bambou.Error {
-
-	return bambou.CurrentSession().CreateChild(o, child)
 }
 
 // GlobalMetadatas retrieves the list of child GlobalMetadatas of the VsgRedundantPort

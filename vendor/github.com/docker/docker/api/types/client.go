@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"io"
 	"net"
+	"os"
 
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
@@ -159,10 +160,13 @@ type ImageBuildOptions struct {
 	ShmSize        int64
 	Dockerfile     string
 	Ulimits        []*units.Ulimit
-	BuildArgs      map[string]string
-	AuthConfigs    map[string]AuthConfig
-	Context        io.Reader
-	Labels         map[string]string
+	// See the parsing of buildArgs in api/server/router/build/build_routes.go
+	// for an explaination of why BuildArgs needs to use *string instead of
+	// just a string
+	BuildArgs   map[string]*string
+	AuthConfigs map[string]AuthConfig
+	Context     io.Reader
+	Labels      map[string]string
 	// squash the resulting image's layers to the parent
 	// preserves the original image and creates a new one from the parent with all
 	// the changes applied to a single layer
@@ -201,9 +205,8 @@ type ImageImportOptions struct {
 
 // ImageListOptions holds parameters to filter the list of images with.
 type ImageListOptions struct {
-	MatchName string
-	All       bool
-	Filters   filters.Args
+	All     bool
+	Filters filters.Args
 }
 
 // ImageLoadResponse returns information to the client about a load process.
@@ -285,10 +288,12 @@ type ServiceCreateOptions struct {
 }
 
 // ServiceCreateResponse contains the information returned to a client
-// on the  creation of a new service.
+// on the creation of a new service.
 type ServiceCreateResponse struct {
 	// ID is the ID of the created service.
 	ID string
+	// Warnings is a set of non-fatal warning messages to pass on to the user.
+	Warnings []string `json:",omitempty"`
 }
 
 // Values for RegistryAuthFrom in ServiceUpdateOptions
@@ -330,11 +335,44 @@ type PluginRemoveOptions struct {
 	Force bool
 }
 
+// PluginEnableOptions holds parameters to enable plugins.
+type PluginEnableOptions struct {
+	Timeout int
+}
+
+// PluginDisableOptions holds parameters to disable plugins.
+type PluginDisableOptions struct {
+	Force bool
+}
+
 // PluginInstallOptions holds parameters to install a plugin.
 type PluginInstallOptions struct {
 	Disabled              bool
 	AcceptAllPermissions  bool
 	RegistryAuth          string // RegistryAuth is the base64 encoded credentials for the registry
+	RemoteRef             string // RemoteRef is the plugin name on the registry
 	PrivilegeFunc         RequestPrivilegeFunc
 	AcceptPermissionsFunc func(PluginPrivileges) (bool, error)
+	Args                  []string
+}
+
+// SecretRequestOption is a type for requesting secrets
+type SecretRequestOption struct {
+	Source string
+	Target string
+	UID    string
+	GID    string
+	Mode   os.FileMode
+}
+
+// SwarmUnlockKeyResponse contains the response for Engine API:
+// GET /swarm/unlockkey
+type SwarmUnlockKeyResponse struct {
+	// UnlockKey is the unlock key in ASCII-armored format.
+	UnlockKey string
+}
+
+// PluginCreateOptions hold all options to plugin create.
+type PluginCreateOptions struct {
+	RepoName string
 }

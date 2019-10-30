@@ -38,27 +38,37 @@ var PermissionIdentity = bambou.Identity{
 // PermissionsList represents a list of Permissions
 type PermissionsList []*Permission
 
-// PermissionsAncestor is the interface of an ancestor of a Permission must implement.
+// PermissionsAncestor is the interface that an ancestor of a Permission must implement.
+// An Ancestor is defined as an entity that has Permission as a descendant.
+// An Ancestor can get a list of its child Permissions, but not necessarily create one.
 type PermissionsAncestor interface {
 	Permissions(*bambou.FetchingInfo) (PermissionsList, *bambou.Error)
-	CreatePermissions(*Permission) *bambou.Error
+}
+
+// PermissionsParent is the interface that a parent of a Permission must implement.
+// A Parent is defined as an entity that has Permission as a child.
+// A Parent is an Ancestor which can create a Permission.
+type PermissionsParent interface {
+	PermissionsAncestor
+	CreatePermission(*Permission) *bambou.Error
 }
 
 // Permission represents the model of a permission
 type Permission struct {
-	ID                         string `json:"ID,omitempty"`
-	ParentID                   string `json:"parentID,omitempty"`
-	ParentType                 string `json:"parentType,omitempty"`
-	Owner                      string `json:"owner,omitempty"`
-	Name                       string `json:"name,omitempty"`
-	LastUpdatedBy              string `json:"lastUpdatedBy,omitempty"`
-	PermittedAction            string `json:"permittedAction,omitempty"`
-	PermittedEntityDescription string `json:"permittedEntityDescription,omitempty"`
-	PermittedEntityID          string `json:"permittedEntityID,omitempty"`
-	PermittedEntityName        string `json:"permittedEntityName,omitempty"`
-	PermittedEntityType        string `json:"permittedEntityType,omitempty"`
-	EntityScope                string `json:"entityScope,omitempty"`
-	ExternalID                 string `json:"externalID,omitempty"`
+	ID                         string        `json:"ID,omitempty"`
+	ParentID                   string        `json:"parentID,omitempty"`
+	ParentType                 string        `json:"parentType,omitempty"`
+	Owner                      string        `json:"owner,omitempty"`
+	Name                       string        `json:"name,omitempty"`
+	LastUpdatedBy              string        `json:"lastUpdatedBy,omitempty"`
+	PermittedAction            string        `json:"permittedAction,omitempty"`
+	PermittedEntityDescription string        `json:"permittedEntityDescription,omitempty"`
+	PermittedEntityID          string        `json:"permittedEntityID,omitempty"`
+	PermittedEntityName        string        `json:"permittedEntityName,omitempty"`
+	PermittedEntityType        string        `json:"permittedEntityType,omitempty"`
+	EmbeddedMetadata           []interface{} `json:"embeddedMetadata,omitempty"`
+	EntityScope                string        `json:"entityScope,omitempty"`
+	ExternalID                 string        `json:"externalID,omitempty"`
 }
 
 // NewPermission returns a new *Permission
@@ -137,10 +147,4 @@ func (o *Permission) EventLogs(info *bambou.FetchingInfo) (EventLogsList, *bambo
 	var list EventLogsList
 	err := bambou.CurrentSession().FetchChildren(o, EventLogIdentity, &list, info)
 	return list, err
-}
-
-// CreateEventLog creates a new child EventLog under the Permission
-func (o *Permission) CreateEventLog(child *EventLog) *bambou.Error {
-
-	return bambou.CurrentSession().CreateChild(o, child)
 }

@@ -16,6 +16,33 @@ type Operation struct {
 	UUIDName  string                   `json:"uuid-name,omitempty"`
 }
 
+// MarshalJSON marshalls 'Operation' to a byte array
+// For 'select' operations, we dont omit the 'Where' field
+// to allow selecting all rows of a table
+func (o Operation) MarshalJSON() ([]byte, error) {
+	type OpAlias Operation
+	switch o.Op {
+	case "select":
+		where := o.Where
+		if where == nil {
+			where = make([]interface{}, 0, 0)
+		}
+		return json.Marshal(&struct {
+			Where []interface{} `json:"where"`
+			OpAlias
+		}{
+			Where:   where,
+			OpAlias: (OpAlias)(o),
+		})
+	default:
+		return json.Marshal(&struct {
+			OpAlias
+		}{
+			OpAlias: (OpAlias)(o),
+		})
+	}
+}
+
 // MonitorRequests represents a group of monitor requests according to RFC7047
 // We cannot use MonitorRequests by inlining the MonitorRequest Map structure till GoLang issue #6213 makes it.
 // The only option is to go with raw map[string]interface{} option :-( that sucks !

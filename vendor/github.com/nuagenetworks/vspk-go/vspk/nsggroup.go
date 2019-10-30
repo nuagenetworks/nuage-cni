@@ -38,21 +38,34 @@ var NSGGroupIdentity = bambou.Identity{
 // NSGGroupsList represents a list of NSGGroups
 type NSGGroupsList []*NSGGroup
 
-// NSGGroupsAncestor is the interface of an ancestor of a NSGGroup must implement.
+// NSGGroupsAncestor is the interface that an ancestor of a NSGGroup must implement.
+// An Ancestor is defined as an entity that has NSGGroup as a descendant.
+// An Ancestor can get a list of its child NSGGroups, but not necessarily create one.
 type NSGGroupsAncestor interface {
 	NSGGroups(*bambou.FetchingInfo) (NSGGroupsList, *bambou.Error)
-	CreateNSGGroups(*NSGGroup) *bambou.Error
+}
+
+// NSGGroupsParent is the interface that a parent of a NSGGroup must implement.
+// A Parent is defined as an entity that has NSGGroup as a child.
+// A Parent is an Ancestor which can create a NSGGroup.
+type NSGGroupsParent interface {
+	NSGGroupsAncestor
+	CreateNSGGroup(*NSGGroup) *bambou.Error
 }
 
 // NSGGroup represents the model of a nsggroup
 type NSGGroup struct {
-	ID             string        `json:"ID,omitempty"`
-	ParentID       string        `json:"parentID,omitempty"`
-	ParentType     string        `json:"parentType,omitempty"`
-	Owner          string        `json:"owner,omitempty"`
-	Name           string        `json:"name,omitempty"`
-	Description    string        `json:"description,omitempty"`
-	AssociatedNSGs []interface{} `json:"associatedNSGs,omitempty"`
+	ID               string        `json:"ID,omitempty"`
+	ParentID         string        `json:"parentID,omitempty"`
+	ParentType       string        `json:"parentType,omitempty"`
+	Owner            string        `json:"owner,omitempty"`
+	Name             string        `json:"name,omitempty"`
+	LastUpdatedBy    string        `json:"lastUpdatedBy,omitempty"`
+	Description      string        `json:"description,omitempty"`
+	EmbeddedMetadata []interface{} `json:"embeddedMetadata,omitempty"`
+	EntityScope      string        `json:"entityScope,omitempty"`
+	NsgGroupId       int           `json:"nsgGroupId,omitempty"`
+	ExternalID       string        `json:"externalID,omitempty"`
 }
 
 // NewNSGGroup returns a new *NSGGroup
@@ -95,6 +108,34 @@ func (o *NSGGroup) Save() *bambou.Error {
 func (o *NSGGroup) Delete() *bambou.Error {
 
 	return bambou.CurrentSession().DeleteEntity(o)
+}
+
+// Metadatas retrieves the list of child Metadatas of the NSGGroup
+func (o *NSGGroup) Metadatas(info *bambou.FetchingInfo) (MetadatasList, *bambou.Error) {
+
+	var list MetadatasList
+	err := bambou.CurrentSession().FetchChildren(o, MetadataIdentity, &list, info)
+	return list, err
+}
+
+// CreateMetadata creates a new child Metadata under the NSGGroup
+func (o *NSGGroup) CreateMetadata(child *Metadata) *bambou.Error {
+
+	return bambou.CurrentSession().CreateChild(o, child)
+}
+
+// GlobalMetadatas retrieves the list of child GlobalMetadatas of the NSGGroup
+func (o *NSGGroup) GlobalMetadatas(info *bambou.FetchingInfo) (GlobalMetadatasList, *bambou.Error) {
+
+	var list GlobalMetadatasList
+	err := bambou.CurrentSession().FetchChildren(o, GlobalMetadataIdentity, &list, info)
+	return list, err
+}
+
+// CreateGlobalMetadata creates a new child GlobalMetadata under the NSGGroup
+func (o *NSGGroup) CreateGlobalMetadata(child *GlobalMetadata) *bambou.Error {
+
+	return bambou.CurrentSession().CreateChild(o, child)
 }
 
 // NSGateways retrieves the list of child NSGateways of the NSGGroup
