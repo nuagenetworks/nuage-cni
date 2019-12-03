@@ -38,26 +38,36 @@ var RateLimiterIdentity = bambou.Identity{
 // RateLimitersList represents a list of RateLimiters
 type RateLimitersList []*RateLimiter
 
-// RateLimitersAncestor is the interface of an ancestor of a RateLimiter must implement.
+// RateLimitersAncestor is the interface that an ancestor of a RateLimiter must implement.
+// An Ancestor is defined as an entity that has RateLimiter as a descendant.
+// An Ancestor can get a list of its child RateLimiters, but not necessarily create one.
 type RateLimitersAncestor interface {
 	RateLimiters(*bambou.FetchingInfo) (RateLimitersList, *bambou.Error)
-	CreateRateLimiters(*RateLimiter) *bambou.Error
+}
+
+// RateLimitersParent is the interface that a parent of a RateLimiter must implement.
+// A Parent is defined as an entity that has RateLimiter as a child.
+// A Parent is an Ancestor which can create a RateLimiter.
+type RateLimitersParent interface {
+	RateLimitersAncestor
+	CreateRateLimiter(*RateLimiter) *bambou.Error
 }
 
 // RateLimiter represents the model of a ratelimiter
 type RateLimiter struct {
-	ID                       string `json:"ID,omitempty"`
-	ParentID                 string `json:"parentID,omitempty"`
-	ParentType               string `json:"parentType,omitempty"`
-	Owner                    string `json:"owner,omitempty"`
-	Name                     string `json:"name,omitempty"`
-	LastUpdatedBy            string `json:"lastUpdatedBy,omitempty"`
-	PeakBurstSize            string `json:"peakBurstSize,omitempty"`
-	PeakInformationRate      string `json:"peakInformationRate,omitempty"`
-	Description              string `json:"description,omitempty"`
-	EntityScope              string `json:"entityScope,omitempty"`
-	CommittedInformationRate string `json:"committedInformationRate,omitempty"`
-	ExternalID               string `json:"externalID,omitempty"`
+	ID                       string        `json:"ID,omitempty"`
+	ParentID                 string        `json:"parentID,omitempty"`
+	ParentType               string        `json:"parentType,omitempty"`
+	Owner                    string        `json:"owner,omitempty"`
+	Name                     string        `json:"name,omitempty"`
+	LastUpdatedBy            string        `json:"lastUpdatedBy,omitempty"`
+	PeakBurstSize            string        `json:"peakBurstSize,omitempty"`
+	PeakInformationRate      string        `json:"peakInformationRate,omitempty"`
+	Description              string        `json:"description,omitempty"`
+	EmbeddedMetadata         []interface{} `json:"embeddedMetadata,omitempty"`
+	EntityScope              string        `json:"entityScope,omitempty"`
+	CommittedInformationRate string        `json:"committedInformationRate,omitempty"`
+	ExternalID               string        `json:"externalID,omitempty"`
 }
 
 // NewRateLimiter returns a new *RateLimiter

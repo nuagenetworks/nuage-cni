@@ -1,8 +1,9 @@
 package client
 
 import (
-	"github.com/containernetworking/cni/pkg/types"
 	"net"
+
+	"github.com/containernetworking/cni/pkg/types"
 )
 
 // Args will hold the network metadata

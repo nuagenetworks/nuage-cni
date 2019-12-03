@@ -8,18 +8,19 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	log "github.com/Sirupsen/logrus"
+	"net"
+	"os"
+	"os/exec"
+	"strings"
+
 	"github.com/containernetworking/cni/pkg/ip"
 	"github.com/containernetworking/cni/pkg/ns"
 	"github.com/containernetworking/cni/pkg/skel"
 	"github.com/containernetworking/cni/pkg/types"
 	vrsSdk "github.com/nuagenetworks/libvrsdk/api"
 	"github.com/nuagenetworks/nuage-cni/config"
+	log "github.com/sirupsen/logrus"
 	"github.com/vishvananda/netlink"
-	"net"
-	"os"
-	"os/exec"
-	"strings"
 )
 
 const (
@@ -293,12 +294,13 @@ func SetDefaultsForNuageCNIConfig(conf *config.Config) {
 		conf.VRSConnectionCheckTimer = 180
 	}
 
-	if conf.NuageSiteId == 0 {
+	if conf.NuageSiteID == 0 {
 		log.Warnf("SiteId not set. It will not be used when specifying metadata")
-		conf.NuageSiteId = -1
+		conf.NuageSiteID = -1
 	}
 }
 
+// IsVSPFunctional checks if VRS and VSC connection is functional
 func IsVSPFunctional() bool {
 
 	log.Debugf("Verifying VRS-VSC connection state")

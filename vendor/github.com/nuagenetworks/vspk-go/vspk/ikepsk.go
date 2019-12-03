@@ -38,30 +38,40 @@ var IKEPSKIdentity = bambou.Identity{
 // IKEPSKsList represents a list of IKEPSKs
 type IKEPSKsList []*IKEPSK
 
-// IKEPSKsAncestor is the interface of an ancestor of a IKEPSK must implement.
+// IKEPSKsAncestor is the interface that an ancestor of a IKEPSK must implement.
+// An Ancestor is defined as an entity that has IKEPSK as a descendant.
+// An Ancestor can get a list of its child IKEPSKs, but not necessarily create one.
 type IKEPSKsAncestor interface {
 	IKEPSKs(*bambou.FetchingInfo) (IKEPSKsList, *bambou.Error)
-	CreateIKEPSKs(*IKEPSK) *bambou.Error
+}
+
+// IKEPSKsParent is the interface that a parent of a IKEPSK must implement.
+// A Parent is defined as an entity that has IKEPSK as a child.
+// A Parent is an Ancestor which can create a IKEPSK.
+type IKEPSKsParent interface {
+	IKEPSKsAncestor
+	CreateIKEPSK(*IKEPSK) *bambou.Error
 }
 
 // IKEPSK represents the model of a ikepsk
 type IKEPSK struct {
-	ID                                string `json:"ID,omitempty"`
-	ParentID                          string `json:"parentID,omitempty"`
-	ParentType                        string `json:"parentType,omitempty"`
-	Owner                             string `json:"owner,omitempty"`
-	Name                              string `json:"name,omitempty"`
-	LastUpdatedBy                     string `json:"lastUpdatedBy,omitempty"`
-	Description                       string `json:"description,omitempty"`
-	Signature                         string `json:"signature,omitempty"`
-	SigningCertificateSerialNumber    int    `json:"signingCertificateSerialNumber,omitempty"`
-	EncryptedPSK                      string `json:"encryptedPSK,omitempty"`
-	EncryptingCertificateSerialNumber int    `json:"encryptingCertificateSerialNumber,omitempty"`
-	UnencryptedPSK                    string `json:"unencryptedPSK,omitempty"`
-	EntityScope                       string `json:"entityScope,omitempty"`
-	AssociatedEnterpriseID            string `json:"associatedEnterpriseID,omitempty"`
-	AutoCreated                       bool   `json:"autoCreated"`
-	ExternalID                        string `json:"externalID,omitempty"`
+	ID                                string        `json:"ID,omitempty"`
+	ParentID                          string        `json:"parentID,omitempty"`
+	ParentType                        string        `json:"parentType,omitempty"`
+	Owner                             string        `json:"owner,omitempty"`
+	Name                              string        `json:"name,omitempty"`
+	LastUpdatedBy                     string        `json:"lastUpdatedBy,omitempty"`
+	Description                       string        `json:"description,omitempty"`
+	Signature                         string        `json:"signature,omitempty"`
+	SigningCertificateSerialNumber    int           `json:"signingCertificateSerialNumber,omitempty"`
+	EmbeddedMetadata                  []interface{} `json:"embeddedMetadata,omitempty"`
+	EncryptedPSK                      string        `json:"encryptedPSK,omitempty"`
+	EncryptingCertificateSerialNumber int           `json:"encryptingCertificateSerialNumber,omitempty"`
+	UnencryptedPSK                    string        `json:"unencryptedPSK,omitempty"`
+	EntityScope                       string        `json:"entityScope,omitempty"`
+	AssociatedEnterpriseID            string        `json:"associatedEnterpriseID,omitempty"`
+	AutoCreated                       bool          `json:"autoCreated"`
+	ExternalID                        string        `json:"externalID,omitempty"`
 }
 
 // NewIKEPSK returns a new *IKEPSK

@@ -136,6 +136,18 @@ func FetchZone(domain *vspk.Domain, vsdZone string) (*vspk.Zone, *bambou.Error) 
 	return zone, zonesErr
 }
 
+// FetchSubnet fetches subnet object
+func FetchSubnet(zone *vspk.Zone, vsdSubnet string) (*vspk.Subnet, *bambou.Error) {
+
+	var subnet *vspk.Subnet
+	subnetFetchingInfo := &bambou.FetchingInfo{Filter: "name == \"" + vsdSubnet + "\""}
+	subnets, subnetsErr := zone.Subnets(subnetFetchingInfo)
+	if subnetsErr == nil {
+		subnet = subnets[0]
+	}
+	return subnet, subnetsErr
+}
+
 // FetchAllPorts fetches all port objects
 func FetchAllPorts(zone *vspk.Zone) (vspk.VPortsList, *bambou.Error) {
 

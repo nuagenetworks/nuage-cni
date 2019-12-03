@@ -38,30 +38,40 @@ var VPortMirrorIdentity = bambou.Identity{
 // VPortMirrorsList represents a list of VPortMirrors
 type VPortMirrorsList []*VPortMirror
 
-// VPortMirrorsAncestor is the interface of an ancestor of a VPortMirror must implement.
+// VPortMirrorsAncestor is the interface that an ancestor of a VPortMirror must implement.
+// An Ancestor is defined as an entity that has VPortMirror as a descendant.
+// An Ancestor can get a list of its child VPortMirrors, but not necessarily create one.
 type VPortMirrorsAncestor interface {
 	VPortMirrors(*bambou.FetchingInfo) (VPortMirrorsList, *bambou.Error)
-	CreateVPortMirrors(*VPortMirror) *bambou.Error
+}
+
+// VPortMirrorsParent is the interface that a parent of a VPortMirror must implement.
+// A Parent is defined as an entity that has VPortMirror as a child.
+// A Parent is an Ancestor which can create a VPortMirror.
+type VPortMirrorsParent interface {
+	VPortMirrorsAncestor
+	CreateVPortMirror(*VPortMirror) *bambou.Error
 }
 
 // VPortMirror represents the model of a vportmirror
 type VPortMirror struct {
-	ID                    string `json:"ID,omitempty"`
-	ParentID              string `json:"parentID,omitempty"`
-	ParentType            string `json:"parentType,omitempty"`
-	Owner                 string `json:"owner,omitempty"`
-	VPortName             string `json:"VPortName,omitempty"`
-	LastUpdatedBy         string `json:"lastUpdatedBy,omitempty"`
-	NetworkName           string `json:"networkName,omitempty"`
-	MirrorDestinationID   string `json:"mirrorDestinationID,omitempty"`
-	MirrorDestinationName string `json:"mirrorDestinationName,omitempty"`
-	MirrorDirection       string `json:"mirrorDirection,omitempty"`
-	EnterpiseName         string `json:"enterpiseName,omitempty"`
-	EntityScope           string `json:"entityScope,omitempty"`
-	DomainName            string `json:"domainName,omitempty"`
-	VportId               string `json:"vportId,omitempty"`
-	AttachedNetworkType   string `json:"attachedNetworkType,omitempty"`
-	ExternalID            string `json:"externalID,omitempty"`
+	ID                    string        `json:"ID,omitempty"`
+	ParentID              string        `json:"parentID,omitempty"`
+	ParentType            string        `json:"parentType,omitempty"`
+	Owner                 string        `json:"owner,omitempty"`
+	LastUpdatedBy         string        `json:"lastUpdatedBy,omitempty"`
+	NetworkName           string        `json:"networkName,omitempty"`
+	MirrorDestinationID   string        `json:"mirrorDestinationID,omitempty"`
+	MirrorDestinationName string        `json:"mirrorDestinationName,omitempty"`
+	MirrorDirection       string        `json:"mirrorDirection,omitempty"`
+	EmbeddedMetadata      []interface{} `json:"embeddedMetadata,omitempty"`
+	EnterpiseName         string        `json:"enterpiseName,omitempty"`
+	EntityScope           string        `json:"entityScope,omitempty"`
+	DomainName            string        `json:"domainName,omitempty"`
+	VportId               string        `json:"vportId,omitempty"`
+	VportName             string        `json:"vportName,omitempty"`
+	AttachedNetworkType   string        `json:"attachedNetworkType,omitempty"`
+	ExternalID            string        `json:"externalID,omitempty"`
 }
 
 // NewVPortMirror returns a new *VPortMirror

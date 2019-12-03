@@ -38,34 +38,44 @@ var PortIdentity = bambou.Identity{
 // PortsList represents a list of Ports
 type PortsList []*Port
 
-// PortsAncestor is the interface of an ancestor of a Port must implement.
+// PortsAncestor is the interface that an ancestor of a Port must implement.
+// An Ancestor is defined as an entity that has Port as a descendant.
+// An Ancestor can get a list of its child Ports, but not necessarily create one.
 type PortsAncestor interface {
 	Ports(*bambou.FetchingInfo) (PortsList, *bambou.Error)
-	CreatePorts(*Port) *bambou.Error
+}
+
+// PortsParent is the interface that a parent of a Port must implement.
+// A Parent is defined as an entity that has Port as a child.
+// A Parent is an Ancestor which can create a Port.
+type PortsParent interface {
+	PortsAncestor
+	CreatePort(*Port) *bambou.Error
 }
 
 // Port represents the model of a port
 type Port struct {
-	ID                          string `json:"ID,omitempty"`
-	ParentID                    string `json:"parentID,omitempty"`
-	ParentType                  string `json:"parentType,omitempty"`
-	Owner                       string `json:"owner,omitempty"`
-	VLANRange                   string `json:"VLANRange,omitempty"`
-	Name                        string `json:"name,omitempty"`
-	LastUpdatedBy               string `json:"lastUpdatedBy,omitempty"`
-	TemplateID                  string `json:"templateID,omitempty"`
-	PermittedAction             string `json:"permittedAction,omitempty"`
-	Description                 string `json:"description,omitempty"`
-	PhysicalName                string `json:"physicalName,omitempty"`
-	EntityScope                 string `json:"entityScope,omitempty"`
-	PortType                    string `json:"portType,omitempty"`
-	IsResilient                 bool   `json:"isResilient"`
-	UseUserMnemonic             bool   `json:"useUserMnemonic"`
-	UserMnemonic                string `json:"userMnemonic,omitempty"`
-	AssociatedEgressQOSPolicyID string `json:"associatedEgressQOSPolicyID,omitempty"`
-	AssociatedRedundantPortID   string `json:"associatedRedundantPortID,omitempty"`
-	Status                      string `json:"status,omitempty"`
-	ExternalID                  string `json:"externalID,omitempty"`
+	ID                          string        `json:"ID,omitempty"`
+	ParentID                    string        `json:"parentID,omitempty"`
+	ParentType                  string        `json:"parentType,omitempty"`
+	Owner                       string        `json:"owner,omitempty"`
+	VLANRange                   string        `json:"VLANRange,omitempty"`
+	Name                        string        `json:"name,omitempty"`
+	LastUpdatedBy               string        `json:"lastUpdatedBy,omitempty"`
+	TemplateID                  string        `json:"templateID,omitempty"`
+	PermittedAction             string        `json:"permittedAction,omitempty"`
+	Description                 string        `json:"description,omitempty"`
+	PhysicalName                string        `json:"physicalName,omitempty"`
+	EmbeddedMetadata            []interface{} `json:"embeddedMetadata,omitempty"`
+	EntityScope                 string        `json:"entityScope,omitempty"`
+	PortType                    string        `json:"portType,omitempty"`
+	IsResilient                 bool          `json:"isResilient"`
+	UseUserMnemonic             bool          `json:"useUserMnemonic"`
+	UserMnemonic                string        `json:"userMnemonic,omitempty"`
+	AssociatedEgressQOSPolicyID string        `json:"associatedEgressQOSPolicyID,omitempty"`
+	AssociatedRedundantPortID   string        `json:"associatedRedundantPortID,omitempty"`
+	Status                      string        `json:"status,omitempty"`
+	ExternalID                  string        `json:"externalID,omitempty"`
 }
 
 // NewPort returns a new *Port
@@ -160,12 +170,6 @@ func (o *Port) Alarms(info *bambou.FetchingInfo) (AlarmsList, *bambou.Error) {
 	return list, err
 }
 
-// CreateAlarm creates a new child Alarm under the Port
-func (o *Port) CreateAlarm(child *Alarm) *bambou.Error {
-
-	return bambou.CurrentSession().CreateChild(o, child)
-}
-
 // GlobalMetadatas retrieves the list of child GlobalMetadatas of the Port
 func (o *Port) GlobalMetadatas(info *bambou.FetchingInfo) (GlobalMetadatasList, *bambou.Error) {
 
@@ -200,10 +204,4 @@ func (o *Port) EventLogs(info *bambou.FetchingInfo) (EventLogsList, *bambou.Erro
 	var list EventLogsList
 	err := bambou.CurrentSession().FetchChildren(o, EventLogIdentity, &list, info)
 	return list, err
-}
-
-// CreateEventLog creates a new child EventLog under the Port
-func (o *Port) CreateEventLog(child *EventLog) *bambou.Error {
-
-	return bambou.CurrentSession().CreateChild(o, child)
 }

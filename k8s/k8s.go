@@ -6,16 +6,18 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"fmt"
-	log "github.com/Sirupsen/logrus"
-	"github.com/nuagenetworks/nuage-cni/client"
-	"github.com/nuagenetworks/nuage-cni/config"
-	"gopkg.in/yaml.v2"
 	"io/ioutil"
-	krestclient "k8s.io/kubernetes/pkg/client/restclient"
-	kclient "k8s.io/kubernetes/pkg/client/unversioned"
-	"k8s.io/kubernetes/pkg/client/unversioned/clientcmd"
 	"net/http"
 	"os"
+
+	"github.com/nuagenetworks/nuage-cni/client"
+	"github.com/nuagenetworks/nuage-cni/config"
+	log "github.com/sirupsen/logrus"
+	"gopkg.in/yaml.v2"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	kclient "k8s.io/client-go/kubernetes"
+	krestclient "k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
 )
 
 var vspK8SConfig = &config.NuageVSPK8SConfig{}
@@ -62,13 +64,13 @@ func getK8SLabelsPodUIDFromAPIServer(podNs string, podname string) error {
 	}
 
 	k8RESTConfig = kubeConfig
-	kubeClient, err := kclient.New(k8RESTConfig)
+	kubeClient, err := kclient.NewForConfig(k8RESTConfig)
 	if err != nil {
 		log.Errorf("Error trying to create kubeclient: %v", err)
 		return err
 	}
 
-	pod, err := kubeClient.Pods(podNs).Get(podname)
+	pod, err := kubeClient.CoreV1().Pods(podNs).Get(podname, metav1.GetOptions{})
 	if err != nil {
 		log.Errorf("Error occured while querying pod %s under pod namespace %s: %v", podname, podNs, err)
 		return err

@@ -38,40 +38,54 @@ var ZFBRequestIdentity = bambou.Identity{
 // ZFBRequestsList represents a list of ZFBRequests
 type ZFBRequestsList []*ZFBRequest
 
-// ZFBRequestsAncestor is the interface of an ancestor of a ZFBRequest must implement.
+// ZFBRequestsAncestor is the interface that an ancestor of a ZFBRequest must implement.
+// An Ancestor is defined as an entity that has ZFBRequest as a descendant.
+// An Ancestor can get a list of its child ZFBRequests, but not necessarily create one.
 type ZFBRequestsAncestor interface {
 	ZFBRequests(*bambou.FetchingInfo) (ZFBRequestsList, *bambou.Error)
-	CreateZFBRequests(*ZFBRequest) *bambou.Error
+}
+
+// ZFBRequestsParent is the interface that a parent of a ZFBRequest must implement.
+// A Parent is defined as an entity that has ZFBRequest as a child.
+// A Parent is an Ancestor which can create a ZFBRequest.
+type ZFBRequestsParent interface {
+	ZFBRequestsAncestor
+	CreateZFBRequest(*ZFBRequest) *bambou.Error
 }
 
 // ZFBRequest represents the model of a zfbrequest
 type ZFBRequest struct {
-	ID                       string  `json:"ID,omitempty"`
-	ParentID                 string  `json:"parentID,omitempty"`
-	ParentType               string  `json:"parentType,omitempty"`
-	Owner                    string  `json:"owner,omitempty"`
-	MACAddress               string  `json:"MACAddress,omitempty"`
-	ZFBApprovalStatus        string  `json:"ZFBApprovalStatus,omitempty"`
-	ZFBBootstrapEnabled      bool    `json:"ZFBBootstrapEnabled"`
-	ZFBInfo                  string  `json:"ZFBInfo,omitempty"`
-	ZFBRequestRetryTimer     int     `json:"ZFBRequestRetryTimer,omitempty"`
-	SKU                      string  `json:"SKU,omitempty"`
-	IPAddress                string  `json:"IPAddress,omitempty"`
-	CPUType                  string  `json:"CPUType,omitempty"`
-	NSGVersion               string  `json:"NSGVersion,omitempty"`
-	UUID                     string  `json:"UUID,omitempty"`
-	Family                   string  `json:"family,omitempty"`
-	LastConnectedTime        float64 `json:"lastConnectedTime,omitempty"`
-	LastUpdatedBy            string  `json:"lastUpdatedBy,omitempty"`
-	SerialNumber             string  `json:"serialNumber,omitempty"`
-	EntityScope              string  `json:"entityScope,omitempty"`
-	Hostname                 string  `json:"hostname,omitempty"`
-	AssociatedEnterpriseID   string  `json:"associatedEnterpriseID,omitempty"`
-	AssociatedEnterpriseName string  `json:"associatedEnterpriseName,omitempty"`
-	AssociatedNSGatewayID    string  `json:"associatedNSGatewayID,omitempty"`
-	AssociatedNSGatewayName  string  `json:"associatedNSGatewayName,omitempty"`
-	StatusString             string  `json:"statusString,omitempty"`
-	ExternalID               string  `json:"externalID,omitempty"`
+	ID                       string        `json:"ID,omitempty"`
+	ParentID                 string        `json:"parentID,omitempty"`
+	ParentType               string        `json:"parentType,omitempty"`
+	Owner                    string        `json:"owner,omitempty"`
+	MACAddress               string        `json:"MACAddress,omitempty"`
+	ZFBApprovalStatus        string        `json:"ZFBApprovalStatus,omitempty"`
+	ZFBBootstrapEnabled      bool          `json:"ZFBBootstrapEnabled"`
+	ZFBInfo                  string        `json:"ZFBInfo,omitempty"`
+	ZFBRequestRetryTimer     int           `json:"ZFBRequestRetryTimer,omitempty"`
+	SKU                      string        `json:"SKU,omitempty"`
+	IPAddress                string        `json:"IPAddress,omitempty"`
+	CPUType                  string        `json:"CPUType,omitempty"`
+	NSGVersion               string        `json:"NSGVersion,omitempty"`
+	UUID                     string        `json:"UUID,omitempty"`
+	Family                   string        `json:"family,omitempty"`
+	LastConnectedTime        float64       `json:"lastConnectedTime,omitempty"`
+	LastUpdatedBy            string        `json:"lastUpdatedBy,omitempty"`
+	RegistrationURL          string        `json:"registrationURL,omitempty"`
+	SerialNumber             string        `json:"serialNumber,omitempty"`
+	EmbeddedMetadata         []interface{} `json:"embeddedMetadata,omitempty"`
+	EntityScope              string        `json:"entityScope,omitempty"`
+	Hostname                 string        `json:"hostname,omitempty"`
+	AssociatedEnterpriseID   string        `json:"associatedEnterpriseID,omitempty"`
+	AssociatedEnterpriseName string        `json:"associatedEnterpriseName,omitempty"`
+	AssociatedEntityType     string        `json:"associatedEntityType,omitempty"`
+	AssociatedGatewayID      string        `json:"associatedGatewayID,omitempty"`
+	AssociatedGatewayName    string        `json:"associatedGatewayName,omitempty"`
+	AssociatedNSGatewayID    string        `json:"associatedNSGatewayID,omitempty"`
+	AssociatedNSGatewayName  string        `json:"associatedNSGatewayName,omitempty"`
+	StatusString             string        `json:"statusString,omitempty"`
+	ExternalID               string        `json:"externalID,omitempty"`
 }
 
 // NewZFBRequest returns a new *ZFBRequest
@@ -142,14 +156,6 @@ func (o *ZFBRequest) GlobalMetadatas(info *bambou.FetchingInfo) (GlobalMetadatas
 func (o *ZFBRequest) CreateGlobalMetadata(child *GlobalMetadata) *bambou.Error {
 
 	return bambou.CurrentSession().CreateChild(o, child)
-}
-
-// Jobs retrieves the list of child Jobs of the ZFBRequest
-func (o *ZFBRequest) Jobs(info *bambou.FetchingInfo) (JobsList, *bambou.Error) {
-
-	var list JobsList
-	err := bambou.CurrentSession().FetchChildren(o, JobIdentity, &list, info)
-	return list, err
 }
 
 // CreateJob creates a new child Job under the ZFBRequest

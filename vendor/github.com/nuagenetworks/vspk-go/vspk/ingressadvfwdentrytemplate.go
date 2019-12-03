@@ -38,65 +38,94 @@ var IngressAdvFwdEntryTemplateIdentity = bambou.Identity{
 // IngressAdvFwdEntryTemplatesList represents a list of IngressAdvFwdEntryTemplates
 type IngressAdvFwdEntryTemplatesList []*IngressAdvFwdEntryTemplate
 
-// IngressAdvFwdEntryTemplatesAncestor is the interface of an ancestor of a IngressAdvFwdEntryTemplate must implement.
+// IngressAdvFwdEntryTemplatesAncestor is the interface that an ancestor of a IngressAdvFwdEntryTemplate must implement.
+// An Ancestor is defined as an entity that has IngressAdvFwdEntryTemplate as a descendant.
+// An Ancestor can get a list of its child IngressAdvFwdEntryTemplates, but not necessarily create one.
 type IngressAdvFwdEntryTemplatesAncestor interface {
 	IngressAdvFwdEntryTemplates(*bambou.FetchingInfo) (IngressAdvFwdEntryTemplatesList, *bambou.Error)
-	CreateIngressAdvFwdEntryTemplates(*IngressAdvFwdEntryTemplate) *bambou.Error
+}
+
+// IngressAdvFwdEntryTemplatesParent is the interface that a parent of a IngressAdvFwdEntryTemplate must implement.
+// A Parent is defined as an entity that has IngressAdvFwdEntryTemplate as a child.
+// A Parent is an Ancestor which can create a IngressAdvFwdEntryTemplate.
+type IngressAdvFwdEntryTemplatesParent interface {
+	IngressAdvFwdEntryTemplatesAncestor
+	CreateIngressAdvFwdEntryTemplate(*IngressAdvFwdEntryTemplate) *bambou.Error
 }
 
 // IngressAdvFwdEntryTemplate represents the model of a ingressadvfwdentrytemplate
 type IngressAdvFwdEntryTemplate struct {
-	ID                              string `json:"ID,omitempty"`
-	ParentID                        string `json:"parentID,omitempty"`
-	ParentType                      string `json:"parentType,omitempty"`
-	Owner                           string `json:"owner,omitempty"`
-	ACLTemplateName                 string `json:"ACLTemplateName,omitempty"`
-	ICMPCode                        string `json:"ICMPCode,omitempty"`
-	ICMPType                        string `json:"ICMPType,omitempty"`
-	FCOverride                      string `json:"FCOverride,omitempty"`
-	IPv6AddressOverride             string `json:"IPv6AddressOverride,omitempty"`
-	DSCP                            string `json:"DSCP,omitempty"`
-	Name                            string `json:"name,omitempty"`
-	LastUpdatedBy                   string `json:"lastUpdatedBy,omitempty"`
-	Action                          string `json:"action,omitempty"`
-	AddressOverride                 string `json:"addressOverride,omitempty"`
-	RedirectVPortTagID              string `json:"redirectVPortTagID,omitempty"`
-	Description                     string `json:"description,omitempty"`
-	DestinationPort                 string `json:"destinationPort,omitempty"`
-	NetworkID                       string `json:"networkID,omitempty"`
-	NetworkType                     string `json:"networkType,omitempty"`
-	MirrorDestinationID             string `json:"mirrorDestinationID,omitempty"`
-	FlowLoggingEnabled              bool   `json:"flowLoggingEnabled"`
-	EnterpriseName                  string `json:"enterpriseName,omitempty"`
-	EntityScope                     string `json:"entityScope,omitempty"`
-	LocationID                      string `json:"locationID,omitempty"`
-	LocationType                    string `json:"locationType,omitempty"`
-	PolicyState                     string `json:"policyState,omitempty"`
-	DomainName                      string `json:"domainName,omitempty"`
-	SourcePort                      string `json:"sourcePort,omitempty"`
-	UplinkPreference                string `json:"uplinkPreference,omitempty"`
-	Priority                        int    `json:"priority,omitempty"`
-	Protocol                        string `json:"protocol,omitempty"`
-	AssociatedApplicationID         string `json:"associatedApplicationID,omitempty"`
-	AssociatedApplicationObjectID   string `json:"associatedApplicationObjectID,omitempty"`
-	AssociatedApplicationObjectType string `json:"associatedApplicationObjectType,omitempty"`
-	AssociatedLiveEntityID          string `json:"associatedLiveEntityID,omitempty"`
-	StatsID                         string `json:"statsID,omitempty"`
-	StatsLoggingEnabled             bool   `json:"statsLoggingEnabled"`
-	EtherType                       string `json:"etherType,omitempty"`
-	ExternalID                      string `json:"externalID,omitempty"`
+	ID                             string        `json:"ID,omitempty"`
+	ParentID                       string        `json:"parentID,omitempty"`
+	ParentType                     string        `json:"parentType,omitempty"`
+	Owner                          string        `json:"owner,omitempty"`
+	ACLTemplateName                string        `json:"ACLTemplateName,omitempty"`
+	ICMPCode                       string        `json:"ICMPCode,omitempty"`
+	ICMPType                       string        `json:"ICMPType,omitempty"`
+	FCOverride                     string        `json:"FCOverride,omitempty"`
+	IPv6AddressOverride            string        `json:"IPv6AddressOverride,omitempty"`
+	DSCP                           string        `json:"DSCP,omitempty"`
+	DSCPRemarking                  string        `json:"DSCPRemarking,omitempty"`
+	FailsafeDatapath               string        `json:"failsafeDatapath,omitempty"`
+	LastUpdatedBy                  string        `json:"lastUpdatedBy,omitempty"`
+	Action                         string        `json:"action,omitempty"`
+	AddressOverride                string        `json:"addressOverride,omitempty"`
+	AddressOverrideType            string        `json:"addressOverrideType,omitempty"`
+	WebFilterID                    string        `json:"webFilterID,omitempty"`
+	WebFilterStatsLoggingEnabled   bool          `json:"webFilterStatsLoggingEnabled"`
+	WebFilterType                  string        `json:"webFilterType,omitempty"`
+	RedirectRewriteType            string        `json:"redirectRewriteType,omitempty"`
+	RedirectRewriteValue           string        `json:"redirectRewriteValue,omitempty"`
+	RedirectVPortTagID             string        `json:"redirectVPortTagID,omitempty"`
+	RemoteUplinkPreference         string        `json:"remoteUplinkPreference,omitempty"`
+	Description                    string        `json:"description,omitempty"`
+	DestinationPort                string        `json:"destinationPort,omitempty"`
+	NetworkID                      string        `json:"networkID,omitempty"`
+	NetworkType                    string        `json:"networkType,omitempty"`
+	MirrorDestinationGroupID       string        `json:"mirrorDestinationGroupID,omitempty"`
+	MirrorDestinationID            string        `json:"mirrorDestinationID,omitempty"`
+	VlanRange                      string        `json:"vlanRange,omitempty"`
+	FlowLoggingEnabled             bool          `json:"flowLoggingEnabled"`
+	EmbeddedMetadata               []interface{} `json:"embeddedMetadata,omitempty"`
+	EnterpriseName                 string        `json:"enterpriseName,omitempty"`
+	EntityScope                    string        `json:"entityScope,omitempty"`
+	LocationID                     string        `json:"locationID,omitempty"`
+	LocationType                   string        `json:"locationType,omitempty"`
+	PolicyState                    string        `json:"policyState,omitempty"`
+	DomainName                     string        `json:"domainName,omitempty"`
+	SourcePort                     string        `json:"sourcePort,omitempty"`
+	UplinkPreference               string        `json:"uplinkPreference,omitempty"`
+	AppType                        string        `json:"appType,omitempty"`
+	Priority                       int           `json:"priority,omitempty"`
+	Protocol                       string        `json:"protocol,omitempty"`
+	IsSLAAware                     bool          `json:"isSLAAware"`
+	AssociatedApplicationID        string        `json:"associatedApplicationID,omitempty"`
+	AssociatedForwardingPathListID string        `json:"associatedForwardingPathListID,omitempty"`
+	AssociatedLiveEntityID         string        `json:"associatedLiveEntityID,omitempty"`
+	AssociatedLiveTemplateID       string        `json:"associatedLiveTemplateID,omitempty"`
+	AssociatedTrafficType          string        `json:"associatedTrafficType,omitempty"`
+	AssociatedTrafficTypeID        string        `json:"associatedTrafficTypeID,omitempty"`
+	StatsID                        string        `json:"statsID,omitempty"`
+	StatsLoggingEnabled            bool          `json:"statsLoggingEnabled"`
+	EtherType                      string        `json:"etherType,omitempty"`
+	ExternalID                     string        `json:"externalID,omitempty"`
 }
 
 // NewIngressAdvFwdEntryTemplate returns a new *IngressAdvFwdEntryTemplate
 func NewIngressAdvFwdEntryTemplate() *IngressAdvFwdEntryTemplate {
 
 	return &IngressAdvFwdEntryTemplate{
-		Protocol:     "6",
-		EtherType:    "0x0800",
-		DSCP:         "*",
-		LocationType: "ANY",
-		Action:       "FORWARD",
-		NetworkType:  "ANY",
+		DSCP:                         "*",
+		FailsafeDatapath:             "FAIL_TO_BLOCK",
+		Action:                       "FORWARD",
+		WebFilterStatsLoggingEnabled: false,
+		RemoteUplinkPreference:       "DEFAULT",
+		NetworkType:                  "ANY",
+		LocationType:                 "ANY",
+		AppType:                      "NONE",
+		Protocol:                     "6",
+		IsSLAAware:                   false,
+		EtherType:                    "0x0800",
 	}
 }
 
@@ -164,30 +193,10 @@ func (o *IngressAdvFwdEntryTemplate) CreateGlobalMetadata(child *GlobalMetadata)
 	return bambou.CurrentSession().CreateChild(o, child)
 }
 
-// Jobs retrieves the list of child Jobs of the IngressAdvFwdEntryTemplate
-func (o *IngressAdvFwdEntryTemplate) Jobs(info *bambou.FetchingInfo) (JobsList, *bambou.Error) {
-
-	var list JobsList
-	err := bambou.CurrentSession().FetchChildren(o, JobIdentity, &list, info)
-	return list, err
-}
-
-// CreateJob creates a new child Job under the IngressAdvFwdEntryTemplate
-func (o *IngressAdvFwdEntryTemplate) CreateJob(child *Job) *bambou.Error {
-
-	return bambou.CurrentSession().CreateChild(o, child)
-}
-
 // Statistics retrieves the list of child Statistics of the IngressAdvFwdEntryTemplate
 func (o *IngressAdvFwdEntryTemplate) Statistics(info *bambou.FetchingInfo) (StatisticsList, *bambou.Error) {
 
 	var list StatisticsList
 	err := bambou.CurrentSession().FetchChildren(o, StatisticsIdentity, &list, info)
 	return list, err
-}
-
-// CreateStatistics creates a new child Statistics under the IngressAdvFwdEntryTemplate
-func (o *IngressAdvFwdEntryTemplate) CreateStatistics(child *Statistics) *bambou.Error {
-
-	return bambou.CurrentSession().CreateChild(o, child)
 }

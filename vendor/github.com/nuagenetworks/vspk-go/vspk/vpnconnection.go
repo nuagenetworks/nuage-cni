@@ -38,24 +38,34 @@ var VPNConnectionIdentity = bambou.Identity{
 // VPNConnectionsList represents a list of VPNConnections
 type VPNConnectionsList []*VPNConnection
 
-// VPNConnectionsAncestor is the interface of an ancestor of a VPNConnection must implement.
+// VPNConnectionsAncestor is the interface that an ancestor of a VPNConnection must implement.
+// An Ancestor is defined as an entity that has VPNConnection as a descendant.
+// An Ancestor can get a list of its child VPNConnections, but not necessarily create one.
 type VPNConnectionsAncestor interface {
 	VPNConnections(*bambou.FetchingInfo) (VPNConnectionsList, *bambou.Error)
-	CreateVPNConnections(*VPNConnection) *bambou.Error
+}
+
+// VPNConnectionsParent is the interface that a parent of a VPNConnection must implement.
+// A Parent is defined as an entity that has VPNConnection as a child.
+// A Parent is an Ancestor which can create a VPNConnection.
+type VPNConnectionsParent interface {
+	VPNConnectionsAncestor
+	CreateVPNConnection(*VPNConnection) *bambou.Error
 }
 
 // VPNConnection represents the model of a vpnconnection
 type VPNConnection struct {
-	ID                     string `json:"ID,omitempty"`
-	ParentID               string `json:"parentID,omitempty"`
-	ParentType             string `json:"parentType,omitempty"`
-	Owner                  string `json:"owner,omitempty"`
-	Name                   string `json:"name,omitempty"`
-	LastUpdatedBy          string `json:"lastUpdatedBy,omitempty"`
-	Description            string `json:"description,omitempty"`
-	EntityScope            string `json:"entityScope,omitempty"`
-	AssociatedWANServiceID string `json:"associatedWANServiceID,omitempty"`
-	ExternalID             string `json:"externalID,omitempty"`
+	ID                     string        `json:"ID,omitempty"`
+	ParentID               string        `json:"parentID,omitempty"`
+	ParentType             string        `json:"parentType,omitempty"`
+	Owner                  string        `json:"owner,omitempty"`
+	Name                   string        `json:"name,omitempty"`
+	LastUpdatedBy          string        `json:"lastUpdatedBy,omitempty"`
+	Description            string        `json:"description,omitempty"`
+	EmbeddedMetadata       []interface{} `json:"embeddedMetadata,omitempty"`
+	EntityScope            string        `json:"entityScope,omitempty"`
+	AssociatedWANServiceID string        `json:"associatedWANServiceID,omitempty"`
+	ExternalID             string        `json:"externalID,omitempty"`
 }
 
 // NewVPNConnection returns a new *VPNConnection

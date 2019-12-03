@@ -38,10 +38,19 @@ var MetadataIdentity = bambou.Identity{
 // MetadatasList represents a list of Metadatas
 type MetadatasList []*Metadata
 
-// MetadatasAncestor is the interface of an ancestor of a Metadata must implement.
+// MetadatasAncestor is the interface that an ancestor of a Metadata must implement.
+// An Ancestor is defined as an entity that has Metadata as a descendant.
+// An Ancestor can get a list of its child Metadatas, but not necessarily create one.
 type MetadatasAncestor interface {
 	Metadatas(*bambou.FetchingInfo) (MetadatasList, *bambou.Error)
-	CreateMetadatas(*Metadata) *bambou.Error
+}
+
+// MetadatasParent is the interface that a parent of a Metadata must implement.
+// A Parent is defined as an entity that has Metadata as a child.
+// A Parent is an Ancestor which can create a Metadata.
+type MetadatasParent interface {
+	MetadatasAncestor
+	CreateMetadata(*Metadata) *bambou.Error
 }
 
 // Metadata represents the model of a metadata
@@ -51,12 +60,15 @@ type Metadata struct {
 	ParentType                  string        `json:"parentType,omitempty"`
 	Owner                       string        `json:"owner,omitempty"`
 	Name                        string        `json:"name,omitempty"`
+	LastUpdatedBy               string        `json:"lastUpdatedBy,omitempty"`
 	Description                 string        `json:"description,omitempty"`
 	MetadataTagIDs              []interface{} `json:"metadataTagIDs,omitempty"`
 	NetworkNotificationDisabled bool          `json:"networkNotificationDisabled"`
 	Blob                        string        `json:"blob,omitempty"`
 	GlobalMetadata              bool          `json:"globalMetadata"`
 	EntityScope                 string        `json:"entityScope,omitempty"`
+	AssocEntityID               string        `json:"assocEntityID,omitempty"`
+	AssocEntityType             string        `json:"assocEntityType,omitempty"`
 	ExternalID                  string        `json:"externalID,omitempty"`
 }
 
@@ -102,35 +114,10 @@ func (o *Metadata) Delete() *bambou.Error {
 	return bambou.CurrentSession().DeleteEntity(o)
 }
 
-// MetadataTags retrieves the list of child MetadataTags of the Metadata
-func (o *Metadata) MetadataTags(info *bambou.FetchingInfo) (MetadataTagsList, *bambou.Error) {
-
-	var list MetadataTagsList
-	err := bambou.CurrentSession().FetchChildren(o, MetadataTagIdentity, &list, info)
-	return list, err
-}
-
-// AssignMetadataTags assigns the list of MetadataTags to the Metadata
-func (o *Metadata) AssignMetadataTags(children MetadataTagsList) *bambou.Error {
-
-	list := []bambou.Identifiable{}
-	for _, c := range children {
-		list = append(list, c)
-	}
-
-	return bambou.CurrentSession().AssignChildren(o, list, MetadataTagIdentity)
-}
-
 // EventLogs retrieves the list of child EventLogs of the Metadata
 func (o *Metadata) EventLogs(info *bambou.FetchingInfo) (EventLogsList, *bambou.Error) {
 
 	var list EventLogsList
 	err := bambou.CurrentSession().FetchChildren(o, EventLogIdentity, &list, info)
 	return list, err
-}
-
-// CreateEventLog creates a new child EventLog under the Metadata
-func (o *Metadata) CreateEventLog(child *EventLog) *bambou.Error {
-
-	return bambou.CurrentSession().CreateChild(o, child)
 }

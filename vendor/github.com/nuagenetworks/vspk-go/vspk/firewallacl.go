@@ -38,24 +38,38 @@ var FirewallAclIdentity = bambou.Identity{
 // FirewallAclsList represents a list of FirewallAcls
 type FirewallAclsList []*FirewallAcl
 
-// FirewallAclsAncestor is the interface of an ancestor of a FirewallAcl must implement.
+// FirewallAclsAncestor is the interface that an ancestor of a FirewallAcl must implement.
+// An Ancestor is defined as an entity that has FirewallAcl as a descendant.
+// An Ancestor can get a list of its child FirewallAcls, but not necessarily create one.
 type FirewallAclsAncestor interface {
 	FirewallAcls(*bambou.FetchingInfo) (FirewallAclsList, *bambou.Error)
-	CreateFirewallAcls(*FirewallAcl) *bambou.Error
+}
+
+// FirewallAclsParent is the interface that a parent of a FirewallAcl must implement.
+// A Parent is defined as an entity that has FirewallAcl as a child.
+// A Parent is an Ancestor which can create a FirewallAcl.
+type FirewallAclsParent interface {
+	FirewallAclsAncestor
+	CreateFirewallAcl(*FirewallAcl) *bambou.Error
 }
 
 // FirewallAcl represents the model of a firewallacl
 type FirewallAcl struct {
-	ID                string        `json:"ID,omitempty"`
-	ParentID          string        `json:"parentID,omitempty"`
-	ParentType        string        `json:"parentType,omitempty"`
-	Owner             string        `json:"owner,omitempty"`
-	Name              string        `json:"name,omitempty"`
-	Active            bool          `json:"active"`
-	DefaultAllowIP    bool          `json:"defaultAllowIP"`
-	DefaultAllowNonIP bool          `json:"defaultAllowNonIP"`
-	Description       string        `json:"description,omitempty"`
-	RuleIds           []interface{} `json:"ruleIds,omitempty"`
+	ID                   string        `json:"ID,omitempty"`
+	ParentID             string        `json:"parentID,omitempty"`
+	ParentType           string        `json:"parentType,omitempty"`
+	Owner                string        `json:"owner,omitempty"`
+	Name                 string        `json:"name,omitempty"`
+	LastUpdatedBy        string        `json:"lastUpdatedBy,omitempty"`
+	Active               bool          `json:"active"`
+	DefaultAllowIP       bool          `json:"defaultAllowIP"`
+	DefaultAllowNonIP    bool          `json:"defaultAllowNonIP"`
+	Description          string        `json:"description,omitempty"`
+	EmbeddedMetadata     []interface{} `json:"embeddedMetadata,omitempty"`
+	EntityScope          string        `json:"entityScope,omitempty"`
+	RuleIds              []interface{} `json:"ruleIds,omitempty"`
+	AutoGeneratePriority bool          `json:"autoGeneratePriority"`
+	ExternalID           string        `json:"externalID,omitempty"`
 }
 
 // NewFirewallAcl returns a new *FirewallAcl
@@ -100,6 +114,20 @@ func (o *FirewallAcl) Delete() *bambou.Error {
 	return bambou.CurrentSession().DeleteEntity(o)
 }
 
+// Metadatas retrieves the list of child Metadatas of the FirewallAcl
+func (o *FirewallAcl) Metadatas(info *bambou.FetchingInfo) (MetadatasList, *bambou.Error) {
+
+	var list MetadatasList
+	err := bambou.CurrentSession().FetchChildren(o, MetadataIdentity, &list, info)
+	return list, err
+}
+
+// CreateMetadata creates a new child Metadata under the FirewallAcl
+func (o *FirewallAcl) CreateMetadata(child *Metadata) *bambou.Error {
+
+	return bambou.CurrentSession().CreateChild(o, child)
+}
+
 // FirewallRules retrieves the list of child FirewallRules of the FirewallAcl
 func (o *FirewallAcl) FirewallRules(info *bambou.FetchingInfo) (FirewallRulesList, *bambou.Error) {
 
@@ -108,8 +136,16 @@ func (o *FirewallAcl) FirewallRules(info *bambou.FetchingInfo) (FirewallRulesLis
 	return list, err
 }
 
-// CreateFirewallRule creates a new child FirewallRule under the FirewallAcl
-func (o *FirewallAcl) CreateFirewallRule(child *FirewallRule) *bambou.Error {
+// GlobalMetadatas retrieves the list of child GlobalMetadatas of the FirewallAcl
+func (o *FirewallAcl) GlobalMetadatas(info *bambou.FetchingInfo) (GlobalMetadatasList, *bambou.Error) {
+
+	var list GlobalMetadatasList
+	err := bambou.CurrentSession().FetchChildren(o, GlobalMetadataIdentity, &list, info)
+	return list, err
+}
+
+// CreateGlobalMetadata creates a new child GlobalMetadata under the FirewallAcl
+func (o *FirewallAcl) CreateGlobalMetadata(child *GlobalMetadata) *bambou.Error {
 
 	return bambou.CurrentSession().CreateChild(o, child)
 }
@@ -120,10 +156,4 @@ func (o *FirewallAcl) Domains(info *bambou.FetchingInfo) (DomainsList, *bambou.E
 	var list DomainsList
 	err := bambou.CurrentSession().FetchChildren(o, DomainIdentity, &list, info)
 	return list, err
-}
-
-// CreateDomain creates a new child Domain under the FirewallAcl
-func (o *FirewallAcl) CreateDomain(child *Domain) *bambou.Error {
-
-	return bambou.CurrentSession().CreateChild(o, child)
 }

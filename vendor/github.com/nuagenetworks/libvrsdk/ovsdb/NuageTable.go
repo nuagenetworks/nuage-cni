@@ -2,6 +2,7 @@ package ovsdb
 
 import (
 	"fmt"
+
 	"github.com/golang/glog"
 	"github.com/socketplane/libovsdb"
 )
@@ -45,7 +46,7 @@ func (nuageTable *NuageTable) InsertRow(ovs *libovsdb.OvsdbClient, row NuageTabl
 		return (errStr)
 	}
 
-	glog.V(2).Info("Insertion into Nuage VM Table succeeded with UUID %s", reply[0].UUID)
+	glog.V(2).Infof("Insertion into Nuage VM Table succeeded with UUID %s", reply[0].UUID)
 
 	return nil
 }
@@ -107,7 +108,7 @@ func (nuageTable *NuageTable) ReadRows(ovs *libovsdb.OvsdbClient, readRowArgs Re
 	glog.V(2).Infof("reply : (%+v) err : (%+v)", reply, err)
 
 	if err != nil || len(reply) != 1 || reply[0].Error != "" {
-		// glog.Errorf("Problem reading row from the Nuage table %s %v %+v", nuageTable.TableName, err, reply)
+		glog.Errorf("Problem reading row from the Nuage table %s %v %+v", nuageTable.TableName, err, reply)
 		return nil, fmt.Errorf("Problem reading row from the Nuage table %s %v",
 			nuageTable.TableName, err)
 	}
@@ -152,13 +153,13 @@ func (nuageTable *NuageTable) ReadRow(ovs *libovsdb.OvsdbClient, readRowArgs Rea
 	glog.V(2).Infof("reply : (%+v) err : (%+v)", reply, err)
 
 	if err != nil || len(reply) != 1 || reply[0].Error != "" {
-		// glog.Errorf("Problem reading row from the Nuage table %s %v", nuageTable.TableName, err)
+		glog.Errorf("Problem reading row from the Nuage table %s %v", nuageTable.TableName, err)
 		return nil, fmt.Errorf("Problem reading row from the Nuage table %s %v",
 			nuageTable.TableName, err)
 	}
 
 	if len(reply[0].Rows) != 1 {
-		// glog.Errorf("Did not find a Nuage Table entry for table %s condition %v", nuageTable.TableName, condition)
+		glog.Errorf("Did not find a Nuage Table entry for table %s condition %v", nuageTable.TableName, condition)
 		return nil, fmt.Errorf("Did not find a Nuage Table entry for table %s condition %v",
 			nuageTable.TableName, condition)
 	}

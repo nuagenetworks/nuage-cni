@@ -38,36 +38,48 @@ var DomainTemplateIdentity = bambou.Identity{
 // DomainTemplatesList represents a list of DomainTemplates
 type DomainTemplatesList []*DomainTemplate
 
-// DomainTemplatesAncestor is the interface of an ancestor of a DomainTemplate must implement.
+// DomainTemplatesAncestor is the interface that an ancestor of a DomainTemplate must implement.
+// An Ancestor is defined as an entity that has DomainTemplate as a descendant.
+// An Ancestor can get a list of its child DomainTemplates, but not necessarily create one.
 type DomainTemplatesAncestor interface {
 	DomainTemplates(*bambou.FetchingInfo) (DomainTemplatesList, *bambou.Error)
-	CreateDomainTemplates(*DomainTemplate) *bambou.Error
+}
+
+// DomainTemplatesParent is the interface that a parent of a DomainTemplate must implement.
+// A Parent is defined as an entity that has DomainTemplate as a child.
+// A Parent is an Ancestor which can create a DomainTemplate.
+type DomainTemplatesParent interface {
+	DomainTemplatesAncestor
+	CreateDomainTemplate(*DomainTemplate) *bambou.Error
 }
 
 // DomainTemplate represents the model of a domaintemplate
 type DomainTemplate struct {
-	ID                              string `json:"ID,omitempty"`
-	ParentID                        string `json:"parentID,omitempty"`
-	ParentType                      string `json:"parentType,omitempty"`
-	Owner                           string `json:"owner,omitempty"`
-	DPI                             string `json:"DPI,omitempty"`
-	Name                            string `json:"name,omitempty"`
-	LastUpdatedBy                   string `json:"lastUpdatedBy,omitempty"`
-	Description                     string `json:"description,omitempty"`
-	Encryption                      string `json:"encryption,omitempty"`
-	EntityScope                     string `json:"entityScope,omitempty"`
-	PolicyChangeStatus              string `json:"policyChangeStatus,omitempty"`
-	AssociatedBGPProfileID          string `json:"associatedBGPProfileID,omitempty"`
-	AssociatedMulticastChannelMapID string `json:"associatedMulticastChannelMapID,omitempty"`
-	AssociatedPATMapperID           string `json:"associatedPATMapperID,omitempty"`
-	Multicast                       string `json:"multicast,omitempty"`
-	ExternalID                      string `json:"externalID,omitempty"`
+	ID                              string        `json:"ID,omitempty"`
+	ParentID                        string        `json:"parentID,omitempty"`
+	ParentType                      string        `json:"parentType,omitempty"`
+	Owner                           string        `json:"owner,omitempty"`
+	DPI                             string        `json:"DPI,omitempty"`
+	Name                            string        `json:"name,omitempty"`
+	LastUpdatedBy                   string        `json:"lastUpdatedBy,omitempty"`
+	Description                     string        `json:"description,omitempty"`
+	EmbeddedMetadata                []interface{} `json:"embeddedMetadata,omitempty"`
+	Encryption                      string        `json:"encryption,omitempty"`
+	EntityScope                     string        `json:"entityScope,omitempty"`
+	PolicyChangeStatus              string        `json:"policyChangeStatus,omitempty"`
+	AssociatedBGPProfileID          string        `json:"associatedBGPProfileID,omitempty"`
+	AssociatedMulticastChannelMapID string        `json:"associatedMulticastChannelMapID,omitempty"`
+	AssociatedPATMapperID           string        `json:"associatedPATMapperID,omitempty"`
+	Multicast                       string        `json:"multicast,omitempty"`
+	ExternalID                      string        `json:"externalID,omitempty"`
 }
 
 // NewDomainTemplate returns a new *DomainTemplate
 func NewDomainTemplate() *DomainTemplate {
 
-	return &DomainTemplate{}
+	return &DomainTemplate{
+		DPI: "DISABLED",
+	}
 }
 
 // Identity returns the Identity of the object.
@@ -148,6 +160,20 @@ func (o *DomainTemplate) CreateMetadata(child *Metadata) *bambou.Error {
 	return bambou.CurrentSession().CreateChild(o, child)
 }
 
+// PGExpressionTemplates retrieves the list of child PGExpressionTemplates of the DomainTemplate
+func (o *DomainTemplate) PGExpressionTemplates(info *bambou.FetchingInfo) (PGExpressionTemplatesList, *bambou.Error) {
+
+	var list PGExpressionTemplatesList
+	err := bambou.CurrentSession().FetchChildren(o, PGExpressionTemplateIdentity, &list, info)
+	return list, err
+}
+
+// CreatePGExpressionTemplate creates a new child PGExpressionTemplate under the DomainTemplate
+func (o *DomainTemplate) CreatePGExpressionTemplate(child *PGExpressionTemplate) *bambou.Error {
+
+	return bambou.CurrentSession().CreateChild(o, child)
+}
+
 // EgressACLTemplates retrieves the list of child EgressACLTemplates of the DomainTemplate
 func (o *DomainTemplate) EgressACLTemplates(info *bambou.FetchingInfo) (EgressACLTemplatesList, *bambou.Error) {
 
@@ -158,6 +184,20 @@ func (o *DomainTemplate) EgressACLTemplates(info *bambou.FetchingInfo) (EgressAC
 
 // CreateEgressACLTemplate creates a new child EgressACLTemplate under the DomainTemplate
 func (o *DomainTemplate) CreateEgressACLTemplate(child *EgressACLTemplate) *bambou.Error {
+
+	return bambou.CurrentSession().CreateChild(o, child)
+}
+
+// EgressAdvFwdTemplates retrieves the list of child EgressAdvFwdTemplates of the DomainTemplate
+func (o *DomainTemplate) EgressAdvFwdTemplates(info *bambou.FetchingInfo) (EgressAdvFwdTemplatesList, *bambou.Error) {
+
+	var list EgressAdvFwdTemplatesList
+	err := bambou.CurrentSession().FetchChildren(o, EgressAdvFwdTemplateIdentity, &list, info)
+	return list, err
+}
+
+// CreateEgressAdvFwdTemplate creates a new child EgressAdvFwdTemplate under the DomainTemplate
+func (o *DomainTemplate) CreateEgressAdvFwdTemplate(child *EgressAdvFwdTemplate) *bambou.Error {
 
 	return bambou.CurrentSession().CreateChild(o, child)
 }
@@ -176,16 +216,16 @@ func (o *DomainTemplate) CreateDomainFIPAclTemplate(child *DomainFIPAclTemplate)
 	return bambou.CurrentSession().CreateChild(o, child)
 }
 
-// FloatingIPACLTemplates retrieves the list of child FloatingIPACLTemplates of the DomainTemplate
-func (o *DomainTemplate) FloatingIPACLTemplates(info *bambou.FetchingInfo) (FloatingIPACLTemplatesList, *bambou.Error) {
+// VirtualFirewallPolicies retrieves the list of child VirtualFirewallPolicies of the DomainTemplate
+func (o *DomainTemplate) VirtualFirewallPolicies(info *bambou.FetchingInfo) (VirtualFirewallPoliciesList, *bambou.Error) {
 
-	var list FloatingIPACLTemplatesList
-	err := bambou.CurrentSession().FetchChildren(o, FloatingIPACLTemplateIdentity, &list, info)
+	var list VirtualFirewallPoliciesList
+	err := bambou.CurrentSession().FetchChildren(o, VirtualFirewallPolicyIdentity, &list, info)
 	return list, err
 }
 
-// CreateFloatingIPACLTemplate creates a new child FloatingIPACLTemplate under the DomainTemplate
-func (o *DomainTemplate) CreateFloatingIPACLTemplate(child *FloatingIPACLTemplate) *bambou.Error {
+// CreateVirtualFirewallPolicy creates a new child VirtualFirewallPolicy under the DomainTemplate
+func (o *DomainTemplate) CreateVirtualFirewallPolicy(child *VirtualFirewallPolicy) *bambou.Error {
 
 	return bambou.CurrentSession().CreateChild(o, child)
 }
@@ -230,28 +270,6 @@ func (o *DomainTemplate) IngressAdvFwdTemplates(info *bambou.FetchingInfo) (Ingr
 func (o *DomainTemplate) CreateIngressAdvFwdTemplate(child *IngressAdvFwdTemplate) *bambou.Error {
 
 	return bambou.CurrentSession().CreateChild(o, child)
-}
-
-// IngressExternalServiceTemplates retrieves the list of child IngressExternalServiceTemplates of the DomainTemplate
-func (o *DomainTemplate) IngressExternalServiceTemplates(info *bambou.FetchingInfo) (IngressExternalServiceTemplatesList, *bambou.Error) {
-
-	var list IngressExternalServiceTemplatesList
-	err := bambou.CurrentSession().FetchChildren(o, IngressExternalServiceTemplateIdentity, &list, info)
-	return list, err
-}
-
-// CreateIngressExternalServiceTemplate creates a new child IngressExternalServiceTemplate under the DomainTemplate
-func (o *DomainTemplate) CreateIngressExternalServiceTemplate(child *IngressExternalServiceTemplate) *bambou.Error {
-
-	return bambou.CurrentSession().CreateChild(o, child)
-}
-
-// Jobs retrieves the list of child Jobs of the DomainTemplate
-func (o *DomainTemplate) Jobs(info *bambou.FetchingInfo) (JobsList, *bambou.Error) {
-
-	var list JobsList
-	err := bambou.CurrentSession().FetchChildren(o, JobIdentity, &list, info)
-	return list, err
 }
 
 // CreateJob creates a new child Job under the DomainTemplate
@@ -329,12 +347,6 @@ func (o *DomainTemplate) Groups(info *bambou.FetchingInfo) (GroupsList, *bambou.
 	return list, err
 }
 
-// CreateGroup creates a new child Group under the DomainTemplate
-func (o *DomainTemplate) CreateGroup(child *Group) *bambou.Error {
-
-	return bambou.CurrentSession().CreateChild(o, child)
-}
-
 // SubnetTemplates retrieves the list of child SubnetTemplates of the DomainTemplate
 func (o *DomainTemplate) SubnetTemplates(info *bambou.FetchingInfo) (SubnetTemplatesList, *bambou.Error) {
 
@@ -343,22 +355,10 @@ func (o *DomainTemplate) SubnetTemplates(info *bambou.FetchingInfo) (SubnetTempl
 	return list, err
 }
 
-// CreateSubnetTemplate creates a new child SubnetTemplate under the DomainTemplate
-func (o *DomainTemplate) CreateSubnetTemplate(child *SubnetTemplate) *bambou.Error {
-
-	return bambou.CurrentSession().CreateChild(o, child)
-}
-
 // EventLogs retrieves the list of child EventLogs of the DomainTemplate
 func (o *DomainTemplate) EventLogs(info *bambou.FetchingInfo) (EventLogsList, *bambou.Error) {
 
 	var list EventLogsList
 	err := bambou.CurrentSession().FetchChildren(o, EventLogIdentity, &list, info)
 	return list, err
-}
-
-// CreateEventLog creates a new child EventLog under the DomainTemplate
-func (o *DomainTemplate) CreateEventLog(child *EventLog) *bambou.Error {
-
-	return bambou.CurrentSession().CreateChild(o, child)
 }

@@ -38,10 +38,19 @@ var EnterpriseProfileIdentity = bambou.Identity{
 // EnterpriseProfilesList represents a list of EnterpriseProfiles
 type EnterpriseProfilesList []*EnterpriseProfile
 
-// EnterpriseProfilesAncestor is the interface of an ancestor of a EnterpriseProfile must implement.
+// EnterpriseProfilesAncestor is the interface that an ancestor of a EnterpriseProfile must implement.
+// An Ancestor is defined as an entity that has EnterpriseProfile as a descendant.
+// An Ancestor can get a list of its child EnterpriseProfiles, but not necessarily create one.
 type EnterpriseProfilesAncestor interface {
 	EnterpriseProfiles(*bambou.FetchingInfo) (EnterpriseProfilesList, *bambou.Error)
-	CreateEnterpriseProfiles(*EnterpriseProfile) *bambou.Error
+}
+
+// EnterpriseProfilesParent is the interface that a parent of a EnterpriseProfile must implement.
+// A Parent is defined as an entity that has EnterpriseProfile as a child.
+// A Parent is an Ancestor which can create a EnterpriseProfile.
+type EnterpriseProfilesParent interface {
+	EnterpriseProfilesAncestor
+	CreateEnterpriseProfile(*EnterpriseProfile) *bambou.Error
 }
 
 // EnterpriseProfile represents the model of a enterpriseprofile
@@ -52,9 +61,10 @@ type EnterpriseProfile struct {
 	Owner                                  string        `json:"owner,omitempty"`
 	BGPEnabled                             bool          `json:"BGPEnabled"`
 	DHCPLeaseInterval                      int           `json:"DHCPLeaseInterval,omitempty"`
-	DPIEnabled                             bool          `json:"DPIEnabled"`
+	VNFManagementEnabled                   bool          `json:"VNFManagementEnabled"`
 	Name                                   string        `json:"name,omitempty"`
 	LastUpdatedBy                          string        `json:"lastUpdatedBy,omitempty"`
+	WebFilterEnabled                       bool          `json:"webFilterEnabled"`
 	ReceiveMultiCastListID                 string        `json:"receiveMultiCastListID,omitempty"`
 	SendMultiCastListID                    string        `json:"sendMultiCastListID,omitempty"`
 	Description                            string        `json:"description,omitempty"`
@@ -63,9 +73,11 @@ type EnterpriseProfile struct {
 	AllowTrustedForwardingClass            bool          `json:"allowTrustedForwardingClass"`
 	AllowedForwardingClasses               []interface{} `json:"allowedForwardingClasses,omitempty"`
 	FloatingIPsQuota                       int           `json:"floatingIPsQuota,omitempty"`
+	EmbeddedMetadata                       []interface{} `json:"embeddedMetadata,omitempty"`
 	EnableApplicationPerformanceManagement bool          `json:"enableApplicationPerformanceManagement"`
 	EncryptionManagementMode               string        `json:"encryptionManagementMode,omitempty"`
 	EntityScope                            string        `json:"entityScope,omitempty"`
+	ForwardingClass                        []interface{} `json:"forwardingClass,omitempty"`
 	ExternalID                             string        `json:"externalID,omitempty"`
 }
 
@@ -73,8 +85,11 @@ type EnterpriseProfile struct {
 func NewEnterpriseProfile() *EnterpriseProfile {
 
 	return &EnterpriseProfile{
-		FloatingIPsQuota:  100,
-		DHCPLeaseInterval: 24,
+		DHCPLeaseInterval:                      24,
+		VNFManagementEnabled:                   false,
+		WebFilterEnabled:                       false,
+		FloatingIPsQuota:                       100,
+		EnableApplicationPerformanceManagement: false,
 	}
 }
 
@@ -150,12 +165,6 @@ func (o *EnterpriseProfile) Enterprises(info *bambou.FetchingInfo) (EnterprisesL
 	return list, err
 }
 
-// CreateEnterprise creates a new child Enterprise under the EnterpriseProfile
-func (o *EnterpriseProfile) CreateEnterprise(child *Enterprise) *bambou.Error {
-
-	return bambou.CurrentSession().CreateChild(o, child)
-}
-
 // MultiCastLists retrieves the list of child MultiCastLists of the EnterpriseProfile
 func (o *EnterpriseProfile) MultiCastLists(info *bambou.FetchingInfo) (MultiCastListsList, *bambou.Error) {
 
@@ -164,41 +173,10 @@ func (o *EnterpriseProfile) MultiCastLists(info *bambou.FetchingInfo) (MultiCast
 	return list, err
 }
 
-// CreateMultiCastList creates a new child MultiCastList under the EnterpriseProfile
-func (o *EnterpriseProfile) CreateMultiCastList(child *MultiCastList) *bambou.Error {
-
-	return bambou.CurrentSession().CreateChild(o, child)
-}
-
 // EventLogs retrieves the list of child EventLogs of the EnterpriseProfile
 func (o *EnterpriseProfile) EventLogs(info *bambou.FetchingInfo) (EventLogsList, *bambou.Error) {
 
 	var list EventLogsList
 	err := bambou.CurrentSession().FetchChildren(o, EventLogIdentity, &list, info)
 	return list, err
-}
-
-// CreateEventLog creates a new child EventLog under the EnterpriseProfile
-func (o *EnterpriseProfile) CreateEventLog(child *EventLog) *bambou.Error {
-
-	return bambou.CurrentSession().CreateChild(o, child)
-}
-
-// ExternalServices retrieves the list of child ExternalServices of the EnterpriseProfile
-func (o *EnterpriseProfile) ExternalServices(info *bambou.FetchingInfo) (ExternalServicesList, *bambou.Error) {
-
-	var list ExternalServicesList
-	err := bambou.CurrentSession().FetchChildren(o, ExternalServiceIdentity, &list, info)
-	return list, err
-}
-
-// AssignExternalServices assigns the list of ExternalServices to the EnterpriseProfile
-func (o *EnterpriseProfile) AssignExternalServices(children ExternalServicesList) *bambou.Error {
-
-	list := []bambou.Identifiable{}
-	for _, c := range children {
-		list = append(list, c)
-	}
-
-	return bambou.CurrentSession().AssignChildren(o, list, ExternalServiceIdentity)
 }

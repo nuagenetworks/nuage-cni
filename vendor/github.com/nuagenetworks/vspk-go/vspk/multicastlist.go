@@ -38,22 +38,32 @@ var MultiCastListIdentity = bambou.Identity{
 // MultiCastListsList represents a list of MultiCastLists
 type MultiCastListsList []*MultiCastList
 
-// MultiCastListsAncestor is the interface of an ancestor of a MultiCastList must implement.
+// MultiCastListsAncestor is the interface that an ancestor of a MultiCastList must implement.
+// An Ancestor is defined as an entity that has MultiCastList as a descendant.
+// An Ancestor can get a list of its child MultiCastLists, but not necessarily create one.
 type MultiCastListsAncestor interface {
 	MultiCastLists(*bambou.FetchingInfo) (MultiCastListsList, *bambou.Error)
-	CreateMultiCastLists(*MultiCastList) *bambou.Error
+}
+
+// MultiCastListsParent is the interface that a parent of a MultiCastList must implement.
+// A Parent is defined as an entity that has MultiCastList as a child.
+// A Parent is an Ancestor which can create a MultiCastList.
+type MultiCastListsParent interface {
+	MultiCastListsAncestor
+	CreateMultiCastList(*MultiCastList) *bambou.Error
 }
 
 // MultiCastList represents the model of a multicastlist
 type MultiCastList struct {
-	ID            string `json:"ID,omitempty"`
-	ParentID      string `json:"parentID,omitempty"`
-	ParentType    string `json:"parentType,omitempty"`
-	Owner         string `json:"owner,omitempty"`
-	LastUpdatedBy string `json:"lastUpdatedBy,omitempty"`
-	McastType     string `json:"mcastType,omitempty"`
-	EntityScope   string `json:"entityScope,omitempty"`
-	ExternalID    string `json:"externalID,omitempty"`
+	ID               string        `json:"ID,omitempty"`
+	ParentID         string        `json:"parentID,omitempty"`
+	ParentType       string        `json:"parentType,omitempty"`
+	Owner            string        `json:"owner,omitempty"`
+	LastUpdatedBy    string        `json:"lastUpdatedBy,omitempty"`
+	McastType        string        `json:"mcastType,omitempty"`
+	EmbeddedMetadata []interface{} `json:"embeddedMetadata,omitempty"`
+	EntityScope      string        `json:"entityScope,omitempty"`
+	ExternalID       string        `json:"externalID,omitempty"`
 }
 
 // NewMultiCastList returns a new *MultiCastList

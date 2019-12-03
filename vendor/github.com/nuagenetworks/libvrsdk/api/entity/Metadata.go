@@ -11,4 +11,5 @@ const (
 	MetadataKeySiteID          MetadataKey = "nuage-siteID"
 	MetadataKeyDeleteMode      MetadataKey = "nuage-delete-mode"
 	MetadataKeyDeleteExpiry    MetadataKey = "nuage-delete-expiry"
+	MetadataKeyExtension       MetadataKey = "nuage-extension"
 )

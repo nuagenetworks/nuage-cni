@@ -2,6 +2,7 @@ package api
 
 import (
 	"errors"
+
 	"github.com/nuagenetworks/libvrsdk/ovsdb"
 	"github.com/socketplane/libovsdb"
 )

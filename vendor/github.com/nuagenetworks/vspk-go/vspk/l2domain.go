@@ -38,50 +38,83 @@ var L2DomainIdentity = bambou.Identity{
 // L2DomainsList represents a list of L2Domains
 type L2DomainsList []*L2Domain
 
-// L2DomainsAncestor is the interface of an ancestor of a L2Domain must implement.
+// L2DomainsAncestor is the interface that an ancestor of a L2Domain must implement.
+// An Ancestor is defined as an entity that has L2Domain as a descendant.
+// An Ancestor can get a list of its child L2Domains, but not necessarily create one.
 type L2DomainsAncestor interface {
 	L2Domains(*bambou.FetchingInfo) (L2DomainsList, *bambou.Error)
-	CreateL2Domains(*L2Domain) *bambou.Error
+}
+
+// L2DomainsParent is the interface that a parent of a L2Domain must implement.
+// A Parent is defined as an entity that has L2Domain as a child.
+// A Parent is an Ancestor which can create a L2Domain.
+type L2DomainsParent interface {
+	L2DomainsAncestor
+	CreateL2Domain(*L2Domain) *bambou.Error
 }
 
 // L2Domain represents the model of a l2domain
 type L2Domain struct {
-	ID                                string `json:"ID,omitempty"`
-	ParentID                          string `json:"parentID,omitempty"`
-	ParentType                        string `json:"parentType,omitempty"`
-	Owner                             string `json:"owner,omitempty"`
-	DHCPManaged                       bool   `json:"DHCPManaged"`
-	DPI                               string `json:"DPI,omitempty"`
-	IPType                            string `json:"IPType,omitempty"`
-	MaintenanceMode                   string `json:"maintenanceMode,omitempty"`
-	Name                              string `json:"name,omitempty"`
-	LastUpdatedBy                     string `json:"lastUpdatedBy,omitempty"`
-	Gateway                           string `json:"gateway,omitempty"`
-	GatewayMACAddress                 string `json:"gatewayMACAddress,omitempty"`
-	Address                           string `json:"address,omitempty"`
-	TemplateID                        string `json:"templateID,omitempty"`
-	ServiceID                         int    `json:"serviceID,omitempty"`
-	Description                       string `json:"description,omitempty"`
-	Netmask                           string `json:"netmask,omitempty"`
-	VnId                              int    `json:"vnId,omitempty"`
-	Encryption                        string `json:"encryption,omitempty"`
-	EntityScope                       string `json:"entityScope,omitempty"`
-	PolicyChangeStatus                string `json:"policyChangeStatus,omitempty"`
-	RouteDistinguisher                string `json:"routeDistinguisher,omitempty"`
-	RouteTarget                       string `json:"routeTarget,omitempty"`
-	UplinkPreference                  string `json:"uplinkPreference,omitempty"`
-	AssociatedMulticastChannelMapID   string `json:"associatedMulticastChannelMapID,omitempty"`
-	AssociatedSharedNetworkResourceID string `json:"associatedSharedNetworkResourceID,omitempty"`
-	Stretched                         bool   `json:"stretched"`
-	Multicast                         string `json:"multicast,omitempty"`
-	ExternalID                        string `json:"externalID,omitempty"`
+	ID                                string        `json:"ID,omitempty"`
+	ParentID                          string        `json:"parentID,omitempty"`
+	ParentType                        string        `json:"parentType,omitempty"`
+	Owner                             string        `json:"owner,omitempty"`
+	L2EncapType                       string        `json:"l2EncapType,omitempty"`
+	DHCPManaged                       bool          `json:"DHCPManaged"`
+	DPI                               string        `json:"DPI,omitempty"`
+	IPType                            string        `json:"IPType,omitempty"`
+	IPv6Address                       string        `json:"IPv6Address,omitempty"`
+	IPv6Gateway                       string        `json:"IPv6Gateway,omitempty"`
+	VXLANECMPEnabled                  bool          `json:"VXLANECMPEnabled"`
+	MaintenanceMode                   string        `json:"maintenanceMode,omitempty"`
+	Name                              string        `json:"name,omitempty"`
+	LastUpdatedBy                     string        `json:"lastUpdatedBy,omitempty"`
+	Gateway                           string        `json:"gateway,omitempty"`
+	GatewayMACAddress                 string        `json:"gatewayMACAddress,omitempty"`
+	Address                           string        `json:"address,omitempty"`
+	TemplateID                        string        `json:"templateID,omitempty"`
+	ServiceID                         int           `json:"serviceID,omitempty"`
+	Description                       string        `json:"description,omitempty"`
+	Netmask                           string        `json:"netmask,omitempty"`
+	FlowCollectionEnabled             string        `json:"flowCollectionEnabled,omitempty"`
+	EmbeddedMetadata                  []interface{} `json:"embeddedMetadata,omitempty"`
+	VnId                              int           `json:"vnId,omitempty"`
+	EnableDHCPv4                      bool          `json:"enableDHCPv4"`
+	EnableDHCPv6                      bool          `json:"enableDHCPv6"`
+	Encryption                        string        `json:"encryption,omitempty"`
+	IngressReplicationEnabled         bool          `json:"ingressReplicationEnabled"`
+	EntityScope                       string        `json:"entityScope,omitempty"`
+	EntityState                       string        `json:"entityState,omitempty"`
+	PolicyChangeStatus                string        `json:"policyChangeStatus,omitempty"`
+	Color                             int           `json:"color,omitempty"`
+	RouteDistinguisher                string        `json:"routeDistinguisher,omitempty"`
+	RouteTarget                       string        `json:"routeTarget,omitempty"`
+	RoutedVPLSEnabled                 bool          `json:"routedVPLSEnabled"`
+	UplinkPreference                  string        `json:"uplinkPreference,omitempty"`
+	UseGlobalMAC                      string        `json:"useGlobalMAC,omitempty"`
+	AssociatedMulticastChannelMapID   string        `json:"associatedMulticastChannelMapID,omitempty"`
+	AssociatedSharedNetworkResourceID string        `json:"associatedSharedNetworkResourceID,omitempty"`
+	AssociatedUnderlayID              string        `json:"associatedUnderlayID,omitempty"`
+	Stretched                         bool          `json:"stretched"`
+	DualStackDynamicIPAllocation      bool          `json:"dualStackDynamicIPAllocation"`
+	Multicast                         string        `json:"multicast,omitempty"`
+	CustomerID                        int           `json:"customerID,omitempty"`
+	ExternalID                        string        `json:"externalID,omitempty"`
 }
 
 // NewL2Domain returns a new *L2Domain
 func NewL2Domain() *L2Domain {
 
 	return &L2Domain{
-		MaintenanceMode: "DISABLED",
+		L2EncapType:               "VXLAN",
+		DPI:                       "DISABLED",
+		VXLANECMPEnabled:          false,
+		MaintenanceMode:           "DISABLED",
+		FlowCollectionEnabled:     "INHERITED",
+		IngressReplicationEnabled: false,
+		Color:                     0,
+		RoutedVPLSEnabled:         false,
+		UseGlobalMAC:              "DISABLED",
 	}
 }
 
@@ -121,6 +154,14 @@ func (o *L2Domain) Delete() *bambou.Error {
 	return bambou.CurrentSession().DeleteEntity(o)
 }
 
+// Gateways retrieves the list of child Gateways of the L2Domain
+func (o *L2Domain) Gateways(info *bambou.FetchingInfo) (GatewaysList, *bambou.Error) {
+
+	var list GatewaysList
+	err := bambou.CurrentSession().FetchChildren(o, GatewayIdentity, &list, info)
+	return list, err
+}
+
 // TCAs retrieves the list of child TCAs of the L2Domain
 func (o *L2Domain) TCAs(info *bambou.FetchingInfo) (TCAsList, *bambou.Error) {
 
@@ -143,12 +184,6 @@ func (o *L2Domain) AddressRanges(info *bambou.FetchingInfo) (AddressRangesList, 
 	return list, err
 }
 
-// CreateAddressRange creates a new child AddressRange under the L2Domain
-func (o *L2Domain) CreateAddressRange(child *AddressRange) *bambou.Error {
-
-	return bambou.CurrentSession().CreateChild(o, child)
-}
-
 // RedirectionTargets retrieves the list of child RedirectionTargets of the L2Domain
 func (o *L2Domain) RedirectionTargets(info *bambou.FetchingInfo) (RedirectionTargetsList, *bambou.Error) {
 
@@ -159,6 +194,28 @@ func (o *L2Domain) RedirectionTargets(info *bambou.FetchingInfo) (RedirectionTar
 
 // CreateRedirectionTarget creates a new child RedirectionTarget under the L2Domain
 func (o *L2Domain) CreateRedirectionTarget(child *RedirectionTarget) *bambou.Error {
+
+	return bambou.CurrentSession().CreateChild(o, child)
+}
+
+// RedundancyGroups retrieves the list of child RedundancyGroups of the L2Domain
+func (o *L2Domain) RedundancyGroups(info *bambou.FetchingInfo) (RedundancyGroupsList, *bambou.Error) {
+
+	var list RedundancyGroupsList
+	err := bambou.CurrentSession().FetchChildren(o, RedundancyGroupIdentity, &list, info)
+	return list, err
+}
+
+// DeploymentFailures retrieves the list of child DeploymentFailures of the L2Domain
+func (o *L2Domain) DeploymentFailures(info *bambou.FetchingInfo) (DeploymentFailuresList, *bambou.Error) {
+
+	var list DeploymentFailuresList
+	err := bambou.CurrentSession().FetchChildren(o, DeploymentFailureIdentity, &list, info)
+	return list, err
+}
+
+// CreateDeploymentFailure creates a new child DeploymentFailure under the L2Domain
+func (o *L2Domain) CreateDeploymentFailure(child *DeploymentFailure) *bambou.Error {
 
 	return bambou.CurrentSession().CreateChild(o, child)
 }
@@ -191,18 +248,40 @@ func (o *L2Domain) CreateMetadata(child *Metadata) *bambou.Error {
 	return bambou.CurrentSession().CreateChild(o, child)
 }
 
+// NetworkPerformanceBindings retrieves the list of child NetworkPerformanceBindings of the L2Domain
+func (o *L2Domain) NetworkPerformanceBindings(info *bambou.FetchingInfo) (NetworkPerformanceBindingsList, *bambou.Error) {
+
+	var list NetworkPerformanceBindingsList
+	err := bambou.CurrentSession().FetchChildren(o, NetworkPerformanceBindingIdentity, &list, info)
+	return list, err
+}
+
+// CreateNetworkPerformanceBinding creates a new child NetworkPerformanceBinding under the L2Domain
+func (o *L2Domain) CreateNetworkPerformanceBinding(child *NetworkPerformanceBinding) *bambou.Error {
+
+	return bambou.CurrentSession().CreateChild(o, child)
+}
+
+// PGExpressions retrieves the list of child PGExpressions of the L2Domain
+func (o *L2Domain) PGExpressions(info *bambou.FetchingInfo) (PGExpressionsList, *bambou.Error) {
+
+	var list PGExpressionsList
+	err := bambou.CurrentSession().FetchChildren(o, PGExpressionIdentity, &list, info)
+	return list, err
+}
+
+// CreatePGExpression creates a new child PGExpression under the L2Domain
+func (o *L2Domain) CreatePGExpression(child *PGExpression) *bambou.Error {
+
+	return bambou.CurrentSession().CreateChild(o, child)
+}
+
 // EgressACLEntryTemplates retrieves the list of child EgressACLEntryTemplates of the L2Domain
 func (o *L2Domain) EgressACLEntryTemplates(info *bambou.FetchingInfo) (EgressACLEntryTemplatesList, *bambou.Error) {
 
 	var list EgressACLEntryTemplatesList
 	err := bambou.CurrentSession().FetchChildren(o, EgressACLEntryTemplateIdentity, &list, info)
 	return list, err
-}
-
-// CreateEgressACLEntryTemplate creates a new child EgressACLEntryTemplate under the L2Domain
-func (o *L2Domain) CreateEgressACLEntryTemplate(child *EgressACLEntryTemplate) *bambou.Error {
-
-	return bambou.CurrentSession().CreateChild(o, child)
 }
 
 // EgressACLTemplates retrieves the list of child EgressACLTemplates of the L2Domain
@@ -219,6 +298,20 @@ func (o *L2Domain) CreateEgressACLTemplate(child *EgressACLTemplate) *bambou.Err
 	return bambou.CurrentSession().CreateChild(o, child)
 }
 
+// EgressAdvFwdTemplates retrieves the list of child EgressAdvFwdTemplates of the L2Domain
+func (o *L2Domain) EgressAdvFwdTemplates(info *bambou.FetchingInfo) (EgressAdvFwdTemplatesList, *bambou.Error) {
+
+	var list EgressAdvFwdTemplatesList
+	err := bambou.CurrentSession().FetchChildren(o, EgressAdvFwdTemplateIdentity, &list, info)
+	return list, err
+}
+
+// CreateEgressAdvFwdTemplate creates a new child EgressAdvFwdTemplate under the L2Domain
+func (o *L2Domain) CreateEgressAdvFwdTemplate(child *EgressAdvFwdTemplate) *bambou.Error {
+
+	return bambou.CurrentSession().CreateChild(o, child)
+}
+
 // DHCPOptions retrieves the list of child DHCPOptions of the L2Domain
 func (o *L2Domain) DHCPOptions(info *bambou.FetchingInfo) (DHCPOptionsList, *bambou.Error) {
 
@@ -231,6 +324,64 @@ func (o *L2Domain) DHCPOptions(info *bambou.FetchingInfo) (DHCPOptionsList, *bam
 func (o *L2Domain) CreateDHCPOption(child *DHCPOption) *bambou.Error {
 
 	return bambou.CurrentSession().CreateChild(o, child)
+}
+
+// DHCPv6Options retrieves the list of child DHCPv6Options of the L2Domain
+func (o *L2Domain) DHCPv6Options(info *bambou.FetchingInfo) (DHCPv6OptionsList, *bambou.Error) {
+
+	var list DHCPv6OptionsList
+	err := bambou.CurrentSession().FetchChildren(o, DHCPv6OptionIdentity, &list, info)
+	return list, err
+}
+
+// CreateDHCPv6Option creates a new child DHCPv6Option under the L2Domain
+func (o *L2Domain) CreateDHCPv6Option(child *DHCPv6Option) *bambou.Error {
+
+	return bambou.CurrentSession().CreateChild(o, child)
+}
+
+// MirrorDestinationGroups retrieves the list of child MirrorDestinationGroups of the L2Domain
+func (o *L2Domain) MirrorDestinationGroups(info *bambou.FetchingInfo) (MirrorDestinationGroupsList, *bambou.Error) {
+
+	var list MirrorDestinationGroupsList
+	err := bambou.CurrentSession().FetchChildren(o, MirrorDestinationGroupIdentity, &list, info)
+	return list, err
+}
+
+// CreateMirrorDestinationGroup creates a new child MirrorDestinationGroup under the L2Domain
+func (o *L2Domain) CreateMirrorDestinationGroup(child *MirrorDestinationGroup) *bambou.Error {
+
+	return bambou.CurrentSession().CreateChild(o, child)
+}
+
+// VirtualFirewallPolicies retrieves the list of child VirtualFirewallPolicies of the L2Domain
+func (o *L2Domain) VirtualFirewallPolicies(info *bambou.FetchingInfo) (VirtualFirewallPoliciesList, *bambou.Error) {
+
+	var list VirtualFirewallPoliciesList
+	err := bambou.CurrentSession().FetchChildren(o, VirtualFirewallPolicyIdentity, &list, info)
+	return list, err
+}
+
+// CreateVirtualFirewallPolicy creates a new child VirtualFirewallPolicy under the L2Domain
+func (o *L2Domain) CreateVirtualFirewallPolicy(child *VirtualFirewallPolicy) *bambou.Error {
+
+	return bambou.CurrentSession().CreateChild(o, child)
+}
+
+// VirtualFirewallRules retrieves the list of child VirtualFirewallRules of the L2Domain
+func (o *L2Domain) VirtualFirewallRules(info *bambou.FetchingInfo) (VirtualFirewallRulesList, *bambou.Error) {
+
+	var list VirtualFirewallRulesList
+	err := bambou.CurrentSession().FetchChildren(o, VirtualFirewallRuleIdentity, &list, info)
+	return list, err
+}
+
+// Alarms retrieves the list of child Alarms of the L2Domain
+func (o *L2Domain) Alarms(info *bambou.FetchingInfo) (AlarmsList, *bambou.Error) {
+
+	var list AlarmsList
+	err := bambou.CurrentSession().FetchChildren(o, AlarmIdentity, &list, info)
+	return list, err
 }
 
 // GlobalMetadatas retrieves the list of child GlobalMetadatas of the L2Domain
@@ -255,12 +406,6 @@ func (o *L2Domain) VMs(info *bambou.FetchingInfo) (VMsList, *bambou.Error) {
 	return list, err
 }
 
-// CreateVM creates a new child VM under the L2Domain
-func (o *L2Domain) CreateVM(child *VM) *bambou.Error {
-
-	return bambou.CurrentSession().CreateChild(o, child)
-}
-
 // VMInterfaces retrieves the list of child VMInterfaces of the L2Domain
 func (o *L2Domain) VMInterfaces(info *bambou.FetchingInfo) (VMInterfacesList, *bambou.Error) {
 
@@ -269,24 +414,12 @@ func (o *L2Domain) VMInterfaces(info *bambou.FetchingInfo) (VMInterfacesList, *b
 	return list, err
 }
 
-// CreateVMInterface creates a new child VMInterface under the L2Domain
-func (o *L2Domain) CreateVMInterface(child *VMInterface) *bambou.Error {
-
-	return bambou.CurrentSession().CreateChild(o, child)
-}
-
 // IngressACLEntryTemplates retrieves the list of child IngressACLEntryTemplates of the L2Domain
 func (o *L2Domain) IngressACLEntryTemplates(info *bambou.FetchingInfo) (IngressACLEntryTemplatesList, *bambou.Error) {
 
 	var list IngressACLEntryTemplatesList
 	err := bambou.CurrentSession().FetchChildren(o, IngressACLEntryTemplateIdentity, &list, info)
 	return list, err
-}
-
-// CreateIngressACLEntryTemplate creates a new child IngressACLEntryTemplate under the L2Domain
-func (o *L2Domain) CreateIngressACLEntryTemplate(child *IngressACLEntryTemplate) *bambou.Error {
-
-	return bambou.CurrentSession().CreateChild(o, child)
 }
 
 // IngressACLTemplates retrieves the list of child IngressACLTemplates of the L2Domain
@@ -317,28 +450,6 @@ func (o *L2Domain) CreateIngressAdvFwdTemplate(child *IngressAdvFwdTemplate) *ba
 	return bambou.CurrentSession().CreateChild(o, child)
 }
 
-// IngressExternalServiceTemplates retrieves the list of child IngressExternalServiceTemplates of the L2Domain
-func (o *L2Domain) IngressExternalServiceTemplates(info *bambou.FetchingInfo) (IngressExternalServiceTemplatesList, *bambou.Error) {
-
-	var list IngressExternalServiceTemplatesList
-	err := bambou.CurrentSession().FetchChildren(o, IngressExternalServiceTemplateIdentity, &list, info)
-	return list, err
-}
-
-// CreateIngressExternalServiceTemplate creates a new child IngressExternalServiceTemplate under the L2Domain
-func (o *L2Domain) CreateIngressExternalServiceTemplate(child *IngressExternalServiceTemplate) *bambou.Error {
-
-	return bambou.CurrentSession().CreateChild(o, child)
-}
-
-// Jobs retrieves the list of child Jobs of the L2Domain
-func (o *L2Domain) Jobs(info *bambou.FetchingInfo) (JobsList, *bambou.Error) {
-
-	var list JobsList
-	err := bambou.CurrentSession().FetchChildren(o, JobIdentity, &list, info)
-	return list, err
-}
-
 // CreateJob creates a new child Job under the L2Domain
 func (o *L2Domain) CreateJob(child *Job) *bambou.Error {
 
@@ -367,24 +478,12 @@ func (o *L2Domain) Containers(info *bambou.FetchingInfo) (ContainersList, *bambo
 	return list, err
 }
 
-// CreateContainer creates a new child Container under the L2Domain
-func (o *L2Domain) CreateContainer(child *Container) *bambou.Error {
-
-	return bambou.CurrentSession().CreateChild(o, child)
-}
-
 // ContainerInterfaces retrieves the list of child ContainerInterfaces of the L2Domain
 func (o *L2Domain) ContainerInterfaces(info *bambou.FetchingInfo) (ContainerInterfacesList, *bambou.Error) {
 
 	var list ContainerInterfacesList
 	err := bambou.CurrentSession().FetchChildren(o, ContainerInterfaceIdentity, &list, info)
 	return list, err
-}
-
-// CreateContainerInterface creates a new child ContainerInterface under the L2Domain
-func (o *L2Domain) CreateContainerInterface(child *ContainerInterface) *bambou.Error {
-
-	return bambou.CurrentSession().CreateChild(o, child)
 }
 
 // QOSs retrieves the list of child QOSs of the L2Domain
@@ -409,24 +508,12 @@ func (o *L2Domain) HostInterfaces(info *bambou.FetchingInfo) (HostInterfacesList
 	return list, err
 }
 
-// CreateHostInterface creates a new child HostInterface under the L2Domain
-func (o *L2Domain) CreateHostInterface(child *HostInterface) *bambou.Error {
-
-	return bambou.CurrentSession().CreateChild(o, child)
-}
-
 // UplinkRDs retrieves the list of child UplinkRDs of the L2Domain
 func (o *L2Domain) UplinkRDs(info *bambou.FetchingInfo) (UplinkRDsList, *bambou.Error) {
 
 	var list UplinkRDsList
 	err := bambou.CurrentSession().FetchChildren(o, UplinkRDIdentity, &list, info)
 	return list, err
-}
-
-// CreateUplinkRD creates a new child UplinkRD under the L2Domain
-func (o *L2Domain) CreateUplinkRD(child *UplinkRD) *bambou.Error {
-
-	return bambou.CurrentSession().CreateChild(o, child)
 }
 
 // VPNConnections retrieves the list of child VPNConnections of the L2Domain
@@ -457,6 +544,14 @@ func (o *L2Domain) CreateVPort(child *VPort) *bambou.Error {
 	return bambou.CurrentSession().CreateChild(o, child)
 }
 
+// Applications retrieves the list of child Applications of the L2Domain
+func (o *L2Domain) Applications(info *bambou.FetchingInfo) (ApplicationsList, *bambou.Error) {
+
+	var list ApplicationsList
+	err := bambou.CurrentSession().FetchChildren(o, ApplicationIdentity, &list, info)
+	return list, err
+}
+
 // Applicationperformancemanagementbindings retrieves the list of child Applicationperformancemanagementbindings of the L2Domain
 func (o *L2Domain) Applicationperformancemanagementbindings(info *bambou.FetchingInfo) (ApplicationperformancemanagementbindingsList, *bambou.Error) {
 
@@ -479,12 +574,6 @@ func (o *L2Domain) BridgeInterfaces(info *bambou.FetchingInfo) (BridgeInterfaces
 	return list, err
 }
 
-// CreateBridgeInterface creates a new child BridgeInterface under the L2Domain
-func (o *L2Domain) CreateBridgeInterface(child *BridgeInterface) *bambou.Error {
-
-	return bambou.CurrentSession().CreateChild(o, child)
-}
-
 // Groups retrieves the list of child Groups of the L2Domain
 func (o *L2Domain) Groups(info *bambou.FetchingInfo) (GroupsList, *bambou.Error) {
 
@@ -493,10 +582,20 @@ func (o *L2Domain) Groups(info *bambou.FetchingInfo) (GroupsList, *bambou.Error)
 	return list, err
 }
 
-// CreateGroup creates a new child Group under the L2Domain
-func (o *L2Domain) CreateGroup(child *Group) *bambou.Error {
+// ProxyARPFilters retrieves the list of child ProxyARPFilters of the L2Domain
+func (o *L2Domain) ProxyARPFilters(info *bambou.FetchingInfo) (ProxyARPFiltersList, *bambou.Error) {
 
-	return bambou.CurrentSession().CreateChild(o, child)
+	var list ProxyARPFiltersList
+	err := bambou.CurrentSession().FetchChildren(o, ProxyARPFilterIdentity, &list, info)
+	return list, err
+}
+
+// NSGatewaySummaries retrieves the list of child NSGatewaySummaries of the L2Domain
+func (o *L2Domain) NSGatewaySummaries(info *bambou.FetchingInfo) (NSGatewaySummariesList, *bambou.Error) {
+
+	var list NSGatewaySummariesList
+	err := bambou.CurrentSession().FetchChildren(o, NSGatewaySummaryIdentity, &list, info)
+	return list, err
 }
 
 // StaticRoutes retrieves the list of child StaticRoutes of the L2Domain
@@ -521,12 +620,6 @@ func (o *L2Domain) Statistics(info *bambou.FetchingInfo) (StatisticsList, *bambo
 	return list, err
 }
 
-// CreateStatistics creates a new child Statistics under the L2Domain
-func (o *L2Domain) CreateStatistics(child *Statistics) *bambou.Error {
-
-	return bambou.CurrentSession().CreateChild(o, child)
-}
-
 // StatisticsPolicies retrieves the list of child StatisticsPolicies of the L2Domain
 func (o *L2Domain) StatisticsPolicies(info *bambou.FetchingInfo) (StatisticsPoliciesList, *bambou.Error) {
 
@@ -549,8 +642,16 @@ func (o *L2Domain) EventLogs(info *bambou.FetchingInfo) (EventLogsList, *bambou.
 	return list, err
 }
 
-// CreateEventLog creates a new child EventLog under the L2Domain
-func (o *L2Domain) CreateEventLog(child *EventLog) *bambou.Error {
+// OverlayMirrorDestinations retrieves the list of child OverlayMirrorDestinations of the L2Domain
+func (o *L2Domain) OverlayMirrorDestinations(info *bambou.FetchingInfo) (OverlayMirrorDestinationsList, *bambou.Error) {
+
+	var list OverlayMirrorDestinationsList
+	err := bambou.CurrentSession().FetchChildren(o, OverlayMirrorDestinationIdentity, &list, info)
+	return list, err
+}
+
+// CreateOverlayMirrorDestination creates a new child OverlayMirrorDestination under the L2Domain
+func (o *L2Domain) CreateOverlayMirrorDestination(child *OverlayMirrorDestination) *bambou.Error {
 
 	return bambou.CurrentSession().CreateChild(o, child)
 }

@@ -2,10 +2,11 @@ package api
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/nuagenetworks/libvrsdk/api/entity"
 	"github.com/nuagenetworks/libvrsdk/ovsdb"
 	"github.com/socketplane/libovsdb"
-	"strings"
 )
 
 // EntityInfo represents the information about an entity that needs to provided by the user to VRS
@@ -51,6 +52,10 @@ func (vrsConnection *VRSConnection) CreateEntity(info EntityInfo) error {
 		NuageEnterprise: info.Metadata[entity.MetadataKeyEnterprise],
 		Metadata:        metadata,
 		Ports:           info.Ports,
+		Event:           int(entity.EventCategoryDefined),
+		EventType:       int(entity.EventDefinedAdded),
+		State:           int(entity.Running),
+		Reason:          int(entity.RunningUnknown),
 	}
 
 	if info.Events != nil {
@@ -58,15 +63,21 @@ func (vrsConnection *VRSConnection) CreateEntity(info EntityInfo) error {
 		nuageVMTableRow.EventType = int(info.Events.EntityEventType)
 		nuageVMTableRow.State = int(info.Events.EntityState)
 		nuageVMTableRow.Reason = int(info.Events.EntityReason)
-	} else {
-		nuageVMTableRow.Event = int(entity.EventCategoryDefined)
-		nuageVMTableRow.EventType = int(entity.EventDefinedAdded)
-		nuageVMTableRow.State = int(entity.Running)
-		nuageVMTableRow.Reason = int(entity.RunningUnknown)
 	}
 
 	if err := vrsConnection.vmTable.InsertRow(vrsConnection.ovsdbClient, &nuageVMTableRow); err != nil {
 		return fmt.Errorf("Problem adding entity info to VRS %v", err)
+	}
+
+	return nil
+}
+
+// DestroyEntityByVMName removes entity from the Nuage VRS based on the name
+func (vrsConnection *VRSConnection) DestroyEntityByVMName(VMName string) error {
+
+	condition := []string{ovsdb.NuageVMTableColumnVMName, "==", VMName}
+	if err := vrsConnection.vmTable.DeleteRow(vrsConnection.ovsdbClient, condition); err != nil {
+		return fmt.Errorf("Unable to delete the entity from VRS %v", err)
 	}
 
 	return nil

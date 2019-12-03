@@ -38,43 +38,64 @@ var VLANIdentity = bambou.Identity{
 // VLANsList represents a list of VLANs
 type VLANsList []*VLAN
 
-// VLANsAncestor is the interface of an ancestor of a VLAN must implement.
+// VLANsAncestor is the interface that an ancestor of a VLAN must implement.
+// An Ancestor is defined as an entity that has VLAN as a descendant.
+// An Ancestor can get a list of its child VLANs, but not necessarily create one.
 type VLANsAncestor interface {
 	VLANs(*bambou.FetchingInfo) (VLANsList, *bambou.Error)
-	CreateVLANs(*VLAN) *bambou.Error
+}
+
+// VLANsParent is the interface that a parent of a VLAN must implement.
+// A Parent is defined as an entity that has VLAN as a child.
+// A Parent is an Ancestor which can create a VLAN.
+type VLANsParent interface {
+	VLANsAncestor
+	CreateVLAN(*VLAN) *bambou.Error
 }
 
 // VLAN represents the model of a vlan
 type VLAN struct {
-	ID                           string `json:"ID,omitempty"`
-	ParentID                     string `json:"parentID,omitempty"`
-	ParentType                   string `json:"parentType,omitempty"`
-	Owner                        string `json:"owner,omitempty"`
-	Value                        int    `json:"value,omitempty"`
-	LastUpdatedBy                string `json:"lastUpdatedBy,omitempty"`
-	GatewayID                    string `json:"gatewayID,omitempty"`
-	Readonly                     bool   `json:"readonly"`
-	TemplateID                   string `json:"templateID,omitempty"`
-	PermittedAction              string `json:"permittedAction,omitempty"`
-	Description                  string `json:"description,omitempty"`
-	Restricted                   bool   `json:"restricted"`
-	EntityScope                  string `json:"entityScope,omitempty"`
-	VportID                      string `json:"vportID,omitempty"`
-	UseUserMnemonic              bool   `json:"useUserMnemonic"`
-	UserMnemonic                 string `json:"userMnemonic,omitempty"`
-	AssociatedBGPProfileID       string `json:"associatedBGPProfileID,omitempty"`
-	AssociatedEgressQOSPolicyID  string `json:"associatedEgressQOSPolicyID,omitempty"`
-	AssociatedUplinkConnectionID string `json:"associatedUplinkConnectionID,omitempty"`
-	AssociatedVSCProfileID       string `json:"associatedVSCProfileID,omitempty"`
-	Status                       string `json:"status,omitempty"`
-	DucVlan                      bool   `json:"ducVlan"`
-	ExternalID                   string `json:"externalID,omitempty"`
+	ID                                    string        `json:"ID,omitempty"`
+	ParentID                              string        `json:"parentID,omitempty"`
+	ParentType                            string        `json:"parentType,omitempty"`
+	Owner                                 string        `json:"owner,omitempty"`
+	Value                                 int           `json:"value,omitempty"`
+	LastUpdatedBy                         string        `json:"lastUpdatedBy,omitempty"`
+	GatewayID                             string        `json:"gatewayID,omitempty"`
+	Readonly                              bool          `json:"readonly"`
+	TemplateID                            string        `json:"templateID,omitempty"`
+	PermittedAction                       string        `json:"permittedAction,omitempty"`
+	Description                           string        `json:"description,omitempty"`
+	Restricted                            bool          `json:"restricted"`
+	ShuntVLAN                             bool          `json:"shuntVLAN"`
+	EmbeddedMetadata                      []interface{} `json:"embeddedMetadata,omitempty"`
+	EntityScope                           string        `json:"entityScope,omitempty"`
+	VportID                               string        `json:"vportID,omitempty"`
+	IsUplink                              bool          `json:"isUplink"`
+	UseUserMnemonic                       bool          `json:"useUserMnemonic"`
+	UserMnemonic                          string        `json:"userMnemonic,omitempty"`
+	AssociatedBGPProfileID                string        `json:"associatedBGPProfileID,omitempty"`
+	AssociatedConnectionType              string        `json:"associatedConnectionType,omitempty"`
+	AssociatedEgressQOSPolicyID           string        `json:"associatedEgressQOSPolicyID,omitempty"`
+	AssociatedIngressOverlayQoSPolicerID  string        `json:"associatedIngressOverlayQoSPolicerID,omitempty"`
+	AssociatedIngressQOSPolicyID          string        `json:"associatedIngressQOSPolicyID,omitempty"`
+	AssociatedIngressUnderlayQoSPolicerID string        `json:"associatedIngressUnderlayQoSPolicerID,omitempty"`
+	AssociatedUplinkConnectionID          string        `json:"associatedUplinkConnectionID,omitempty"`
+	AssociatedVSCProfileID                string        `json:"associatedVSCProfileID,omitempty"`
+	Status                                string        `json:"status,omitempty"`
+	DucVlan                               bool          `json:"ducVlan"`
+	ExternalID                            string        `json:"externalID,omitempty"`
+	Type                                  string        `json:"type,omitempty"`
 }
 
 // NewVLAN returns a new *VLAN
 func NewVLAN() *VLAN {
 
-	return &VLAN{}
+	return &VLAN{
+		ShuntVLAN: false,
+		IsUplink:  false,
+		DucVlan:   false,
+	}
 }
 
 // Identity returns the Identity of the object.
@@ -196,12 +217,6 @@ func (o *VLAN) Alarms(info *bambou.FetchingInfo) (AlarmsList, *bambou.Error) {
 	return list, err
 }
 
-// CreateAlarm creates a new child Alarm under the VLAN
-func (o *VLAN) CreateAlarm(child *Alarm) *bambou.Error {
-
-	return bambou.CurrentSession().CreateChild(o, child)
-}
-
 // GlobalMetadatas retrieves the list of child GlobalMetadatas of the VLAN
 func (o *VLAN) GlobalMetadatas(info *bambou.FetchingInfo) (GlobalMetadatasList, *bambou.Error) {
 
@@ -258,16 +273,26 @@ func (o *VLAN) CreateBRConnection(child *BRConnection) *bambou.Error {
 	return bambou.CurrentSession().CreateChild(o, child)
 }
 
+// Statistics retrieves the list of child Statistics of the VLAN
+func (o *VLAN) Statistics(info *bambou.FetchingInfo) (StatisticsList, *bambou.Error) {
+
+	var list StatisticsList
+	err := bambou.CurrentSession().FetchChildren(o, StatisticsIdentity, &list, info)
+	return list, err
+}
+
+// Ltestatistics retrieves the list of child Ltestatistics of the VLAN
+func (o *VLAN) Ltestatistics(info *bambou.FetchingInfo) (LtestatisticsList, *bambou.Error) {
+
+	var list LtestatisticsList
+	err := bambou.CurrentSession().FetchChildren(o, LtestatisticsIdentity, &list, info)
+	return list, err
+}
+
 // EventLogs retrieves the list of child EventLogs of the VLAN
 func (o *VLAN) EventLogs(info *bambou.FetchingInfo) (EventLogsList, *bambou.Error) {
 
 	var list EventLogsList
 	err := bambou.CurrentSession().FetchChildren(o, EventLogIdentity, &list, info)
 	return list, err
-}
-
-// CreateEventLog creates a new child EventLog under the VLAN
-func (o *VLAN) CreateEventLog(child *EventLog) *bambou.Error {
-
-	return bambou.CurrentSession().CreateChild(o, child)
 }

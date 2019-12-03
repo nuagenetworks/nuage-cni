@@ -1,11 +1,12 @@
 package ovsdb
 
 import (
+	"reflect"
+	"strings"
+
 	"github.com/golang/glog"
 	"github.com/nuagenetworks/libvrsdk/api/entity"
 	"github.com/socketplane/libovsdb"
-	"reflect"
-	"strings"
 )
 
 // Constants needed to describe Nuage_Port_Table

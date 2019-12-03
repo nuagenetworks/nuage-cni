@@ -3,22 +3,7 @@ package daemon
 import (
 	"encoding/json"
 	"fmt"
-	log "github.com/Sirupsen/logrus"
-	"github.com/docker/docker/api/types"
-	dockerClient "github.com/docker/docker/client"
-	vrsSdk "github.com/nuagenetworks/libvrsdk/api"
-	"github.com/nuagenetworks/libvrsdk/api/port"
-	"github.com/nuagenetworks/nuage-cni/client"
-	"github.com/nuagenetworks/nuage-cni/config"
-	"github.com/nuagenetworks/nuage-cni/k8s"
-	"golang.org/x/net/context"
 	"io/ioutil"
-	kapi "k8s.io/kubernetes/pkg/api"
-	krestclient "k8s.io/kubernetes/pkg/client/restclient"
-	kclient "k8s.io/kubernetes/pkg/client/unversioned"
-	"k8s.io/kubernetes/pkg/client/unversioned/clientcmd"
-	"k8s.io/kubernetes/pkg/fields"
-	"k8s.io/kubernetes/pkg/labels"
 	"net/http"
 	"os"
 	"os/exec"
@@ -26,6 +11,22 @@ import (
 	"strings"
 	"syscall"
 	"time"
+
+	"github.com/docker/docker/api/types"
+	dockerClient "github.com/docker/docker/client"
+	vrsSdk "github.com/nuagenetworks/libvrsdk/api"
+	"github.com/nuagenetworks/libvrsdk/api/port"
+	"github.com/nuagenetworks/nuage-cni/client"
+	"github.com/nuagenetworks/nuage-cni/config"
+	"github.com/nuagenetworks/nuage-cni/k8s"
+	log "github.com/sirupsen/logrus"
+	"golang.org/x/net/context"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/apimachinery/pkg/labels"
+	kclient "k8s.io/client-go/kubernetes"
+	krestclient "k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
 )
 
 var interruptChannel chan bool
@@ -201,7 +202,7 @@ func getStaleEntityEntriesForDeletion(ids []string) []string {
 	// Delete resolved entities earlier marked as stale
 	// from stale entity map
 	keyFound := false
-	for key, _ := range staleEntityMap {
+	for key := range staleEntityMap {
 		for _, staleID := range ids {
 			if key == staleID {
 				log.Debugf("Entry %s is still not resolved or is a stale entry", key)
@@ -240,7 +241,7 @@ func getStalePortEntriesForDeletion(ids []string) []string {
 	// Delete resolved alubr0 ports earlier marked as stale
 	// from stale port map
 	keyFound := false
-	for key, _ := range stalePortMap {
+	for key := range stalePortMap {
 		for _, staleID := range ids {
 			if key == staleID {
 				log.Debugf("Entry %s is still not resolved or is a stale entry", key)
@@ -538,14 +539,14 @@ func getActiveK8SPods(orchestrator string) ([]string, error) {
 	}
 
 	config = kubeConfig
-	kubeClient, err := kclient.New(config)
+	kubeClient, err := kclient.NewForConfig(config)
 	if err != nil {
 		log.Errorf("Error trying to create kubeclient")
 		return podsList, err
 	}
 
-	var listOpts = &kapi.ListOptions{LabelSelector: labels.Everything(), FieldSelector: fields.Everything()}
-	pods, err := kubeClient.Pods(kapi.NamespaceAll).List(*listOpts)
+	listOpts := metav1.ListOptions{LabelSelector: labels.Everything().String(), FieldSelector: fields.Everything().String()}
+	pods, err := kubeClient.CoreV1().Pods(metav1.NamespaceAll).List(listOpts)
 	if err != nil {
 		log.Errorf("Error occured while fetching pods from k8s api server")
 		return podsList, err

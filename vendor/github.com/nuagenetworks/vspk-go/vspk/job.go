@@ -38,27 +38,37 @@ var JobIdentity = bambou.Identity{
 // JobsList represents a list of Jobs
 type JobsList []*Job
 
-// JobsAncestor is the interface of an ancestor of a Job must implement.
+// JobsAncestor is the interface that an ancestor of a Job must implement.
+// An Ancestor is defined as an entity that has Job as a descendant.
+// An Ancestor can get a list of its child Jobs, but not necessarily create one.
 type JobsAncestor interface {
 	Jobs(*bambou.FetchingInfo) (JobsList, *bambou.Error)
-	CreateJobs(*Job) *bambou.Error
+}
+
+// JobsParent is the interface that a parent of a Job must implement.
+// A Parent is defined as an entity that has Job as a child.
+// A Parent is an Ancestor which can create a Job.
+type JobsParent interface {
+	JobsAncestor
+	CreateJob(*Job) *bambou.Error
 }
 
 // Job represents the model of a job
 type Job struct {
-	ID              string      `json:"ID,omitempty"`
-	ParentID        string      `json:"parentID,omitempty"`
-	ParentType      string      `json:"parentType,omitempty"`
-	Owner           string      `json:"owner,omitempty"`
-	Parameters      interface{} `json:"parameters,omitempty"`
-	LastUpdatedBy   string      `json:"lastUpdatedBy,omitempty"`
-	Result          interface{} `json:"result,omitempty"`
-	EntityScope     string      `json:"entityScope,omitempty"`
-	Command         string      `json:"command,omitempty"`
-	Progress        float64     `json:"progress,omitempty"`
-	AssocEntityType string      `json:"assocEntityType,omitempty"`
-	Status          string      `json:"status,omitempty"`
-	ExternalID      string      `json:"externalID,omitempty"`
+	ID               string        `json:"ID,omitempty"`
+	ParentID         string        `json:"parentID,omitempty"`
+	ParentType       string        `json:"parentType,omitempty"`
+	Owner            string        `json:"owner,omitempty"`
+	Parameters       interface{}   `json:"parameters,omitempty"`
+	LastUpdatedBy    string        `json:"lastUpdatedBy,omitempty"`
+	Result           interface{}   `json:"result,omitempty"`
+	EmbeddedMetadata []interface{} `json:"embeddedMetadata,omitempty"`
+	EntityScope      string        `json:"entityScope,omitempty"`
+	Command          string        `json:"command,omitempty"`
+	Progress         float64       `json:"progress,omitempty"`
+	AssocEntityType  string        `json:"assocEntityType,omitempty"`
+	Status           string        `json:"status,omitempty"`
+	ExternalID       string        `json:"externalID,omitempty"`
 }
 
 // NewJob returns a new *Job

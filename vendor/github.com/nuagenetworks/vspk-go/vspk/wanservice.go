@@ -38,47 +38,57 @@ var WANServiceIdentity = bambou.Identity{
 // WANServicesList represents a list of WANServices
 type WANServicesList []*WANService
 
-// WANServicesAncestor is the interface of an ancestor of a WANService must implement.
+// WANServicesAncestor is the interface that an ancestor of a WANService must implement.
+// An Ancestor is defined as an entity that has WANService as a descendant.
+// An Ancestor can get a list of its child WANServices, but not necessarily create one.
 type WANServicesAncestor interface {
 	WANServices(*bambou.FetchingInfo) (WANServicesList, *bambou.Error)
-	CreateWANServices(*WANService) *bambou.Error
+}
+
+// WANServicesParent is the interface that a parent of a WANService must implement.
+// A Parent is defined as an entity that has WANService as a child.
+// A Parent is an Ancestor which can create a WANService.
+type WANServicesParent interface {
+	WANServicesAncestor
+	CreateWANService(*WANService) *bambou.Error
 }
 
 // WANService represents the model of a service
 type WANService struct {
-	ID                     string `json:"ID,omitempty"`
-	ParentID               string `json:"parentID,omitempty"`
-	ParentType             string `json:"parentType,omitempty"`
-	Owner                  string `json:"owner,omitempty"`
-	WANServiceIdentifier   string `json:"WANServiceIdentifier,omitempty"`
-	IRBEnabled             bool   `json:"IRBEnabled"`
-	Name                   string `json:"name,omitempty"`
-	LastUpdatedBy          string `json:"lastUpdatedBy,omitempty"`
-	PermittedAction        string `json:"permittedAction,omitempty"`
-	ServicePolicy          string `json:"servicePolicy,omitempty"`
-	ServiceType            string `json:"serviceType,omitempty"`
-	Description            string `json:"description,omitempty"`
-	VnId                   int    `json:"vnId,omitempty"`
-	EnterpriseName         string `json:"enterpriseName,omitempty"`
-	EntityScope            string `json:"entityScope,omitempty"`
-	DomainName             string `json:"domainName,omitempty"`
-	ConfigType             string `json:"configType,omitempty"`
-	Orphan                 bool   `json:"orphan"`
-	UseUserMnemonic        bool   `json:"useUserMnemonic"`
-	UserMnemonic           string `json:"userMnemonic,omitempty"`
-	AssociatedDomainID     string `json:"associatedDomainID,omitempty"`
-	AssociatedVPNConnectID string `json:"associatedVPNConnectID,omitempty"`
-	TunnelType             string `json:"tunnelType,omitempty"`
-	ExternalID             string `json:"externalID,omitempty"`
-	ExternalRouteTarget    string `json:"externalRouteTarget,omitempty"`
+	ID                     string        `json:"ID,omitempty"`
+	ParentID               string        `json:"parentID,omitempty"`
+	ParentType             string        `json:"parentType,omitempty"`
+	Owner                  string        `json:"owner,omitempty"`
+	WANServiceIdentifier   string        `json:"WANServiceIdentifier,omitempty"`
+	IRBEnabled             bool          `json:"IRBEnabled"`
+	Name                   string        `json:"name,omitempty"`
+	LastUpdatedBy          string        `json:"lastUpdatedBy,omitempty"`
+	PermittedAction        string        `json:"permittedAction,omitempty"`
+	ServicePolicy          string        `json:"servicePolicy,omitempty"`
+	ServiceType            string        `json:"serviceType,omitempty"`
+	Description            string        `json:"description,omitempty"`
+	EmbeddedMetadata       []interface{} `json:"embeddedMetadata,omitempty"`
+	VnId                   int           `json:"vnId,omitempty"`
+	EnterpriseName         string        `json:"enterpriseName,omitempty"`
+	EntityScope            string        `json:"entityScope,omitempty"`
+	DomainName             string        `json:"domainName,omitempty"`
+	ConfigType             string        `json:"configType,omitempty"`
+	Orphan                 bool          `json:"orphan"`
+	UseUserMnemonic        bool          `json:"useUserMnemonic"`
+	UserMnemonic           string        `json:"userMnemonic,omitempty"`
+	AssociatedDomainID     string        `json:"associatedDomainID,omitempty"`
+	AssociatedVPNConnectID string        `json:"associatedVPNConnectID,omitempty"`
+	TunnelType             string        `json:"tunnelType,omitempty"`
+	ExternalID             string        `json:"externalID,omitempty"`
+	ExternalRouteTarget    string        `json:"externalRouteTarget,omitempty"`
 }
 
 // NewWANService returns a new *WANService
 func NewWANService() *WANService {
 
 	return &WANService{
-		ConfigType:  "STATIC",
 		ServiceType: "L3",
+		ConfigType:  "STATIC",
 	}
 }
 
@@ -154,12 +164,6 @@ func (o *WANService) Alarms(info *bambou.FetchingInfo) (AlarmsList, *bambou.Erro
 	return list, err
 }
 
-// CreateAlarm creates a new child Alarm under the WANService
-func (o *WANService) CreateAlarm(child *Alarm) *bambou.Error {
-
-	return bambou.CurrentSession().CreateChild(o, child)
-}
-
 // GlobalMetadatas retrieves the list of child GlobalMetadatas of the WANService
 func (o *WANService) GlobalMetadatas(info *bambou.FetchingInfo) (GlobalMetadatasList, *bambou.Error) {
 
@@ -194,10 +198,4 @@ func (o *WANService) EventLogs(info *bambou.FetchingInfo) (EventLogsList, *bambo
 	var list EventLogsList
 	err := bambou.CurrentSession().FetchChildren(o, EventLogIdentity, &list, info)
 	return list, err
-}
-
-// CreateEventLog creates a new child EventLog under the WANService
-func (o *WANService) CreateEventLog(child *EventLog) *bambou.Error {
-
-	return bambou.CurrentSession().CreateChild(o, child)
 }

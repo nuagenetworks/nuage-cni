@@ -38,25 +38,36 @@ var GatewayTemplateIdentity = bambou.Identity{
 // GatewayTemplatesList represents a list of GatewayTemplates
 type GatewayTemplatesList []*GatewayTemplate
 
-// GatewayTemplatesAncestor is the interface of an ancestor of a GatewayTemplate must implement.
+// GatewayTemplatesAncestor is the interface that an ancestor of a GatewayTemplate must implement.
+// An Ancestor is defined as an entity that has GatewayTemplate as a descendant.
+// An Ancestor can get a list of its child GatewayTemplates, but not necessarily create one.
 type GatewayTemplatesAncestor interface {
 	GatewayTemplates(*bambou.FetchingInfo) (GatewayTemplatesList, *bambou.Error)
-	CreateGatewayTemplates(*GatewayTemplate) *bambou.Error
+}
+
+// GatewayTemplatesParent is the interface that a parent of a GatewayTemplate must implement.
+// A Parent is defined as an entity that has GatewayTemplate as a child.
+// A Parent is an Ancestor which can create a GatewayTemplate.
+type GatewayTemplatesParent interface {
+	GatewayTemplatesAncestor
+	CreateGatewayTemplate(*GatewayTemplate) *bambou.Error
 }
 
 // GatewayTemplate represents the model of a gatewaytemplate
 type GatewayTemplate struct {
-	ID            string `json:"ID,omitempty"`
-	ParentID      string `json:"parentID,omitempty"`
-	ParentType    string `json:"parentType,omitempty"`
-	Owner         string `json:"owner,omitempty"`
-	Name          string `json:"name,omitempty"`
-	LastUpdatedBy string `json:"lastUpdatedBy,omitempty"`
-	Personality   string `json:"personality,omitempty"`
-	Description   string `json:"description,omitempty"`
-	EnterpriseID  string `json:"enterpriseID,omitempty"`
-	EntityScope   string `json:"entityScope,omitempty"`
-	ExternalID    string `json:"externalID,omitempty"`
+	ID                      string        `json:"ID,omitempty"`
+	ParentID                string        `json:"parentID,omitempty"`
+	ParentType              string        `json:"parentType,omitempty"`
+	Owner                   string        `json:"owner,omitempty"`
+	Name                    string        `json:"name,omitempty"`
+	LastUpdatedBy           string        `json:"lastUpdatedBy,omitempty"`
+	Personality             string        `json:"personality,omitempty"`
+	Description             string        `json:"description,omitempty"`
+	EmbeddedMetadata        []interface{} `json:"embeddedMetadata,omitempty"`
+	InfrastructureProfileID string        `json:"infrastructureProfileID,omitempty"`
+	EnterpriseID            string        `json:"enterpriseID,omitempty"`
+	EntityScope             string        `json:"entityScope,omitempty"`
+	ExternalID              string        `json:"externalID,omitempty"`
 }
 
 // NewGatewayTemplate returns a new *GatewayTemplate

@@ -38,63 +38,79 @@ var EgressACLEntryTemplateIdentity = bambou.Identity{
 // EgressACLEntryTemplatesList represents a list of EgressACLEntryTemplates
 type EgressACLEntryTemplatesList []*EgressACLEntryTemplate
 
-// EgressACLEntryTemplatesAncestor is the interface of an ancestor of a EgressACLEntryTemplate must implement.
+// EgressACLEntryTemplatesAncestor is the interface that an ancestor of a EgressACLEntryTemplate must implement.
+// An Ancestor is defined as an entity that has EgressACLEntryTemplate as a descendant.
+// An Ancestor can get a list of its child EgressACLEntryTemplates, but not necessarily create one.
 type EgressACLEntryTemplatesAncestor interface {
 	EgressACLEntryTemplates(*bambou.FetchingInfo) (EgressACLEntryTemplatesList, *bambou.Error)
-	CreateEgressACLEntryTemplates(*EgressACLEntryTemplate) *bambou.Error
+}
+
+// EgressACLEntryTemplatesParent is the interface that a parent of a EgressACLEntryTemplate must implement.
+// A Parent is defined as an entity that has EgressACLEntryTemplate as a child.
+// A Parent is an Ancestor which can create a EgressACLEntryTemplate.
+type EgressACLEntryTemplatesParent interface {
+	EgressACLEntryTemplatesAncestor
+	CreateEgressACLEntryTemplate(*EgressACLEntryTemplate) *bambou.Error
 }
 
 // EgressACLEntryTemplate represents the model of a egressaclentrytemplate
 type EgressACLEntryTemplate struct {
-	ID                              string `json:"ID,omitempty"`
-	ParentID                        string `json:"parentID,omitempty"`
-	ParentType                      string `json:"parentType,omitempty"`
-	Owner                           string `json:"owner,omitempty"`
-	ACLTemplateName                 string `json:"ACLTemplateName,omitempty"`
-	ICMPCode                        string `json:"ICMPCode,omitempty"`
-	ICMPType                        string `json:"ICMPType,omitempty"`
-	IPv6AddressOverride             string `json:"IPv6AddressOverride,omitempty"`
-	DSCP                            string `json:"DSCP,omitempty"`
-	LastUpdatedBy                   string `json:"lastUpdatedBy,omitempty"`
-	Action                          string `json:"action,omitempty"`
-	AddressOverride                 string `json:"addressOverride,omitempty"`
-	Reflexive                       bool   `json:"reflexive"`
-	Description                     string `json:"description,omitempty"`
-	DestinationPort                 string `json:"destinationPort,omitempty"`
-	NetworkID                       string `json:"networkID,omitempty"`
-	NetworkType                     string `json:"networkType,omitempty"`
-	MirrorDestinationID             string `json:"mirrorDestinationID,omitempty"`
-	FlowLoggingEnabled              bool   `json:"flowLoggingEnabled"`
-	EnterpriseName                  string `json:"enterpriseName,omitempty"`
-	EntityScope                     string `json:"entityScope,omitempty"`
-	LocationID                      string `json:"locationID,omitempty"`
-	LocationType                    string `json:"locationType,omitempty"`
-	PolicyState                     string `json:"policyState,omitempty"`
-	DomainName                      string `json:"domainName,omitempty"`
-	SourcePort                      string `json:"sourcePort,omitempty"`
-	Priority                        int    `json:"priority,omitempty"`
-	Protocol                        string `json:"protocol,omitempty"`
-	AssociatedApplicationID         string `json:"associatedApplicationID,omitempty"`
-	AssociatedApplicationObjectID   string `json:"associatedApplicationObjectID,omitempty"`
-	AssociatedApplicationObjectType string `json:"associatedApplicationObjectType,omitempty"`
-	AssociatedLiveEntityID          string `json:"associatedLiveEntityID,omitempty"`
-	Stateful                        bool   `json:"stateful"`
-	StatsID                         string `json:"statsID,omitempty"`
-	StatsLoggingEnabled             bool   `json:"statsLoggingEnabled"`
-	EtherType                       string `json:"etherType,omitempty"`
-	ExternalID                      string `json:"externalID,omitempty"`
+	ID                                 string        `json:"ID,omitempty"`
+	ParentID                           string        `json:"parentID,omitempty"`
+	ParentType                         string        `json:"parentType,omitempty"`
+	Owner                              string        `json:"owner,omitempty"`
+	ACLTemplateName                    string        `json:"ACLTemplateName,omitempty"`
+	ICMPCode                           string        `json:"ICMPCode,omitempty"`
+	ICMPType                           string        `json:"ICMPType,omitempty"`
+	IPv6AddressOverride                string        `json:"IPv6AddressOverride,omitempty"`
+	DSCP                               string        `json:"DSCP,omitempty"`
+	LastUpdatedBy                      string        `json:"lastUpdatedBy,omitempty"`
+	Action                             string        `json:"action,omitempty"`
+	AddressOverride                    string        `json:"addressOverride,omitempty"`
+	WebFilterID                        string        `json:"webFilterID,omitempty"`
+	WebFilterStatsLoggingEnabled       bool          `json:"webFilterStatsLoggingEnabled"`
+	WebFilterType                      string        `json:"webFilterType,omitempty"`
+	Description                        string        `json:"description,omitempty"`
+	DestinationPort                    string        `json:"destinationPort,omitempty"`
+	NetworkID                          string        `json:"networkID,omitempty"`
+	NetworkType                        string        `json:"networkType,omitempty"`
+	MirrorDestinationGroupID           string        `json:"mirrorDestinationGroupID,omitempty"`
+	MirrorDestinationID                string        `json:"mirrorDestinationID,omitempty"`
+	FlowLoggingEnabled                 bool          `json:"flowLoggingEnabled"`
+	EmbeddedMetadata                   []interface{} `json:"embeddedMetadata,omitempty"`
+	EnterpriseName                     string        `json:"enterpriseName,omitempty"`
+	EntityScope                        string        `json:"entityScope,omitempty"`
+	LocationID                         string        `json:"locationID,omitempty"`
+	LocationType                       string        `json:"locationType,omitempty"`
+	PolicyState                        string        `json:"policyState,omitempty"`
+	DomainName                         string        `json:"domainName,omitempty"`
+	SourcePort                         string        `json:"sourcePort,omitempty"`
+	Priority                           int           `json:"priority,omitempty"`
+	Protocol                           string        `json:"protocol,omitempty"`
+	AssociatedL7ApplicationSignatureID string        `json:"associatedL7ApplicationSignatureID,omitempty"`
+	AssociatedLiveEntityID             string        `json:"associatedLiveEntityID,omitempty"`
+	AssociatedLiveTemplateID           string        `json:"associatedLiveTemplateID,omitempty"`
+	AssociatedTrafficType              string        `json:"associatedTrafficType,omitempty"`
+	AssociatedTrafficTypeID            string        `json:"associatedTrafficTypeID,omitempty"`
+	AssociatedVirtualFirewallRuleID    string        `json:"associatedVirtualFirewallRuleID,omitempty"`
+	Stateful                           bool          `json:"stateful"`
+	StatsID                            string        `json:"statsID,omitempty"`
+	StatsLoggingEnabled                bool          `json:"statsLoggingEnabled"`
+	EtherType                          string        `json:"etherType,omitempty"`
+	ExternalID                         string        `json:"externalID,omitempty"`
 }
 
 // NewEgressACLEntryTemplate returns a new *EgressACLEntryTemplate
 func NewEgressACLEntryTemplate() *EgressACLEntryTemplate {
 
 	return &EgressACLEntryTemplate{
-		Protocol:     "6",
-		EtherType:    "0x0800",
-		DSCP:         "*",
-		LocationType: "ANY",
-		Action:       "FORWARD",
-		NetworkType:  "ANY",
+		DSCP:                         "*",
+		Action:                       "FORWARD",
+		WebFilterStatsLoggingEnabled: false,
+		NetworkType:                  "ANY",
+		LocationType:                 "ANY",
+		Protocol:                     "6",
+		EtherType:                    "0x0800",
 	}
 }
 
@@ -162,30 +178,10 @@ func (o *EgressACLEntryTemplate) CreateGlobalMetadata(child *GlobalMetadata) *ba
 	return bambou.CurrentSession().CreateChild(o, child)
 }
 
-// Jobs retrieves the list of child Jobs of the EgressACLEntryTemplate
-func (o *EgressACLEntryTemplate) Jobs(info *bambou.FetchingInfo) (JobsList, *bambou.Error) {
-
-	var list JobsList
-	err := bambou.CurrentSession().FetchChildren(o, JobIdentity, &list, info)
-	return list, err
-}
-
-// CreateJob creates a new child Job under the EgressACLEntryTemplate
-func (o *EgressACLEntryTemplate) CreateJob(child *Job) *bambou.Error {
-
-	return bambou.CurrentSession().CreateChild(o, child)
-}
-
 // Statistics retrieves the list of child Statistics of the EgressACLEntryTemplate
 func (o *EgressACLEntryTemplate) Statistics(info *bambou.FetchingInfo) (StatisticsList, *bambou.Error) {
 
 	var list StatisticsList
 	err := bambou.CurrentSession().FetchChildren(o, StatisticsIdentity, &list, info)
 	return list, err
-}
-
-// CreateStatistics creates a new child Statistics under the EgressACLEntryTemplate
-func (o *EgressACLEntryTemplate) CreateStatistics(child *Statistics) *bambou.Error {
-
-	return bambou.CurrentSession().CreateChild(o, child)
 }
