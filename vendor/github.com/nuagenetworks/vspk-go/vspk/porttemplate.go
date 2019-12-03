@@ -38,27 +38,37 @@ var PortTemplateIdentity = bambou.Identity{
 // PortTemplatesList represents a list of PortTemplates
 type PortTemplatesList []*PortTemplate
 
-// PortTemplatesAncestor is the interface of an ancestor of a PortTemplate must implement.
+// PortTemplatesAncestor is the interface that an ancestor of a PortTemplate must implement.
+// An Ancestor is defined as an entity that has PortTemplate as a descendant.
+// An Ancestor can get a list of its child PortTemplates, but not necessarily create one.
 type PortTemplatesAncestor interface {
 	PortTemplates(*bambou.FetchingInfo) (PortTemplatesList, *bambou.Error)
-	CreatePortTemplates(*PortTemplate) *bambou.Error
+}
+
+// PortTemplatesParent is the interface that a parent of a PortTemplate must implement.
+// A Parent is defined as an entity that has PortTemplate as a child.
+// A Parent is an Ancestor which can create a PortTemplate.
+type PortTemplatesParent interface {
+	PortTemplatesAncestor
+	CreatePortTemplate(*PortTemplate) *bambou.Error
 }
 
 // PortTemplate represents the model of a porttemplate
 type PortTemplate struct {
-	ID                          string `json:"ID,omitempty"`
-	ParentID                    string `json:"parentID,omitempty"`
-	ParentType                  string `json:"parentType,omitempty"`
-	Owner                       string `json:"owner,omitempty"`
-	VLANRange                   string `json:"VLANRange,omitempty"`
-	Name                        string `json:"name,omitempty"`
-	LastUpdatedBy               string `json:"lastUpdatedBy,omitempty"`
-	Description                 string `json:"description,omitempty"`
-	PhysicalName                string `json:"physicalName,omitempty"`
-	EntityScope                 string `json:"entityScope,omitempty"`
-	PortType                    string `json:"portType,omitempty"`
-	AssociatedEgressQOSPolicyID string `json:"associatedEgressQOSPolicyID,omitempty"`
-	ExternalID                  string `json:"externalID,omitempty"`
+	ID                          string        `json:"ID,omitempty"`
+	ParentID                    string        `json:"parentID,omitempty"`
+	ParentType                  string        `json:"parentType,omitempty"`
+	Owner                       string        `json:"owner,omitempty"`
+	VLANRange                   string        `json:"VLANRange,omitempty"`
+	Name                        string        `json:"name,omitempty"`
+	LastUpdatedBy               string        `json:"lastUpdatedBy,omitempty"`
+	Description                 string        `json:"description,omitempty"`
+	PhysicalName                string        `json:"physicalName,omitempty"`
+	EmbeddedMetadata            []interface{} `json:"embeddedMetadata,omitempty"`
+	EntityScope                 string        `json:"entityScope,omitempty"`
+	PortType                    string        `json:"portType,omitempty"`
+	AssociatedEgressQOSPolicyID string        `json:"associatedEgressQOSPolicyID,omitempty"`
+	ExternalID                  string        `json:"externalID,omitempty"`
 }
 
 // NewPortTemplate returns a new *PortTemplate

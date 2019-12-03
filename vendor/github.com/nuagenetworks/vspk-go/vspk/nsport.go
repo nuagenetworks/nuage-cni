@@ -38,42 +38,63 @@ var NSPortIdentity = bambou.Identity{
 // NSPortsList represents a list of NSPorts
 type NSPortsList []*NSPort
 
-// NSPortsAncestor is the interface of an ancestor of a NSPort must implement.
+// NSPortsAncestor is the interface that an ancestor of a NSPort must implement.
+// An Ancestor is defined as an entity that has NSPort as a descendant.
+// An Ancestor can get a list of its child NSPorts, but not necessarily create one.
 type NSPortsAncestor interface {
 	NSPorts(*bambou.FetchingInfo) (NSPortsList, *bambou.Error)
-	CreateNSPorts(*NSPort) *bambou.Error
+}
+
+// NSPortsParent is the interface that a parent of a NSPort must implement.
+// A Parent is defined as an entity that has NSPort as a child.
+// A Parent is an Ancestor which can create a NSPort.
+type NSPortsParent interface {
+	NSPortsAncestor
+	CreateNSPort(*NSPort) *bambou.Error
 }
 
 // NSPort represents the model of a nsport
 type NSPort struct {
-	ID                          string `json:"ID,omitempty"`
-	ParentID                    string `json:"parentID,omitempty"`
-	ParentType                  string `json:"parentType,omitempty"`
-	Owner                       string `json:"owner,omitempty"`
-	NATTraversal                string `json:"NATTraversal,omitempty"`
-	VLANRange                   string `json:"VLANRange,omitempty"`
-	Name                        string `json:"name,omitempty"`
-	LastUpdatedBy               string `json:"lastUpdatedBy,omitempty"`
-	TemplateID                  string `json:"templateID,omitempty"`
-	PermittedAction             string `json:"permittedAction,omitempty"`
-	Description                 string `json:"description,omitempty"`
-	PhysicalName                string `json:"physicalName,omitempty"`
-	EntityScope                 string `json:"entityScope,omitempty"`
-	PortType                    string `json:"portType,omitempty"`
-	Speed                       string `json:"speed,omitempty"`
-	UseUserMnemonic             bool   `json:"useUserMnemonic"`
-	UserMnemonic                string `json:"userMnemonic,omitempty"`
-	AssociatedEgressQOSPolicyID string `json:"associatedEgressQOSPolicyID,omitempty"`
-	AssociatedRedundantPortID   string `json:"associatedRedundantPortID,omitempty"`
-	Status                      string `json:"status,omitempty"`
-	Mtu                         int    `json:"mtu,omitempty"`
-	ExternalID                  string `json:"externalID,omitempty"`
+	ID                          string        `json:"ID,omitempty"`
+	ParentID                    string        `json:"parentID,omitempty"`
+	ParentType                  string        `json:"parentType,omitempty"`
+	Owner                       string        `json:"owner,omitempty"`
+	NATTraversal                string        `json:"NATTraversal,omitempty"`
+	VLANRange                   string        `json:"VLANRange,omitempty"`
+	Name                        string        `json:"name,omitempty"`
+	LastUpdatedBy               string        `json:"lastUpdatedBy,omitempty"`
+	TemplateID                  string        `json:"templateID,omitempty"`
+	PermittedAction             string        `json:"permittedAction,omitempty"`
+	Description                 string        `json:"description,omitempty"`
+	ShuntPort                   bool          `json:"shuntPort"`
+	PhysicalName                string        `json:"physicalName,omitempty"`
+	EmbeddedMetadata            []interface{} `json:"embeddedMetadata,omitempty"`
+	EnableNATProbes             bool          `json:"enableNATProbes"`
+	EntityScope                 string        `json:"entityScope,omitempty"`
+	PortType                    string        `json:"portType,omitempty"`
+	Speed                       string        `json:"speed,omitempty"`
+	TrafficThroughUBROnly       bool          `json:"TrafficThroughUBROnly"`
+	UseUserMnemonic             bool          `json:"useUserMnemonic"`
+	UserMnemonic                string        `json:"userMnemonic,omitempty"`
+	AssociatedEgressQOSPolicyID string        `json:"associatedEgressQOSPolicyID,omitempty"`
+	AssociatedRedundantPortID   string        `json:"associatedRedundantPortID,omitempty"`
+	Status                      string        `json:"status,omitempty"`
+	Mtu                         int           `json:"mtu,omitempty"`
+	ExternalID                  string        `json:"externalID,omitempty"`
 }
 
 // NewNSPort returns a new *NSPort
 func NewNSPort() *NSPort {
 
-	return &NSPort{}
+	return &NSPort{
+		NATTraversal:          "NONE",
+		VLANRange:             "0-4094",
+		ShuntPort:             false,
+		EnableNATProbes:       true,
+		Speed:                 "AUTONEGOTIATE",
+		TrafficThroughUBROnly: false,
+		Mtu:                   1500,
+	}
 }
 
 // Identity returns the Identity of the object.
@@ -162,12 +183,6 @@ func (o *NSPort) Alarms(info *bambou.FetchingInfo) (AlarmsList, *bambou.Error) {
 	return list, err
 }
 
-// CreateAlarm creates a new child Alarm under the NSPort
-func (o *NSPort) CreateAlarm(child *Alarm) *bambou.Error {
-
-	return bambou.CurrentSession().CreateChild(o, child)
-}
-
 // GlobalMetadatas retrieves the list of child GlobalMetadatas of the NSPort
 func (o *NSPort) GlobalMetadatas(info *bambou.FetchingInfo) (GlobalMetadatasList, *bambou.Error) {
 
@@ -204,12 +219,6 @@ func (o *NSPort) Statistics(info *bambou.FetchingInfo) (StatisticsList, *bambou.
 	return list, err
 }
 
-// CreateStatistics creates a new child Statistics under the NSPort
-func (o *NSPort) CreateStatistics(child *Statistics) *bambou.Error {
-
-	return bambou.CurrentSession().CreateChild(o, child)
-}
-
 // StatisticsPolicies retrieves the list of child StatisticsPolicies of the NSPort
 func (o *NSPort) StatisticsPolicies(info *bambou.FetchingInfo) (StatisticsPoliciesList, *bambou.Error) {
 
@@ -224,16 +233,18 @@ func (o *NSPort) CreateStatisticsPolicy(child *StatisticsPolicy) *bambou.Error {
 	return bambou.CurrentSession().CreateChild(o, child)
 }
 
+// LTEInformations retrieves the list of child LTEInformations of the NSPort
+func (o *NSPort) LTEInformations(info *bambou.FetchingInfo) (LTEInformationsList, *bambou.Error) {
+
+	var list LTEInformationsList
+	err := bambou.CurrentSession().FetchChildren(o, LTEInformationIdentity, &list, info)
+	return list, err
+}
+
 // EventLogs retrieves the list of child EventLogs of the NSPort
 func (o *NSPort) EventLogs(info *bambou.FetchingInfo) (EventLogsList, *bambou.Error) {
 
 	var list EventLogsList
 	err := bambou.CurrentSession().FetchChildren(o, EventLogIdentity, &list, info)
 	return list, err
-}
-
-// CreateEventLog creates a new child EventLog under the NSPort
-func (o *NSPort) CreateEventLog(child *EventLog) *bambou.Error {
-
-	return bambou.CurrentSession().CreateChild(o, child)
 }

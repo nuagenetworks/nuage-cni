@@ -17,5 +17,5 @@ version=$version-$NUAGE_BUILD_NUMBER
 cd $GOPATH/src/github.com/nuagenetworks/nuage-cni
 make -f Makefile
 sudo docker build --build-arg http_proxy=${http_proxy} --build-arg https_proxy=${https_proxy} --build-arg no_proxy=${no_proxy} -t nuage/cni:${version} .
-docker save nuage/cni:${version} > nuage-cni-docker-${version}.tar
-docker rmi nuage/cni:${version}
+sudo docker save nuage/cni:${version} > nuage-cni-docker-${version}.tar
+sudo docker rmi nuage/cni:${version}

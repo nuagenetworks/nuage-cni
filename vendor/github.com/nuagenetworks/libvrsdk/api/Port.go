@@ -3,11 +3,12 @@ package api
 import (
 	"errors"
 	"fmt"
+	"reflect"
+
 	"github.com/nuagenetworks/libvrsdk/api/port"
 	"github.com/nuagenetworks/libvrsdk/ovsdb"
 	"github.com/nuagenetworks/libvrsdk/test/util"
 	"github.com/socketplane/libovsdb"
-	"reflect"
 )
 
 type empty struct{}
@@ -301,7 +302,6 @@ func (vrsConnection *VRSConnection) AddPortToAlubr0(intfName string, entityInfo 
 
 	// 1) Insert a row for Nuage port in OVSDB Interface table
 	extIDMap := make(map[string]string)
-	intfOp := libovsdb.Operation{}
 	intf := make(map[string]interface{})
 	intf["name"] = intfName
 	extIDMap["vm-name"] = entityInfo.Name
@@ -311,7 +311,7 @@ func (vrsConnection *VRSConnection) AddPortToAlubr0(intfName string, entityInfo 
 		return err
 	}
 	// interface table ops
-	intfOp = libovsdb.Operation{
+	intfOp := libovsdb.Operation{
 		Op:       "insert",
 		Table:    interfaceTable,
 		Row:      intf,
@@ -319,15 +319,16 @@ func (vrsConnection *VRSConnection) AddPortToAlubr0(intfName string, entityInfo 
 	}
 
 	// 2) Insert a row for Nuage port in OVSDB Port table
-	portOp := libovsdb.Operation{}
 	port := make(map[string]interface{})
 	port["name"] = intfName
-	port["interfaces"] = libovsdb.UUID{namedIntfUUID}
+	port["interfaces"] = libovsdb.UUID{
+		GoUUID: namedIntfUUID,
+	}
 	port["external_ids"], err = libovsdb.NewOvsMap(extIDMap)
 	if err != nil {
 		return err
 	}
-	portOp = libovsdb.Operation{
+	portOp := libovsdb.Operation{
 		Op:       "insert",
 		Table:    portTable,
 		Row:      port,
@@ -335,7 +336,7 @@ func (vrsConnection *VRSConnection) AddPortToAlubr0(intfName string, entityInfo 
 	}
 
 	// 3) Mutate the Ports column of the row in the Bridge table with new Nuage port
-	mutateUUID := []libovsdb.UUID{libovsdb.UUID{namedPortUUID}}
+	mutateUUID := []libovsdb.UUID{{GoUUID: namedPortUUID}}
 	mutateSet, _ := libovsdb.NewOvsSet(mutateUUID)
 	mutation := libovsdb.NewMutation("ports", "insert", mutateSet)
 	condition := libovsdb.NewCondition("name", "==", bridgeName)
@@ -385,7 +386,7 @@ func (vrsConnection *VRSConnection) RemovePortFromAlubr0(portName string) error 
 	}
 
 	// Deleting a Bridge row in Bridge table requires mutating the open_vswitch table.
-	mutateUUID := []libovsdb.UUID{libovsdb.UUID{portUUIDNew}}
+	mutateUUID := []libovsdb.UUID{{GoUUID: portUUIDNew}}
 	mutateSet, _ := libovsdb.NewOvsSet(mutateUUID)
 	mutation := libovsdb.NewMutation("ports", "delete", mutateSet)
 	condition = libovsdb.NewCondition("name", "==", bridgeName)

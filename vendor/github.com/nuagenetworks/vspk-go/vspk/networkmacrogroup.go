@@ -38,29 +38,43 @@ var NetworkMacroGroupIdentity = bambou.Identity{
 // NetworkMacroGroupsList represents a list of NetworkMacroGroups
 type NetworkMacroGroupsList []*NetworkMacroGroup
 
-// NetworkMacroGroupsAncestor is the interface of an ancestor of a NetworkMacroGroup must implement.
+// NetworkMacroGroupsAncestor is the interface that an ancestor of a NetworkMacroGroup must implement.
+// An Ancestor is defined as an entity that has NetworkMacroGroup as a descendant.
+// An Ancestor can get a list of its child NetworkMacroGroups, but not necessarily create one.
 type NetworkMacroGroupsAncestor interface {
 	NetworkMacroGroups(*bambou.FetchingInfo) (NetworkMacroGroupsList, *bambou.Error)
-	CreateNetworkMacroGroups(*NetworkMacroGroup) *bambou.Error
+}
+
+// NetworkMacroGroupsParent is the interface that a parent of a NetworkMacroGroup must implement.
+// A Parent is defined as an entity that has NetworkMacroGroup as a child.
+// A Parent is an Ancestor which can create a NetworkMacroGroup.
+type NetworkMacroGroupsParent interface {
+	NetworkMacroGroupsAncestor
+	CreateNetworkMacroGroup(*NetworkMacroGroup) *bambou.Error
 }
 
 // NetworkMacroGroup represents the model of a networkmacrogroup
 type NetworkMacroGroup struct {
-	ID            string `json:"ID,omitempty"`
-	ParentID      string `json:"parentID,omitempty"`
-	ParentType    string `json:"parentType,omitempty"`
-	Owner         string `json:"owner,omitempty"`
-	Name          string `json:"name,omitempty"`
-	LastUpdatedBy string `json:"lastUpdatedBy,omitempty"`
-	Description   string `json:"description,omitempty"`
-	EntityScope   string `json:"entityScope,omitempty"`
-	ExternalID    string `json:"externalID,omitempty"`
+	ID               string        `json:"ID,omitempty"`
+	ParentID         string        `json:"parentID,omitempty"`
+	ParentType       string        `json:"parentType,omitempty"`
+	Owner            string        `json:"owner,omitempty"`
+	MacroGroupType   string        `json:"macroGroupType,omitempty"`
+	Name             string        `json:"name,omitempty"`
+	LastUpdatedBy    string        `json:"lastUpdatedBy,omitempty"`
+	Description      string        `json:"description,omitempty"`
+	EmbeddedMetadata []interface{} `json:"embeddedMetadata,omitempty"`
+	EntityScope      string        `json:"entityScope,omitempty"`
+	IsSaaSType       bool          `json:"isSaaSType"`
+	ExternalID       string        `json:"externalID,omitempty"`
 }
 
 // NewNetworkMacroGroup returns a new *NetworkMacroGroup
 func NewNetworkMacroGroup() *NetworkMacroGroup {
 
-	return &NetworkMacroGroup{}
+	return &NetworkMacroGroup{
+		IsSaaSType: false,
+	}
 }
 
 // Identity returns the Identity of the object.
@@ -135,8 +149,13 @@ func (o *NetworkMacroGroup) EnterpriseNetworks(info *bambou.FetchingInfo) (Enter
 	return list, err
 }
 
-// CreateEnterpriseNetwork creates a new child EnterpriseNetwork under the NetworkMacroGroup
-func (o *NetworkMacroGroup) CreateEnterpriseNetwork(child *EnterpriseNetwork) *bambou.Error {
+// AssignEnterpriseNetworks assigns the list of EnterpriseNetworks to the NetworkMacroGroup
+func (o *NetworkMacroGroup) AssignEnterpriseNetworks(children EnterpriseNetworksList) *bambou.Error {
 
-	return bambou.CurrentSession().CreateChild(o, child)
+	list := []bambou.Identifiable{}
+	for _, c := range children {
+		list = append(list, c)
+	}
+
+	return bambou.CurrentSession().AssignChildren(o, list, EnterpriseNetworkIdentity)
 }

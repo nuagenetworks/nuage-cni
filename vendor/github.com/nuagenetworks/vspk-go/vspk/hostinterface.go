@@ -38,38 +38,49 @@ var HostInterfaceIdentity = bambou.Identity{
 // HostInterfacesList represents a list of HostInterfaces
 type HostInterfacesList []*HostInterface
 
-// HostInterfacesAncestor is the interface of an ancestor of a HostInterface must implement.
+// HostInterfacesAncestor is the interface that an ancestor of a HostInterface must implement.
+// An Ancestor is defined as an entity that has HostInterface as a descendant.
+// An Ancestor can get a list of its child HostInterfaces, but not necessarily create one.
 type HostInterfacesAncestor interface {
 	HostInterfaces(*bambou.FetchingInfo) (HostInterfacesList, *bambou.Error)
-	CreateHostInterfaces(*HostInterface) *bambou.Error
+}
+
+// HostInterfacesParent is the interface that a parent of a HostInterface must implement.
+// A Parent is defined as an entity that has HostInterface as a child.
+// A Parent is an Ancestor which can create a HostInterface.
+type HostInterfacesParent interface {
+	HostInterfacesAncestor
+	CreateHostInterface(*HostInterface) *bambou.Error
 }
 
 // HostInterface represents the model of a hostinterface
 type HostInterface struct {
-	ID                          string `json:"ID,omitempty"`
-	ParentID                    string `json:"parentID,omitempty"`
-	ParentType                  string `json:"parentType,omitempty"`
-	Owner                       string `json:"owner,omitempty"`
-	MAC                         string `json:"MAC,omitempty"`
-	IPAddress                   string `json:"IPAddress,omitempty"`
-	VPortID                     string `json:"VPortID,omitempty"`
-	VPortName                   string `json:"VPortName,omitempty"`
-	Name                        string `json:"name,omitempty"`
-	LastUpdatedBy               string `json:"lastUpdatedBy,omitempty"`
-	Gateway                     string `json:"gateway,omitempty"`
-	Netmask                     string `json:"netmask,omitempty"`
-	NetworkName                 string `json:"networkName,omitempty"`
-	TierID                      string `json:"tierID,omitempty"`
-	EntityScope                 string `json:"entityScope,omitempty"`
-	PolicyDecisionID            string `json:"policyDecisionID,omitempty"`
-	DomainID                    string `json:"domainID,omitempty"`
-	DomainName                  string `json:"domainName,omitempty"`
-	ZoneID                      string `json:"zoneID,omitempty"`
-	ZoneName                    string `json:"zoneName,omitempty"`
-	AssociatedFloatingIPAddress string `json:"associatedFloatingIPAddress,omitempty"`
-	AttachedNetworkID           string `json:"attachedNetworkID,omitempty"`
-	AttachedNetworkType         string `json:"attachedNetworkType,omitempty"`
-	ExternalID                  string `json:"externalID,omitempty"`
+	ID                  string        `json:"ID,omitempty"`
+	ParentID            string        `json:"parentID,omitempty"`
+	ParentType          string        `json:"parentType,omitempty"`
+	Owner               string        `json:"owner,omitempty"`
+	MAC                 string        `json:"MAC,omitempty"`
+	IPAddress           string        `json:"IPAddress,omitempty"`
+	VPortID             string        `json:"VPortID,omitempty"`
+	VPortName           string        `json:"VPortName,omitempty"`
+	IPv6Address         string        `json:"IPv6Address,omitempty"`
+	IPv6Gateway         string        `json:"IPv6Gateway,omitempty"`
+	Name                string        `json:"name,omitempty"`
+	LastUpdatedBy       string        `json:"lastUpdatedBy,omitempty"`
+	Gateway             string        `json:"gateway,omitempty"`
+	Netmask             string        `json:"netmask,omitempty"`
+	NetworkName         string        `json:"networkName,omitempty"`
+	TierID              string        `json:"tierID,omitempty"`
+	EmbeddedMetadata    []interface{} `json:"embeddedMetadata,omitempty"`
+	EntityScope         string        `json:"entityScope,omitempty"`
+	PolicyDecisionID    string        `json:"policyDecisionID,omitempty"`
+	DomainID            string        `json:"domainID,omitempty"`
+	DomainName          string        `json:"domainName,omitempty"`
+	ZoneID              string        `json:"zoneID,omitempty"`
+	ZoneName            string        `json:"zoneName,omitempty"`
+	AttachedNetworkID   string        `json:"attachedNetworkID,omitempty"`
+	AttachedNetworkType string        `json:"attachedNetworkType,omitempty"`
+	ExternalID          string        `json:"externalID,omitempty"`
 }
 
 // NewHostInterface returns a new *HostInterface
@@ -122,24 +133,12 @@ func (o *HostInterface) TCAs(info *bambou.FetchingInfo) (TCAsList, *bambou.Error
 	return list, err
 }
 
-// CreateTCA creates a new child TCA under the HostInterface
-func (o *HostInterface) CreateTCA(child *TCA) *bambou.Error {
-
-	return bambou.CurrentSession().CreateChild(o, child)
-}
-
 // RedirectionTargets retrieves the list of child RedirectionTargets of the HostInterface
 func (o *HostInterface) RedirectionTargets(info *bambou.FetchingInfo) (RedirectionTargetsList, *bambou.Error) {
 
 	var list RedirectionTargetsList
 	err := bambou.CurrentSession().FetchChildren(o, RedirectionTargetIdentity, &list, info)
 	return list, err
-}
-
-// CreateRedirectionTarget creates a new child RedirectionTarget under the HostInterface
-func (o *HostInterface) CreateRedirectionTarget(child *RedirectionTarget) *bambou.Error {
-
-	return bambou.CurrentSession().CreateChild(o, child)
 }
 
 // Metadatas retrieves the list of child Metadatas of the HostInterface
@@ -164,10 +163,12 @@ func (o *HostInterface) DHCPOptions(info *bambou.FetchingInfo) (DHCPOptionsList,
 	return list, err
 }
 
-// CreateDHCPOption creates a new child DHCPOption under the HostInterface
-func (o *HostInterface) CreateDHCPOption(child *DHCPOption) *bambou.Error {
+// DHCPv6Options retrieves the list of child DHCPv6Options of the HostInterface
+func (o *HostInterface) DHCPv6Options(info *bambou.FetchingInfo) (DHCPv6OptionsList, *bambou.Error) {
 
-	return bambou.CurrentSession().CreateChild(o, child)
+	var list DHCPv6OptionsList
+	err := bambou.CurrentSession().FetchChildren(o, DHCPv6OptionIdentity, &list, info)
+	return list, err
 }
 
 // GlobalMetadatas retrieves the list of child GlobalMetadatas of the HostInterface
@@ -192,24 +193,12 @@ func (o *HostInterface) PolicyDecisions(info *bambou.FetchingInfo) (PolicyDecisi
 	return list, err
 }
 
-// CreatePolicyDecision creates a new child PolicyDecision under the HostInterface
-func (o *HostInterface) CreatePolicyDecision(child *PolicyDecision) *bambou.Error {
-
-	return bambou.CurrentSession().CreateChild(o, child)
-}
-
 // PolicyGroups retrieves the list of child PolicyGroups of the HostInterface
 func (o *HostInterface) PolicyGroups(info *bambou.FetchingInfo) (PolicyGroupsList, *bambou.Error) {
 
 	var list PolicyGroupsList
 	err := bambou.CurrentSession().FetchChildren(o, PolicyGroupIdentity, &list, info)
 	return list, err
-}
-
-// CreatePolicyGroup creates a new child PolicyGroup under the HostInterface
-func (o *HostInterface) CreatePolicyGroup(child *PolicyGroup) *bambou.Error {
-
-	return bambou.CurrentSession().CreateChild(o, child)
 }
 
 // QOSs retrieves the list of child QOSs of the HostInterface
@@ -234,24 +223,12 @@ func (o *HostInterface) StaticRoutes(info *bambou.FetchingInfo) (StaticRoutesLis
 	return list, err
 }
 
-// CreateStaticRoute creates a new child StaticRoute under the HostInterface
-func (o *HostInterface) CreateStaticRoute(child *StaticRoute) *bambou.Error {
-
-	return bambou.CurrentSession().CreateChild(o, child)
-}
-
 // Statistics retrieves the list of child Statistics of the HostInterface
 func (o *HostInterface) Statistics(info *bambou.FetchingInfo) (StatisticsList, *bambou.Error) {
 
 	var list StatisticsList
 	err := bambou.CurrentSession().FetchChildren(o, StatisticsIdentity, &list, info)
 	return list, err
-}
-
-// CreateStatistics creates a new child Statistics under the HostInterface
-func (o *HostInterface) CreateStatistics(child *Statistics) *bambou.Error {
-
-	return bambou.CurrentSession().CreateChild(o, child)
 }
 
 // MultiCastChannelMaps retrieves the list of child MultiCastChannelMaps of the HostInterface
@@ -262,22 +239,10 @@ func (o *HostInterface) MultiCastChannelMaps(info *bambou.FetchingInfo) (MultiCa
 	return list, err
 }
 
-// CreateMultiCastChannelMap creates a new child MultiCastChannelMap under the HostInterface
-func (o *HostInterface) CreateMultiCastChannelMap(child *MultiCastChannelMap) *bambou.Error {
-
-	return bambou.CurrentSession().CreateChild(o, child)
-}
-
 // EventLogs retrieves the list of child EventLogs of the HostInterface
 func (o *HostInterface) EventLogs(info *bambou.FetchingInfo) (EventLogsList, *bambou.Error) {
 
 	var list EventLogsList
 	err := bambou.CurrentSession().FetchChildren(o, EventLogIdentity, &list, info)
 	return list, err
-}
-
-// CreateEventLog creates a new child EventLog under the HostInterface
-func (o *HostInterface) CreateEventLog(child *EventLog) *bambou.Error {
-
-	return bambou.CurrentSession().CreateChild(o, child)
 }

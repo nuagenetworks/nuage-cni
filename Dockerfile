@@ -1,4 +1,4 @@
-FROM centos
+FROM registry.access.redhat.com/ubi8/ubi:latest
 
 ADD nuage-cni-k8s /opt/cni/bin/nuage-cni-k8s
 ADD nuage-cni-openshift /opt/cni/bin/nuage-cni-openshift

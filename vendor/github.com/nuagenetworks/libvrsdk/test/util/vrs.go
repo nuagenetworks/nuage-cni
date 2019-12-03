@@ -12,6 +12,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/golang/glog"
 )
 
 const (
@@ -78,7 +80,10 @@ func GenerateMAC() string {
 	hw := make(net.HardwareAddr, 6)
 	h := md5.New()
 	hostname, _ := os.Hostname()
-	io.WriteString(h, hostname)
+	_, err := io.WriteString(h, hostname)
+	if err != nil {
+		glog.Errorf("Error while generating MAC %v", err)
+	}
 	hostnameHash := hex.EncodeToString(h.Sum(nil))
 	randbuf := make([]byte, 6)
 	rand.Seed(time.Now().UTC().UnixNano())

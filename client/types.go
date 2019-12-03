@@ -1,21 +1,10 @@
 package client
 
 import (
-	"github.com/containernetworking/cni/pkg/types"
 	"net"
+
+	"github.com/containernetworking/cni/pkg/types"
 )
-
-// Args will hold the network metadata
-// info to be passed to CNI plugins
-type Args struct {
-	Mesos Mesos `json:"org.apache.mesos,omitempty"`
-}
-
-// Mesos will hold the network information
-// that will be passed to CNI plugins by Mesos runtime
-type Mesos struct {
-	NetworkInfo NetworkInfo `json:"network_info"`
-}
 
 // NetworkInfo defines CNI network name
 // and network metadata labels that will be passed by CNI
@@ -34,7 +23,6 @@ type NetConf struct {
 	Name     string `json:"name"`
 	Type     string `json:"type"`
 	Hostname string `json:"hostname"`
-	Args     Args   `json:"args"`
 }
 
 // K8sArgs is the valid CNI_ARGS used for Kubernetes

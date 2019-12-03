@@ -38,62 +38,71 @@ var FirewallRuleIdentity = bambou.Identity{
 // FirewallRulesList represents a list of FirewallRules
 type FirewallRulesList []*FirewallRule
 
-// FirewallRulesAncestor is the interface of an ancestor of a FirewallRule must implement.
+// FirewallRulesAncestor is the interface that an ancestor of a FirewallRule must implement.
+// An Ancestor is defined as an entity that has FirewallRule as a descendant.
+// An Ancestor can get a list of its child FirewallRules, but not necessarily create one.
 type FirewallRulesAncestor interface {
 	FirewallRules(*bambou.FetchingInfo) (FirewallRulesList, *bambou.Error)
-	CreateFirewallRules(*FirewallRule) *bambou.Error
+}
+
+// FirewallRulesParent is the interface that a parent of a FirewallRule must implement.
+// A Parent is defined as an entity that has FirewallRule as a child.
+// A Parent is an Ancestor which can create a FirewallRule.
+type FirewallRulesParent interface {
+	FirewallRulesAncestor
+	CreateFirewallRule(*FirewallRule) *bambou.Error
 }
 
 // FirewallRule represents the model of a firewallrule
 type FirewallRule struct {
-	ID                            string `json:"ID,omitempty"`
-	ParentID                      string `json:"parentID,omitempty"`
-	ParentType                    string `json:"parentType,omitempty"`
-	Owner                         string `json:"owner,omitempty"`
-	ACLTemplateName               string `json:"ACLTemplateName,omitempty"`
-	ICMPCode                      string `json:"ICMPCode,omitempty"`
-	ICMPType                      string `json:"ICMPType,omitempty"`
-	IPv6AddressOverride           string `json:"IPv6AddressOverride,omitempty"`
-	DSCP                          string `json:"DSCP,omitempty"`
-	Action                        string `json:"action,omitempty"`
-	AddressOverride               string `json:"addressOverride,omitempty"`
-	Description                   string `json:"description,omitempty"`
-	DestNetwork                   string `json:"destNetwork,omitempty"`
-	DestPgId                      string `json:"destPgId,omitempty"`
-	DestPgType                    string `json:"destPgType,omitempty"`
-	DestinationIpv6Value          string `json:"destinationIpv6Value,omitempty"`
-	DestinationPort               string `json:"destinationPort,omitempty"`
-	DestinationType               string `json:"destinationType,omitempty"`
-	DestinationValue              string `json:"destinationValue,omitempty"`
-	NetworkID                     string `json:"networkID,omitempty"`
-	NetworkType                   string `json:"networkType,omitempty"`
-	MirrorDestinationID           string `json:"mirrorDestinationID,omitempty"`
-	FlowLoggingEnabled            bool   `json:"flowLoggingEnabled"`
-	EnterpriseName                string `json:"enterpriseName,omitempty"`
-	LocationID                    string `json:"locationID,omitempty"`
-	LocationType                  string `json:"locationType,omitempty"`
-	DomainName                    string `json:"domainName,omitempty"`
-	SourceIpv6Value               string `json:"sourceIpv6Value,omitempty"`
-	SourceNetwork                 string `json:"sourceNetwork,omitempty"`
-	SourcePgId                    string `json:"sourcePgId,omitempty"`
-	SourcePgType                  string `json:"sourcePgType,omitempty"`
-	SourcePort                    string `json:"sourcePort,omitempty"`
-	SourceType                    string `json:"sourceType,omitempty"`
-	SourceValue                   string `json:"sourceValue,omitempty"`
-	Priority                      string `json:"priority,omitempty"`
-	AssociatedApplicationID       string `json:"associatedApplicationID,omitempty"`
-	AssociatedApplicationObjectID string `json:"associatedApplicationObjectID,omitempty"`
-	AssociatedfirewallACLID       string `json:"associatedfirewallACLID,omitempty"`
-	Stateful                      bool   `json:"stateful"`
-	StatsID                       string `json:"statsID,omitempty"`
-	StatsLoggingEnabled           bool   `json:"statsLoggingEnabled"`
-	EtherType                     string `json:"etherType,omitempty"`
+	ID                           string        `json:"ID,omitempty"`
+	ParentID                     string        `json:"parentID,omitempty"`
+	ParentType                   string        `json:"parentType,omitempty"`
+	Owner                        string        `json:"owner,omitempty"`
+	ACLTemplateName              string        `json:"ACLTemplateName,omitempty"`
+	ICMPCode                     string        `json:"ICMPCode,omitempty"`
+	ICMPType                     string        `json:"ICMPType,omitempty"`
+	IPv6AddressOverride          string        `json:"IPv6AddressOverride,omitempty"`
+	DSCP                         string        `json:"DSCP,omitempty"`
+	LastUpdatedBy                string        `json:"lastUpdatedBy,omitempty"`
+	Action                       string        `json:"action,omitempty"`
+	AddressOverride              string        `json:"addressOverride,omitempty"`
+	WebFilterID                  string        `json:"webFilterID,omitempty"`
+	WebFilterStatsLoggingEnabled bool          `json:"webFilterStatsLoggingEnabled"`
+	WebFilterType                string        `json:"webFilterType,omitempty"`
+	Description                  string        `json:"description,omitempty"`
+	DestinationPort              string        `json:"destinationPort,omitempty"`
+	NetworkID                    string        `json:"networkID,omitempty"`
+	NetworkType                  string        `json:"networkType,omitempty"`
+	MirrorDestinationID          string        `json:"mirrorDestinationID,omitempty"`
+	FlowLoggingEnabled           bool          `json:"flowLoggingEnabled"`
+	EmbeddedMetadata             []interface{} `json:"embeddedMetadata,omitempty"`
+	EnterpriseName               string        `json:"enterpriseName,omitempty"`
+	EntityScope                  string        `json:"entityScope,omitempty"`
+	LocationID                   string        `json:"locationID,omitempty"`
+	LocationType                 string        `json:"locationType,omitempty"`
+	DomainName                   string        `json:"domainName,omitempty"`
+	SourcePort                   string        `json:"sourcePort,omitempty"`
+	Priority                     int           `json:"priority,omitempty"`
+	Protocol                     string        `json:"protocol,omitempty"`
+	AssociatedLiveTemplateID     string        `json:"associatedLiveTemplateID,omitempty"`
+	AssociatedTrafficType        string        `json:"associatedTrafficType,omitempty"`
+	AssociatedTrafficTypeID      string        `json:"associatedTrafficTypeID,omitempty"`
+	AssociatedfirewallACLID      string        `json:"associatedfirewallACLID,omitempty"`
+	Stateful                     bool          `json:"stateful"`
+	StatsID                      string        `json:"statsID,omitempty"`
+	StatsLoggingEnabled          bool          `json:"statsLoggingEnabled"`
+	EtherType                    string        `json:"etherType,omitempty"`
+	ExternalID                   string        `json:"externalID,omitempty"`
 }
 
 // NewFirewallRule returns a new *FirewallRule
 func NewFirewallRule() *FirewallRule {
 
-	return &FirewallRule{}
+	return &FirewallRule{
+		WebFilterStatsLoggingEnabled: false,
+		Stateful:                     false,
+	}
 }
 
 // Identity returns the Identity of the object.
@@ -130,4 +139,32 @@ func (o *FirewallRule) Save() *bambou.Error {
 func (o *FirewallRule) Delete() *bambou.Error {
 
 	return bambou.CurrentSession().DeleteEntity(o)
+}
+
+// Metadatas retrieves the list of child Metadatas of the FirewallRule
+func (o *FirewallRule) Metadatas(info *bambou.FetchingInfo) (MetadatasList, *bambou.Error) {
+
+	var list MetadatasList
+	err := bambou.CurrentSession().FetchChildren(o, MetadataIdentity, &list, info)
+	return list, err
+}
+
+// CreateMetadata creates a new child Metadata under the FirewallRule
+func (o *FirewallRule) CreateMetadata(child *Metadata) *bambou.Error {
+
+	return bambou.CurrentSession().CreateChild(o, child)
+}
+
+// GlobalMetadatas retrieves the list of child GlobalMetadatas of the FirewallRule
+func (o *FirewallRule) GlobalMetadatas(info *bambou.FetchingInfo) (GlobalMetadatasList, *bambou.Error) {
+
+	var list GlobalMetadatasList
+	err := bambou.CurrentSession().FetchChildren(o, GlobalMetadataIdentity, &list, info)
+	return list, err
+}
+
+// CreateGlobalMetadata creates a new child GlobalMetadata under the FirewallRule
+func (o *FirewallRule) CreateGlobalMetadata(child *GlobalMetadata) *bambou.Error {
+
+	return bambou.CurrentSession().CreateChild(o, child)
 }

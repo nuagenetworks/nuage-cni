@@ -3,7 +3,7 @@ package entity
 // State represents possible states for the Nuage entity
 type State int
 
-//EntityEvents contains state description of an event
+// EntityEvents contains state description of an event
 type EntityEvents struct {
 	EntityEventCategory EventCategory
 	EntityEventType     Event

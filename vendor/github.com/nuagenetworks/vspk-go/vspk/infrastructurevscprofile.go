@@ -38,33 +38,49 @@ var InfrastructureVscProfileIdentity = bambou.Identity{
 // InfrastructureVscProfilesList represents a list of InfrastructureVscProfiles
 type InfrastructureVscProfilesList []*InfrastructureVscProfile
 
-// InfrastructureVscProfilesAncestor is the interface of an ancestor of a InfrastructureVscProfile must implement.
+// InfrastructureVscProfilesAncestor is the interface that an ancestor of a InfrastructureVscProfile must implement.
+// An Ancestor is defined as an entity that has InfrastructureVscProfile as a descendant.
+// An Ancestor can get a list of its child InfrastructureVscProfiles, but not necessarily create one.
 type InfrastructureVscProfilesAncestor interface {
 	InfrastructureVscProfiles(*bambou.FetchingInfo) (InfrastructureVscProfilesList, *bambou.Error)
-	CreateInfrastructureVscProfiles(*InfrastructureVscProfile) *bambou.Error
+}
+
+// InfrastructureVscProfilesParent is the interface that a parent of a InfrastructureVscProfile must implement.
+// A Parent is defined as an entity that has InfrastructureVscProfile as a child.
+// A Parent is an Ancestor which can create a InfrastructureVscProfile.
+type InfrastructureVscProfilesParent interface {
+	InfrastructureVscProfilesAncestor
+	CreateInfrastructureVscProfile(*InfrastructureVscProfile) *bambou.Error
 }
 
 // InfrastructureVscProfile represents the model of a infrastructurevscprofile
 type InfrastructureVscProfile struct {
-	ID               string `json:"ID,omitempty"`
-	ParentID         string `json:"parentID,omitempty"`
-	ParentType       string `json:"parentType,omitempty"`
-	Owner            string `json:"owner,omitempty"`
-	Name             string `json:"name,omitempty"`
-	LastUpdatedBy    string `json:"lastUpdatedBy,omitempty"`
-	SecondController string `json:"secondController,omitempty"`
-	Description      string `json:"description,omitempty"`
-	FirstController  string `json:"firstController,omitempty"`
-	EnterpriseID     string `json:"enterpriseID,omitempty"`
-	EntityScope      string `json:"entityScope,omitempty"`
-	ProbeInterval    int    `json:"probeInterval,omitempty"`
-	ExternalID       string `json:"externalID,omitempty"`
+	ID                 string        `json:"ID,omitempty"`
+	ParentID           string        `json:"parentID,omitempty"`
+	ParentType         string        `json:"parentType,omitempty"`
+	Owner              string        `json:"owner,omitempty"`
+	Name               string        `json:"name,omitempty"`
+	LastUpdatedBy      string        `json:"lastUpdatedBy,omitempty"`
+	AddressFamily      string        `json:"addressFamily,omitempty"`
+	SecondController   string        `json:"secondController,omitempty"`
+	SecondControllerV6 string        `json:"secondControllerV6,omitempty"`
+	Description        string        `json:"description,omitempty"`
+	FirstController    string        `json:"firstController,omitempty"`
+	FirstControllerV6  string        `json:"firstControllerV6,omitempty"`
+	EmbeddedMetadata   []interface{} `json:"embeddedMetadata,omitempty"`
+	EnterpriseID       string        `json:"enterpriseID,omitempty"`
+	EntityScope        string        `json:"entityScope,omitempty"`
+	ProbeInterval      int           `json:"probeInterval,omitempty"`
+	ExternalID         string        `json:"externalID,omitempty"`
 }
 
 // NewInfrastructureVscProfile returns a new *InfrastructureVscProfile
 func NewInfrastructureVscProfile() *InfrastructureVscProfile {
 
-	return &InfrastructureVscProfile{}
+	return &InfrastructureVscProfile{
+		AddressFamily: "IPV4",
+		ProbeInterval: 5000,
+	}
 }
 
 // Identity returns the Identity of the object.

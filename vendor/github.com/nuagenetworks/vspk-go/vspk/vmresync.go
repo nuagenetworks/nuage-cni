@@ -38,24 +38,34 @@ var VMResyncIdentity = bambou.Identity{
 // VMResyncsList represents a list of VMResyncs
 type VMResyncsList []*VMResync
 
-// VMResyncsAncestor is the interface of an ancestor of a VMResync must implement.
+// VMResyncsAncestor is the interface that an ancestor of a VMResync must implement.
+// An Ancestor is defined as an entity that has VMResync as a descendant.
+// An Ancestor can get a list of its child VMResyncs, but not necessarily create one.
 type VMResyncsAncestor interface {
 	VMResyncs(*bambou.FetchingInfo) (VMResyncsList, *bambou.Error)
-	CreateVMResyncs(*VMResync) *bambou.Error
+}
+
+// VMResyncsParent is the interface that a parent of a VMResync must implement.
+// A Parent is defined as an entity that has VMResync as a child.
+// A Parent is an Ancestor which can create a VMResync.
+type VMResyncsParent interface {
+	VMResyncsAncestor
+	CreateVMResync(*VMResync) *bambou.Error
 }
 
 // VMResync represents the model of a resync
 type VMResync struct {
-	ID                      string `json:"ID,omitempty"`
-	ParentID                string `json:"parentID,omitempty"`
-	ParentType              string `json:"parentType,omitempty"`
-	Owner                   string `json:"owner,omitempty"`
-	LastRequestTimestamp    int    `json:"lastRequestTimestamp,omitempty"`
-	LastTimeResyncInitiated int    `json:"lastTimeResyncInitiated,omitempty"`
-	LastUpdatedBy           string `json:"lastUpdatedBy,omitempty"`
-	EntityScope             string `json:"entityScope,omitempty"`
-	Status                  string `json:"status,omitempty"`
-	ExternalID              string `json:"externalID,omitempty"`
+	ID                      string        `json:"ID,omitempty"`
+	ParentID                string        `json:"parentID,omitempty"`
+	ParentType              string        `json:"parentType,omitempty"`
+	Owner                   string        `json:"owner,omitempty"`
+	LastRequestTimestamp    int           `json:"lastRequestTimestamp,omitempty"`
+	LastTimeResyncInitiated int           `json:"lastTimeResyncInitiated,omitempty"`
+	LastUpdatedBy           string        `json:"lastUpdatedBy,omitempty"`
+	EmbeddedMetadata        []interface{} `json:"embeddedMetadata,omitempty"`
+	EntityScope             string        `json:"entityScope,omitempty"`
+	Status                  string        `json:"status,omitempty"`
+	ExternalID              string        `json:"externalID,omitempty"`
 }
 
 // NewVMResync returns a new *VMResync

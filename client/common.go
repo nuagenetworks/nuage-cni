@@ -8,23 +8,18 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	log "github.com/Sirupsen/logrus"
+	"net"
+	"os"
+	"strings"
+
 	"github.com/containernetworking/cni/pkg/ip"
 	"github.com/containernetworking/cni/pkg/ns"
 	"github.com/containernetworking/cni/pkg/skel"
 	"github.com/containernetworking/cni/pkg/types"
 	vrsSdk "github.com/nuagenetworks/libvrsdk/api"
 	"github.com/nuagenetworks/nuage-cni/config"
+	log "github.com/sirupsen/logrus"
 	"github.com/vishvananda/netlink"
-	"net"
-	"os"
-	"os/exec"
-	"strings"
-)
-
-const (
-	addCli    = "add"
-	deleteCli = "del"
 )
 
 // AddIgnoreUnknownArgs appends the 'IgnoreUnknown=1' option to CNI_ARGS before calling the CNI plugin.
@@ -203,7 +198,7 @@ func generateVEthString(uuid string) string {
 	if err != nil {
 		log.Errorf("Error generating unique hash string for entity")
 	}
-	return fmt.Sprintf("%s", hex.EncodeToString(h.Sum(nil))[:13])
+	return hex.EncodeToString(h.Sum(nil))[:13]
 }
 
 // GetContainerNuageMetadata populates NuageMetadata struct
@@ -218,11 +213,8 @@ func GetContainerNuageMetadata(nuageMetadata *NuageMetadata, args *skel.CmdArgs)
 		return fmt.Errorf("Failed to load netconf from CNI: %v", err)
 	}
 
-	// Parse endpoint labels passed in by Mesos, and store in a map.
+	// Parse endpoint labels passed in by store in a map.
 	labels := map[string]string{}
-	for _, label := range conf.Args.Mesos.NetworkInfo.Labels.Labels {
-		labels[label.Key] = label.Value
-	}
 
 	if _, ok := labels["enterprise"]; ok {
 		nuageMetadata.Enterprise = labels["enterprise"]
@@ -293,26 +285,19 @@ func SetDefaultsForNuageCNIConfig(conf *config.Config) {
 		conf.VRSConnectionCheckTimer = 180
 	}
 
-	if conf.NuageSiteId == 0 {
+	if conf.NuageSiteID == 0 {
 		log.Warnf("SiteId not set. It will not be used when specifying metadata")
-		conf.NuageSiteId = -1
+		conf.NuageSiteID = -1
 	}
 }
 
-func IsVSPFunctional() bool {
-
+// IsVSPFunctional retruns the state of vsc and vrs connection
+func IsVSPFunctional(vrsConnection vrsSdk.VRSConnection) bool {
 	log.Debugf("Verifying VRS-VSC connection state")
-	cmd := "docker ps | grep 'install-nuage-vrs' | awk '{ print $1 }'"
-	out, _ := exec.Command("bash", "-c", cmd).Output()
-	id := strings.Replace(string(out), "\n", "", -1)
-	cmd = "docker exec " + id + " bash -c 'ovs-vsctl show' | grep is_connected"
-	out, _ = exec.Command("bash", "-c", cmd).Output()
-	isConnected := string(out)
-	if strings.Contains(isConnected, "true") {
-		log.Debugf("VRS-VSC connection is functional")
-		return true
+	state, err := vrsConnection.GetControllerState()
+	if err != nil {
+		log.Errorf("failed getting controller state %v", err)
+		return false
 	}
-
-	log.Errorf("VRS-VSC connection is not functional")
-	return false
+	return state == vrsSdk.ControllerConnected
 }
