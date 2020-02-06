@@ -302,7 +302,6 @@ func (vrsConnection *VRSConnection) AddPortToAlubr0(intfName string, entityInfo 
 
 	// 1) Insert a row for Nuage port in OVSDB Interface table
 	extIDMap := make(map[string]string)
-	intfOp := libovsdb.Operation{}
 	intf := make(map[string]interface{})
 	intf["name"] = intfName
 	extIDMap["vm-name"] = entityInfo.Name
@@ -312,7 +311,7 @@ func (vrsConnection *VRSConnection) AddPortToAlubr0(intfName string, entityInfo 
 		return err
 	}
 	// interface table ops
-	intfOp = libovsdb.Operation{
+	intfOp := libovsdb.Operation{
 		Op:       "insert",
 		Table:    interfaceTable,
 		Row:      intf,
@@ -320,7 +319,6 @@ func (vrsConnection *VRSConnection) AddPortToAlubr0(intfName string, entityInfo 
 	}
 
 	// 2) Insert a row for Nuage port in OVSDB Port table
-	portOp := libovsdb.Operation{}
 	port := make(map[string]interface{})
 	port["name"] = intfName
 	port["interfaces"] = libovsdb.UUID{
@@ -330,7 +328,7 @@ func (vrsConnection *VRSConnection) AddPortToAlubr0(intfName string, entityInfo 
 	if err != nil {
 		return err
 	}
-	portOp = libovsdb.Operation{
+	portOp := libovsdb.Operation{
 		Op:       "insert",
 		Table:    portTable,
 		Row:      port,

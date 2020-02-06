@@ -75,6 +75,8 @@ github.com/nuagenetworks/go-bambou v1.0.1 h1:2a57V5x9SgRJBiks3ctaKmunzeCnzSGk70w
 github.com/nuagenetworks/go-bambou v1.0.1/go.mod h1:yC0ArV/eEns5nHC0UPwLOcKWkbCZxb63tUd352gL7M4=
 github.com/nuagenetworks/libvrsdk v0.0.0-20200418052219-a96c759cab36 h1:fuE++mWA5VSGS7d3zNA5Ns8ZG4lfczVKWnNJZFM9bQs=
 github.com/nuagenetworks/libvrsdk v0.0.0-20200418052219-a96c759cab36/go.mod h1:v0JDae7TtUZ7DOwzSmNsKiccWkM7UHgGb0nvpj3pgTk=
+github.com/nuagenetworks/libvrsdk v0.0.0-20200605094716-2516ba4fe4aa h1:FANoesHhZA0zohw/Aofx4cqOmbA4UAMDNLN7BA/+jDg=
+github.com/nuagenetworks/libvrsdk v0.0.0-20200605094716-2516ba4fe4aa/go.mod h1:v0JDae7TtUZ7DOwzSmNsKiccWkM7UHgGb0nvpj3pgTk=
 github.com/nuagenetworks/vspk-go v6.0.4+incompatible h1:yFzFZjQWFKWAz/0bRHB+jfqhbgGTzHYY7cCfNRpKOj0=
 github.com/nuagenetworks/vspk-go v6.0.4+incompatible/go.mod h1:fmVBvdkGnXfHSn7drdJwlPqNa+123RmOMpzSubPT6E8=
 github.com/onsi/ginkgo v1.6.0/go.mod h1:lLunBs/Ym6LB5Z9jYTR76FiuTmxDTDusOGeTQH+WWjE=

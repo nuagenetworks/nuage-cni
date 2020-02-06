@@ -20,7 +20,7 @@ require (
 	github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0 // indirect
 	github.com/kr/pretty v0.2.0 // indirect
 	github.com/modern-go/reflect2 v1.0.1 // indirect
-	github.com/nuagenetworks/libvrsdk v0.0.0-20200418052219-a96c759cab36
+	github.com/nuagenetworks/libvrsdk v0.0.0-20200605094716-2516ba4fe4aa
 	github.com/onsi/ginkgo v1.12.0 // indirect
 	github.com/onsi/gomega v1.9.0 // indirect
 	github.com/opencontainers/go-digest v1.0.0-rc1 // indirect

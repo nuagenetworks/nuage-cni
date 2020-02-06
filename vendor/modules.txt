@@ -78,7 +78,7 @@ github.com/modern-go/concurrent
 github.com/modern-go/reflect2
 # github.com/nuagenetworks/go-bambou v1.0.1
 github.com/nuagenetworks/go-bambou/bambou
-# github.com/nuagenetworks/libvrsdk v0.0.0-20200418052219-a96c759cab36
+# github.com/nuagenetworks/libvrsdk v0.0.0-20200605094716-2516ba4fe4aa
 github.com/nuagenetworks/libvrsdk/api
 github.com/nuagenetworks/libvrsdk/api/entity
 github.com/nuagenetworks/libvrsdk/api/port

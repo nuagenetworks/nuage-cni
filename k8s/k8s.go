@@ -210,7 +210,7 @@ func initDataDir(orchestrator string) {
 
 	isHostAtomic = VerifyHostType()
 	var dir string
-	if isHostAtomic == true {
+	if isHostAtomic {
 		dir = "/var/usr/share/"
 	} else {
 		dir = "/usr/share/"

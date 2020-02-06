@@ -32,7 +32,6 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-var hostname string
 var logMessageCounter int
 
 type logTextFormatter log.TextFormatter
@@ -74,8 +73,6 @@ func init() {
 	// must ensure that the goroutine does not jump from OS thread to thread
 	runtime.LockOSThread()
 
-	hostname, _ = os.Hostname()
-
 	// Reading Nuage CNI plugin parameter file
 	data, err := ioutil.ReadFile(paramFile)
 	if err != nil {
@@ -88,7 +85,7 @@ func init() {
 
 	if _, err = os.Stat(logFolder); err != nil {
 		if os.IsNotExist(err) {
-			err = os.Mkdir(logFolder, 777)
+			err = os.Mkdir(logFolder, 0777)
 			if err != nil {
 				fmt.Printf("Error creating log folder: %v", err)
 			}
@@ -139,8 +136,7 @@ func init() {
 	client.SetDefaultsForNuageCNIConfig(nuageCNIConfig)
 
 	// Determine which orchestrator is making the CNI call
-	var arg string
-	arg = os.Args[0]
+	var arg string = os.Args[0]
 	if strings.Contains(arg, mesos) {
 		orchestrator = mesos
 	} else if strings.Contains(arg, kubernetes) {
@@ -190,12 +186,12 @@ func networkConnect(args *skel.CmdArgs) error {
 	// OVSDB entries to resolve pods in Nuage overlay networks
 	for retryCount := 1; retryCount <= 10; retryCount++ {
 		isVSPFunctional := client.IsVSPFunctional()
-		if isVSPFunctional == false && retryCount == 10 {
+		if !isVSPFunctional && retryCount == 10 {
 			log.Errorf("VRS-VSC connection is not in functional state. Cannot resolve any pods")
 			return fmt.Errorf("VRS-VSC connection is not in functional state. Exiting")
 		}
 
-		if isVSPFunctional == true {
+		if isVSPFunctional {
 			log.Debugf("VRS-VSC connection is in functional state. Pods can be spawned")
 			break
 		}
@@ -373,7 +369,7 @@ func networkConnect(args *skel.CmdArgs) error {
 		return fmt.Errorf("Failed to register for updates from VRS %v", err)
 	}
 	ticker := time.NewTicker(time.Duration(nuageCNIConfig.PortResolveTimer) * time.Second)
-	portInfo := &vrsSdk.PortIPv4Info{}
+	var portInfo = &vrsSdk.PortIPv4Info{}
 	select {
 	case portInfo = <-portInfoUpdateChan:
 		log.Debugf("Received an update from VRS for entity port %s", entityInfo["brport"])

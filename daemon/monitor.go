@@ -210,7 +210,7 @@ func getStaleEntityEntriesForDeletion(ids []string) []string {
 				break
 			}
 		}
-		if keyFound == false {
+		if !keyFound {
 			delete(staleEntityMap, key)
 		} else {
 			keyFound = false
@@ -249,7 +249,7 @@ func getStalePortEntriesForDeletion(ids []string) []string {
 				break
 			}
 		}
-		if keyFound == false {
+		if !keyFound {
 			delete(staleEntityMap, key)
 		} else {
 			keyFound = false
@@ -285,7 +285,7 @@ func cleanupVMTable(vrsConnection vrsSdk.VRSConnection, entityUUIDList []string,
 	deleteStaleEntitiesList = getStaleEntityEntriesForDeletion(staleIDs)
 	for _, staleID := range deleteStaleEntitiesList {
 		doAudit := auditEntity(vrsConnection, staleID)
-		if doAudit == true {
+		if doAudit {
 			entityName, err := vrsConnection.GetEntityName(staleID)
 			if err != nil {
 				log.Debugf("Error obtaining entity name from OVSDB: %v", err)
@@ -472,7 +472,7 @@ func MonitorAgent(config *config.Config, orchestrator string) error {
 	// Determine whether the base host is RHEL server or RHEL atomic
 	isAtomic = k8s.VerifyHostType()
 
-	if isAtomic == false && orchestrator == "ose" {
+	if !isAtomic && orchestrator == "ose" {
 		cmdstr := fmt.Sprintf("rm -irf /var/usr/")
 		cmd := exec.Command("bash", "-c", cmdstr)
 		_, _ = cmd.Output()
@@ -518,7 +518,7 @@ func getActiveK8SPods(orchestrator string) ([]string, error) {
 	var config *krestclient.Config
 	var kubeconfFile string
 	var dir string
-	if isAtomic == true {
+	if isAtomic {
 		dir = "/var/usr/share"
 	} else {
 		dir = "/usr/share"

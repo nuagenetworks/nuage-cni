@@ -23,11 +23,6 @@ import (
 	"github.com/vishvananda/netlink"
 )
 
-const (
-	addCli    = "add"
-	deleteCli = "del"
-)
-
 // AddIgnoreUnknownArgs appends the 'IgnoreUnknown=1' option to CNI_ARGS before calling the CNI plugin.
 // Otherwise, it will complain about the Kubernetes arguments.
 // See https://github.com/kubernetes/kubernetes/pull/24983
@@ -204,7 +199,7 @@ func generateVEthString(uuid string) string {
 	if err != nil {
 		log.Errorf("Error generating unique hash string for entity")
 	}
-	return fmt.Sprintf("%s", hex.EncodeToString(h.Sum(nil))[:13])
+	return hex.EncodeToString(h.Sum(nil))[:13]
 }
 
 // GetContainerNuageMetadata populates NuageMetadata struct

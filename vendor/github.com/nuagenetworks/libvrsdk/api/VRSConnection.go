@@ -3,6 +3,7 @@ package api
 import (
 	"errors"
 
+	"github.com/golang/glog"
 	"github.com/nuagenetworks/libvrsdk/ovsdb"
 	"github.com/socketplane/libovsdb"
 )
@@ -101,6 +102,9 @@ func (vrsConnection *VRSConnection) monitorTable() error {
 		}
 	}
 	initialData, err := vrsConnection.ovsdbClient.Monitor("Open_vSwitch", nil, monitorRequests)
+	if err != nil {
+		return errors.New("Couldn't fetch initial data of OVS")
+	}
 	err = vrsConnection.processUpdates(initialData)
 	if err != nil {
 		return errors.New("Couldn't process initial updates")
@@ -109,9 +113,15 @@ func (vrsConnection *VRSConnection) monitorTable() error {
 		for {
 			select {
 			case registration := <-vrsConnection.registrationChannel:
-				vrsConnection.handlePortRegistration(registration)
+				err := vrsConnection.handlePortRegistration(registration)
+				if err != nil {
+					glog.Errorf("Error handling port registration from VRS: %s", err)
+				}
 			case currentUpdate := <-vrsConnection.updatesChan:
-				vrsConnection.processUpdates(currentUpdate)
+				err := vrsConnection.processUpdates(currentUpdate)
+				if err != nil {
+					glog.Errorf("Error processing updates from VRS: %s", err)
+				}
 			case <-vrsConnection.stopChannel:
 				return
 			}
