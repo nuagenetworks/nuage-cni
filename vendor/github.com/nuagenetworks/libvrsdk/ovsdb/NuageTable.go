@@ -10,6 +10,15 @@ import (
 // OvsDBName is the OVS database name
 const OvsDBName = "Open_vSwitch"
 
+// NuageTableOps operations
+type NuageTableOps interface {
+	InsertRow(ovs *libovsdb.OvsdbClient, row NuageTableRow) error
+	DeleteRow(ovs *libovsdb.OvsdbClient, condition []string) error
+	ReadRow(ovs *libovsdb.OvsdbClient, readRowArgs ReadRowArgs) (map[string]interface{}, error)
+	ReadRows(ovs *libovsdb.OvsdbClient, readRowArgs ReadRowArgs) ([]map[string]interface{}, error)
+	UpdateRow(ovs *libovsdb.OvsdbClient, ovsdbRow map[string]interface{}, condition []string) error
+}
+
 // NuageTable represent a Nuage OVSDB table
 type NuageTable struct {
 	TableName string

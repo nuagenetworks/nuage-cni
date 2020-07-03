@@ -32,7 +32,6 @@ In Audit Daemon mode, the Nuage CNI plugin also operates as a background systemd
 
 - Execute "make" from "nuage-cni" folder. Following binaries will be generated under "nuage-cni" folder:
 
- - nuage-cni-mesos
  - nuage-cni-k8s
  - nuage-cni-openshift
 
@@ -42,9 +41,9 @@ In Audit Daemon mode, the Nuage CNI plugin also operates as a background systemd
 
 - Set the version required for the rpm: export version=`desired rpm version`
 
-- Update the `desired rpm version` in rpmbuild spec files for Mesos, k8s and Openshift
+- Update the `desired rpm version` in rpmbuild spec files for k8s and Openshift
 
-- Then run ./scripts/buildRPM.sh which will generate RPMs for Nuage CNI plugin for Mesos/K8S/OSE under rpmbuild directory on your host
+- Then run ./scripts/buildRPM.sh which will generate RPMs for Nuage CNI plugin for K8S/OSE under rpmbuild directory on your host
 
 
 ## Steps to generate Nuage CNI docker image for CNI daemon sets install
@@ -63,8 +62,6 @@ In Audit Daemon mode, the Nuage CNI plugin also operates as a background systemd
 
 
 # Automated Nuage CNI plugin installation
-
-- Please refer to the Nuage VSP Mesos Integration Guide for detailed steps on Nuage Mesos CNI plugin frameworks installation on Mesos clusters.
 
 - Please refer to the Nuage VSP OpenShift Integration Guide for detailed steps on Nuage Openshift CNI plugin Ansible installation on Openshift clusters (HA and single master)
 

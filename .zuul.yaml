@@ -13,12 +13,13 @@
     name: cni-build-image
     parent: nuage-build-docker-image
     vars:
-      go_task: make
       zuul_work_dir: "{{ ansible_user_dir }}/src/github.com/{{ zuul.project.name }}"
+      container_command: docker
       docker_images:
         - context: .
           dockerfile: Dockerfile
           repository: nuage/cni
+          go_task: make
           build_args:
             - "http_proxy={{ proxy_env.http_proxy if proxy_env is defined else '' }}"
             - "https_proxy={{ proxy_env.https_proxy if proxy_env is defined else '' }}"

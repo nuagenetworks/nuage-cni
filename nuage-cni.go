@@ -51,10 +51,6 @@ var nuageCNIConfig = &config.Config{}
 var operMode string
 var orchestrator string
 
-// nuageMetadataObj will be a structure pointer
-// to hold Nuage metadata
-var nuageMetadataObj = client.NuageMetadata{}
-
 // Const definitions for plugin log location and input parameter file
 const (
 	paramFile     = "/etc/default/nuage-cni.yaml"
@@ -63,7 +59,6 @@ const (
 	daemonLogFile = "/var/log/cni/nuage-daemon.log"
 	bridgeName    = "alubr0"
 	kubernetes    = "k8s"
-	mesos         = "mesos"
 	openshift     = "ose"
 )
 
@@ -87,7 +82,7 @@ func init() {
 		if os.IsNotExist(err) {
 			err = os.Mkdir(logFolder, 0777)
 			if err != nil {
-				fmt.Printf("Error creating log folder: %v", err)
+				log.Errorf("Error creating log folder: %v", err)
 			}
 		}
 	}
@@ -137,17 +132,13 @@ func init() {
 
 	// Determine which orchestrator is making the CNI call
 	var arg string = os.Args[0]
-	if strings.Contains(arg, mesos) {
-		orchestrator = mesos
-	} else if strings.Contains(arg, kubernetes) {
+	if strings.Contains(arg, kubernetes) {
 		orchestrator = kubernetes
 	} else {
 		orchestrator = openshift
 	}
 
 	switch orchestrator {
-	case mesos:
-		log.Debugf("CNI call for mesos orchestrator")
 	case kubernetes:
 		log.Debugf("CNI call for k8s orchestrator")
 	case openshift:
@@ -169,7 +160,9 @@ func networkConnect(args *skel.CmdArgs) error {
 	var vrsConnection vrsSdk.VRSConnection
 	var result *types.Result
 	entityInfo := make(map[string]string)
-
+	// nuageMetadataObj will be a structure pointer
+	// to hold Nuage metadata
+	var nuageMetadataObj = client.NuageMetadata{}
 	for {
 		vrsConnection, err = client.ConnectToVRSOVSDB(nuageCNIConfig)
 		if err != nil {
@@ -185,7 +178,7 @@ func networkConnect(args *skel.CmdArgs) error {
 	// Here we want to verify if Nuage VSP in good state before we create
 	// OVSDB entries to resolve pods in Nuage overlay networks
 	for retryCount := 1; retryCount <= 10; retryCount++ {
-		isVSPFunctional := client.IsVSPFunctional()
+		isVSPFunctional := client.IsVSPFunctional(vrsConnection)
 		if !isVSPFunctional && retryCount == 10 {
 			log.Errorf("VRS-VSC connection is not in functional state. Cannot resolve any pods")
 			return fmt.Errorf("VRS-VSC connection is not in functional state. Exiting")

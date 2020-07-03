@@ -54,20 +54,17 @@ type Pod struct {
 func getK8SLabelsPodUIDFromAPIServer(podNs string, podname string) error {
 
 	log.Infof("Obtaining labels from API server for pod %s under namespace %s", podname, podNs)
-	loadingRules := &clientcmd.ClientConfigLoadingRules{}
-	loadingRules.ExplicitPath = kubeconfFile
-	loader := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(loadingRules, &clientcmd.ConfigOverrides{})
-	kubeConfig, err := loader.ClientConfig()
+	kubeConfig, err := clientcmd.BuildConfigFromFlags("", kubeconfFile)
 	if err != nil {
 		log.Errorf("Error loading kubeconfig file: %v", err)
 		return err
 	}
-
+	// creates the clientset
 	k8RESTConfig = kubeConfig
 	kubeClient, err := kclient.NewForConfig(k8RESTConfig)
 	if err != nil {
 		log.Errorf("Error trying to create kubeclient: %v", err)
-		return err
+		panic(err.Error())
 	}
 
 	pod, err := kubeClient.CoreV1().Pods(podNs).Get(podname, metav1.GetOptions{})
@@ -133,20 +130,14 @@ func getPodMetadataFromNuageK8sMon(podname string, ns string) error {
 	url := vspK8SConfig.NuageK8SMonServer + "/namespaces/" + ns + "/pods"
 
 	// Load client cert
-	cert, err := tls.LoadX509KeyPair(nuageMonClientCertFile, nuageMonClientKeyFile)
+	cert, err := tls.X509KeyPair([]byte(nuageMonClientCertFile), []byte(nuageMonClientKeyFile))
 	if err != nil {
-		log.Errorf("Error loading client cert file to communicate with Nuage K8S monitor: %v", err)
+		log.Errorf("Error loading client cert file to communicate with Nuage monitor: %v", err)
 		return err
 	}
 
-	// Load CA cert
-	caCert, err := ioutil.ReadFile(nuageMonClientCACertFile)
-	if err != nil {
-		log.Errorf("Error loading CA cert file to communicate with Nuage K8S monitor: %v", err)
-		return err
-	}
 	caCertPool := x509.NewCertPool()
-	caCertPool.AppendCertsFromPEM(caCert)
+	caCertPool.AppendCertsFromPEM([]byte(nuageMonClientCACertFile))
 
 	// Setup HTTPS client
 	tlsConfig := &tls.Config{
@@ -318,20 +309,14 @@ func SendPodDeletionNotification(podname string, ns string, orchestrator string)
 	url := vspK8SConfig.NuageK8SMonServer + "/namespaces/" + ns + "/pods"
 
 	// Load client cert
-	cert, err := tls.LoadX509KeyPair(nuageMonClientCertFile, nuageMonClientKeyFile)
+	cert, err := tls.X509KeyPair([]byte(nuageMonClientCertFile), []byte(nuageMonClientKeyFile))
 	if err != nil {
 		log.Errorf("Error loading client cert file to communicate with Nuage monitor: %v", err)
 		return err
 	}
 
-	// Load CA cert
-	caCert, err := ioutil.ReadFile(nuageMonClientCACertFile)
-	if err != nil {
-		log.Errorf("Error loading CA cert file to communicate with Nuage monitor: %v", err)
-		return err
-	}
 	caCertPool := x509.NewCertPool()
-	caCertPool.AppendCertsFromPEM(caCert)
+	caCertPool.AppendCertsFromPEM([]byte(nuageMonClientCACertFile))
 
 	// Setup HTTPS client
 	tlsConfig := &tls.Config{

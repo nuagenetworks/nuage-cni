@@ -4,14 +4,10 @@ go 1.13
 
 require (
 	github.com/BurntSushi/toml v0.3.1 // indirect
-	github.com/Microsoft/go-winio v0.4.14 // indirect
 	github.com/ccding/go-logging v0.0.0-20190618175518-0ac4cc1a6533 // indirect
 	github.com/containernetworking/cni v0.3.1-0.20161010053931-d872391998fb
 	github.com/coreos/go-iptables v0.1.1-0.20160907220151-5463fbac3bcc // indirect
 	github.com/docker/distribution v2.7.1+incompatible // indirect
-	github.com/docker/docker v1.13.1
-	github.com/docker/go-connections v0.4.0 // indirect
-	github.com/docker/go-units v0.4.0 // indirect
 	github.com/gogo/protobuf v1.3.1 // indirect
 	github.com/google/gofuzz v1.1.0 // indirect
 	github.com/googleapis/gnostic v0.0.0-00010101000000-000000000000 // indirect
@@ -20,16 +16,14 @@ require (
 	github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0 // indirect
 	github.com/kr/pretty v0.2.0 // indirect
 	github.com/modern-go/reflect2 v1.0.1 // indirect
-	github.com/nuagenetworks/libvrsdk v0.0.0-20200605094716-2516ba4fe4aa
+	github.com/nuagenetworks/libvrsdk v0.0.0-20200625144000-d7373f6f983c
 	github.com/onsi/ginkgo v1.12.0 // indirect
 	github.com/onsi/gomega v1.9.0 // indirect
-	github.com/opencontainers/go-digest v1.0.0-rc1 // indirect
-	github.com/pkg/errors v0.9.1 // indirect
 	github.com/sirupsen/logrus v1.4.2
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/vishvananda/netlink v0.0.0-20151203164549-edcd99c0881a
 	github.com/vishvananda/netns v0.0.0-20160430053723-8ba1072b58e0 // indirect
-	golang.org/x/net v0.0.0-20200222125558-5a598a2470a0
+	golang.org/x/net v0.0.0-20200222125558-5a598a2470a0 // indirect
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d // indirect
 	golang.org/x/time v0.0.0-20191024005414-555d28b269f0 // indirect
 	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect

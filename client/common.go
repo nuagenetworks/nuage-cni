@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"net"
 	"os"
-	"os/exec"
 	"strings"
 
 	"github.com/containernetworking/cni/pkg/ip"
@@ -214,11 +213,8 @@ func GetContainerNuageMetadata(nuageMetadata *NuageMetadata, args *skel.CmdArgs)
 		return fmt.Errorf("Failed to load netconf from CNI: %v", err)
 	}
 
-	// Parse endpoint labels passed in by Mesos, and store in a map.
+	// Parse endpoint labels passed in by store in a map.
 	labels := map[string]string{}
-	for _, label := range conf.Args.Mesos.NetworkInfo.Labels.Labels {
-		labels[label.Key] = label.Value
-	}
 
 	if _, ok := labels["enterprise"]; ok {
 		nuageMetadata.Enterprise = labels["enterprise"]
@@ -295,21 +291,13 @@ func SetDefaultsForNuageCNIConfig(conf *config.Config) {
 	}
 }
 
-// IsVSPFunctional checks if VRS and VSC connection is functional
-func IsVSPFunctional() bool {
-
+// IsVSPFunctional retruns the state of vsc and vrs connection
+func IsVSPFunctional(vrsConnection vrsSdk.VRSConnection) bool {
 	log.Debugf("Verifying VRS-VSC connection state")
-	cmd := "docker ps | grep 'install-nuage-vrs' | awk '{ print $1 }'"
-	out, _ := exec.Command("bash", "-c", cmd).Output()
-	id := strings.Replace(string(out), "\n", "", -1)
-	cmd = "docker exec " + id + " bash -c 'ovs-vsctl show' | grep is_connected"
-	out, _ = exec.Command("bash", "-c", cmd).Output()
-	isConnected := string(out)
-	if strings.Contains(isConnected, "true") {
-		log.Debugf("VRS-VSC connection is functional")
-		return true
+	state, err := vrsConnection.GetControllerState()
+	if err != nil {
+		log.Errorf("failed getting controller state %v", err)
+		return false
 	}
-
-	log.Errorf("VRS-VSC connection is not functional")
-	return false
+	return state == vrsSdk.ControllerConnected
 }
