@@ -8,7 +8,7 @@ require (
 	github.com/containernetworking/cni v0.3.1-0.20161010053931-d872391998fb
 	github.com/coreos/go-iptables v0.1.1-0.20160907220151-5463fbac3bcc // indirect
 	github.com/docker/distribution v2.7.1+incompatible // indirect
-	github.com/gogo/protobuf v1.3.1 // indirect
+	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/google/gofuzz v1.1.0 // indirect
 	github.com/googleapis/gnostic v0.0.0-00010101000000-000000000000 // indirect
 	github.com/imdario/mergo v0.3.8 // indirect
@@ -23,7 +23,6 @@ require (
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/vishvananda/netlink v0.0.0-20151203164549-edcd99c0881a
 	github.com/vishvananda/netns v0.0.0-20160430053723-8ba1072b58e0 // indirect
-	golang.org/x/net v0.0.0-20200222125558-5a598a2470a0 // indirect
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d // indirect
 	golang.org/x/time v0.0.0-20191024005414-555d28b269f0 // indirect
 	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
