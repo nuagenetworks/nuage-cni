@@ -18,7 +18,7 @@ github.com/containernetworking/cni/pkg/version
 github.com/coreos/go-iptables/iptables
 # github.com/davecgh/go-spew v1.1.1
 github.com/davecgh/go-spew/spew
-# github.com/gogo/protobuf v1.3.1
+# github.com/gogo/protobuf v1.3.2
 github.com/gogo/protobuf/proto
 github.com/gogo/protobuf/sortkeys
 # github.com/golang/glog v0.0.0-20141105023935-44145f04b68c
@@ -66,9 +66,9 @@ github.com/spf13/pflag
 # github.com/vishvananda/netlink v0.0.0-20151203164549-edcd99c0881a
 github.com/vishvananda/netlink
 github.com/vishvananda/netlink/nl
-# golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2
+# golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
 golang.org/x/crypto/ssh/terminal
-# golang.org/x/net v0.0.0-20200222125558-5a598a2470a0
+# golang.org/x/net v0.0.0-20201021035429-f5854403a974
 golang.org/x/net/context
 golang.org/x/net/context/ctxhttp
 golang.org/x/net/http/httpguts
@@ -78,10 +78,11 @@ golang.org/x/net/idna
 # golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d
 golang.org/x/oauth2
 golang.org/x/oauth2/internal
-# golang.org/x/sys v0.0.0-20191120155948-bd437916bb0e
+# golang.org/x/sys v0.0.0-20200930185726-fdedc70b468f
+golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/unix
 golang.org/x/sys/windows
-# golang.org/x/text v0.3.0
+# golang.org/x/text v0.3.3
 golang.org/x/text/secure/bidirule
 golang.org/x/text/transform
 golang.org/x/text/unicode/bidi
