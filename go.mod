@@ -7,7 +7,7 @@ require (
 	github.com/ccding/go-logging v0.0.0-20190618175518-0ac4cc1a6533 // indirect
 	github.com/containernetworking/cni v0.3.1-0.20161010053931-d872391998fb
 	github.com/coreos/go-iptables v0.1.1-0.20160907220151-5463fbac3bcc // indirect
-	github.com/docker/distribution v2.7.1+incompatible // indirect
+	github.com/docker/distribution v2.8.0+incompatible // indirect
 	github.com/gogo/protobuf v1.3.1 // indirect
 	github.com/google/gofuzz v1.1.0 // indirect
 	github.com/googleapis/gnostic v0.0.0-00010101000000-000000000000 // indirect
